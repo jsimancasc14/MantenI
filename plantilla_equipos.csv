@@ -1,0 +1,3 @@
+codigo,tipo,marca,modelo,serial,numero_interno,dependencia,responsable,ubicacion,estado,procesador,ram,disco,sistema_operativo,office,programas,observaciones
+EQ-001,Computador,HP,280 G7,SN-12345,INV-001,Secretaría,Ana Pérez,Oficina 1,Operativo,Intel i5,8 GB,256 GB SSD,Windows 11,Microsoft Office 2021,"Zoom, Chrome, Office",Equipo funcionando correctamente
+EQ-002,Monitor,Dell,P2422H,SN-67890,INV-002,Contabilidad,Luis Gómez,Oficina 2,Operativo,N/A,N/A,N/A,Windows 11,Microsoft Office 2021,"Chrome, Teams",Sin novedad

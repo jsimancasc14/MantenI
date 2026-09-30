@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-labelledby="title desc">
+  <title id="title">Logo ManténTI Arjona</title>
+  <desc id="desc">Escudo azul con un edificio institucional y una marca de verificación verde</desc>
+  <g fill="none" stroke="#092d62" stroke-linecap="square" stroke-linejoin="miter">
+    <path d="M120 17 194 35v49c0 49-26 85-74 111-48-26-74-62-74-111V35z" stroke-width="11"/>
+    <path d="M120 52v12m-49 33 49-27 49 27H71zm5 14h88M82 111v49m27-49v49m27-49v49m27-49v49m-81-1h61" stroke-width="8"/>
+  </g>
+  <circle cx="120" cy="79" r="5" fill="#092d62"/>
+  <g fill="none" stroke="#13a66a" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M202 57c8 37-13 74-48 96-27 17-60 24-91 16 31 33 72 47 112 31 39-16 62-54 61-95-.5-20-7-37-19-48" stroke-width="10"/>
+    <path d="m144 129 17 17 43-48" stroke-width="13"/>
+    <path d="M53 169c34 11 73 4 103-13 24-13 42-32 51-55" stroke-width="7"/>
+  </g>
+</svg>
