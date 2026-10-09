@@ -1,6 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/backend/login.php", "destination": "/api/login" },
-    { "source": "/backend/api.php", "destination": "/api/core" }
-  ]
-}
