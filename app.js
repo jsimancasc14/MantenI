@@ -28,7 +28,8 @@ const DB = {
         { nombre: "Despacho del Alcalde", responsable: "Secretaria General", correo: "despacho@arjona-bolivar.gov.co", telefono: "(605) 123 4571" }
     ],
     tecnicos: [
-        { nombre: "J. Rodríguez", cargo: "Técnico TI", correo: "ti1@arjona-bolivar.gov.co", telefono: "310 111 2233", activo: true },
+        { nombre: "Jairo Simancas Cogollo", cargo: "Técnico TI", correo: "jsimancasc14@gmail.com", telefono: "3006051812", activo: true },
+        { nombre: "Juan Diaz Pardo", cargo: "Técnico TI", correo: "juancadg007@gmail.com", telefono: "3002018036", activo: true },
         { nombre: "C. Martínez", cargo: "Técnico TI", correo: "ti2@arjona-bolivar.gov.co", telefono: "310 222 3344", activo: true },
         { nombre: "L. Gómez", cargo: "Técnico TI", correo: "ti3@arjona-bolivar.gov.co", telefono: "310 333 4455", activo: true }
     ],
@@ -106,14 +107,14 @@ function actualizarSidebarUsuario() {
 }
 
 async function mostrarApp() {
-    document.getElementById('login-screen')?.classList.add('hidden');
-    document.getElementById('app-shell')?.classList.remove('hidden');
-    actualizarSidebarUsuario();
-    cargarSesionSegura();
+    await cargarSesionSegura();
     await Promise.all([
         cargarInventarioDesdeBackend(),
         cargarOperacionesDesdeBackend()
     ]);
+    document.getElementById('login-screen')?.classList.add('hidden');
+    document.getElementById('app-shell')?.classList.remove('hidden');
+    actualizarSidebarUsuario();
     cargarInventario(document.getElementById('buscar-equipo')?.value || '');
     cargarOrdenes();
     cargarPreventivos();
@@ -121,15 +122,12 @@ async function mostrarApp() {
 }
 
 async function cargarSesionSegura() {
-    try {
-        const response = await fetch('backend/api.php?action=session', { credentials: 'same-origin' });
-        if (response.ok) {
-            const result = await response.json();
-            csrfToken = result.csrf_token || '';
-        }
-    } catch (error) {
-        console.warn('No se pudo renovar el token de seguridad.', error);
+    const response = await fetch('backend/api.php?action=session', { credentials: 'same-origin' });
+    const result = await response.json();
+    if (!response.ok || !result.ok || !result.csrf_token) {
+        throw new Error(result.error || 'No se pudo validar la sesión con el servidor.');
     }
+    csrfToken = result.csrf_token;
 }
 
 function cambiarUsuario() {
@@ -179,7 +177,13 @@ async function iniciarSesion(event) {
         return;
     }
 
-    mostrarApp();
+    try {
+        await mostrarApp();
+    } catch (error) {
+        localStorage.removeItem('MantTI_User');
+        cambiarUsuario();
+        alert(error.message || 'No se pudo cargar la información de PostgreSQL. Verifica la conexión y que la base tenga el esquema importado.');
+    }
 }
 
 const loginForm = document.getElementById('login-form');
@@ -263,6 +267,7 @@ document.querySelectorAll('.module-btn').forEach(btn => {
         cargarOrdenes();
     });
 });
+document.getElementById('tecnico-asignado')?.addEventListener('change', cargarOrdenes);
 document.querySelectorAll('.pestana-int').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.pestana-int').forEach(b => b.classList.remove('active'));
@@ -375,101 +380,111 @@ function cargarGraficaEstados() {
 // INVENTARIO
 // ======================================================
 async function cargarInventarioDesdeBackend() {
-    try {
-        const response = await fetch('backend/api.php?action=inventario', {
-            credentials: 'same-origin'
-        });
-        if (!response.ok) return;
-        const result = await response.json();
-        if (!result.ok || !Array.isArray(result.data)) return;
-
-        DB.inventario = result.data.map(equipo => ({
-            id: equipo.codigo,
-            tipo: equipo.tipo,
-            marca: equipo.marca,
-            modelo: equipo.modelo,
-            serial: equipo.serial,
-            interno: equipo.numero_interno,
-            adquisicion: equipo.created_at?.slice(0, 10) || '',
-            proveedor: '',
-            valor: 0,
-            dependencia: equipo.dependencia,
-            responsable: equipo.responsable,
-            ubicacion: equipo.ubicacion,
-            estado: equipo.estado,
-            procesador: equipo.procesador || '',
-            ram: equipo.ram || '',
-            disco: equipo.disco || '',
-            so: equipo.sistema_operativo || '',
-            office: equipo.office || '',
-            programas: equipo.programas || '',
-            observaciones: equipo.observaciones || ''
-        }));
-        guardarDB();
-        cargarInventario(document.getElementById('buscar-equipo')?.value || '');
-        cargarDashboard();
-    } catch (error) {
-        console.warn('No se pudo sincronizar el inventario con el servidor.', error);
+    const response = await fetch('backend/api.php?action=inventario', {
+        credentials: 'same-origin'
+    });
+    const result = await response.json();
+    if (!response.ok || !result.ok || !Array.isArray(result.data)) {
+        throw new Error(result.error || 'No se pudo leer el inventario de PostgreSQL.');
     }
+
+    DB.inventario = result.data.map(equipo => ({
+        id: equipo.codigo,
+        tipo: equipo.tipo,
+        marca: equipo.marca,
+        modelo: equipo.modelo,
+        serial: equipo.serial,
+        interno: equipo.numero_interno,
+        adquisicion: equipo.created_at?.slice(0, 10) || '',
+        proveedor: '',
+        valor: 0,
+        dependencia: equipo.dependencia,
+        responsable: equipo.responsable,
+        ubicacion: equipo.ubicacion,
+        estado: equipo.estado,
+        procesador: equipo.procesador || '',
+        ram: equipo.ram || '',
+        disco: equipo.disco || '',
+        so: equipo.sistema_operativo || '',
+        office: equipo.office || '',
+        programas: equipo.programas || '',
+        observaciones: equipo.observaciones || ''
+    }));
+    guardarDB();
+    cargarInventario(document.getElementById('buscar-equipo')?.value || '');
+    cargarDashboard();
 }
 
 async function cargarOperacionesDesdeBackend() {
-    try {
-        const [ordenesResponse, preventivosResponse] = await Promise.all([
-            fetch('backend/api.php?action=ordenes', { credentials: 'same-origin' }),
-            fetch('backend/api.php?action=preventivos', { credentials: 'same-origin' })
-        ]);
-        if (!ordenesResponse.ok || !preventivosResponse.ok) return;
-
-        const [ordenesResult, preventivosResult] = await Promise.all([
-            ordenesResponse.json(),
-            preventivosResponse.json()
-        ]);
-        if (ordenesResult.ok && Array.isArray(ordenesResult.data)) {
-            DB.ordenes = ordenesResult.data.map(orden => ({
-                id: orden.codigo,
-                solicitud: orden.fecha_solicitud,
-                programada: orden.fecha_programada,
-                cierre: orden.fecha_cierre || '',
-                equipo: orden.equipo_codigo,
-                tipo: orden.tipo,
-                prioridad: orden.prioridad,
-                solicitante: orden.solicitante,
-                dependenciaSol: orden.dependencia_solicitante,
-                tecnico: orden.tecnico,
-                falla: orden.falla,
-                diagnostico: orden.diagnostico_inicial || '',
-                actividades: orden.actividades || '',
-                repuestos: orden.repuestos || '',
-                horas: Number(orden.horas || 0),
-                costo: Number(orden.costo || 0),
-                diagnosticoFinal: orden.diagnostico_final || '',
-                estadoEquipoCierre: orden.estado_equipo_cierre || '',
-                observaciones: orden.observaciones || '',
-                estado: orden.estado
-            }));
-        }
-        if (preventivosResult.ok && Array.isArray(preventivosResult.data)) {
-            DB.preventivos = preventivosResult.data.map(plan => ({
-                id: plan.codigo,
-                equipo: plan.equipo_codigo,
-                dependencia: plan.dependencia,
-                frecuencia: plan.frecuencia,
-                ultimo: plan.ultimo_mantenimiento || '',
-                proximo: plan.proximo_mantenimiento,
-                tecnico: plan.tecnico,
-                estado: plan.estado,
-                actividades: plan.actividades,
-                observaciones: plan.observaciones || ''
-            }));
-        }
-        guardarDB();
-        cargarDashboard();
-        cargarOrdenes();
-        cargarPreventivos();
-    } catch (error) {
-        console.warn('No se pudieron sincronizar órdenes y preventivos.', error);
+    const [ordenesResponse, preventivosResponse, catalogosResponse] = await Promise.all([
+        fetch('backend/api.php?action=ordenes', { credentials: 'same-origin' }),
+        fetch('backend/api.php?action=preventivos', { credentials: 'same-origin' }),
+        fetch('backend/api.php?action=catalogos', { credentials: 'same-origin' })
+    ]);
+    const [ordenesResult, preventivosResult, catalogosResult] = await Promise.all([
+        ordenesResponse.json(),
+        preventivosResponse.json(),
+        catalogosResponse.json()
+    ]);
+    if (!ordenesResponse.ok || !ordenesResult.ok || !Array.isArray(ordenesResult.data) ||
+        !preventivosResponse.ok || !preventivosResult.ok || !Array.isArray(preventivosResult.data) ||
+        !catalogosResponse.ok || !catalogosResult.ok || !catalogosResult.data) {
+        throw new Error('No se pudieron leer órdenes, mantenimientos o catálogos de PostgreSQL.');
     }
+    DB.ordenes = ordenesResult.data.map(orden => ({
+        id: orden.codigo,
+        solicitud: orden.fecha_solicitud,
+        programada: orden.fecha_programada,
+        cierre: orden.fecha_cierre || '',
+        equipo: orden.equipo_codigo,
+        tipo: orden.tipo,
+        prioridad: orden.prioridad,
+        solicitante: orden.solicitante,
+        dependenciaSol: orden.dependencia_solicitante,
+        tecnico: orden.tecnico.trim().toLowerCase() === 'juan diaz' ? 'Juan Diaz Pardo' :
+            orden.tecnico.trim().toLowerCase() === 'jairo jose simancas cogollo' ? 'Jairo Simancas Cogollo' : orden.tecnico,
+        falla: orden.falla,
+        diagnostico: orden.diagnostico_inicial || '',
+        actividades: orden.actividades || '',
+        repuestos: orden.repuestos || '',
+        horas: Number(orden.horas || 0),
+        costo: Number(orden.costo || 0),
+        diagnosticoFinal: orden.diagnostico_final || '',
+        estadoEquipoCierre: orden.estado_equipo_cierre || '',
+        observaciones: orden.observaciones || '',
+        estado: orden.estado
+    }));
+    DB.preventivos = preventivosResult.data.map(plan => ({
+        id: plan.codigo,
+        equipo: plan.equipo_codigo,
+        dependencia: plan.dependencia,
+        frecuencia: plan.frecuencia,
+        ultimo: plan.ultimo_mantenimiento || '',
+        proximo: plan.proximo_mantenimiento,
+        tecnico: plan.tecnico,
+        estado: plan.estado,
+        actividades: plan.actividades,
+        observaciones: plan.observaciones || ''
+    }));
+    DB.dependencias = catalogosResult.data.dependencias;
+    DB.tecnicos = catalogosResult.data.tecnicos
+        .filter(tecnico => !tecnico.nombre.trim().toLowerCase().startsWith('j.'))
+        .map(tecnico => ({
+            ...tecnico,
+            nombre: tecnico.nombre.trim().toLowerCase() === 'juan diaz' ? 'Juan Diaz Pardo' :
+                tecnico.nombre.trim().toLowerCase() === 'jairo jose simancas cogollo' ? 'Jairo Simancas Cogollo' : tecnico.nombre,
+            activo: Number(tecnico.activo) === 1
+        }));
+    cargarSelectorTecnicos();
+    DB.repuestos = catalogosResult.data.repuestos.map(repuesto => ({
+        ...repuesto,
+        costo: Number(repuesto.costo || 0)
+    }));
+    guardarDB();
+    cargarCatalogos();
+    cargarDashboard();
+    cargarOrdenes();
+    cargarPreventivos();
 }
 
 function cargarInventario(filtro='') {
@@ -703,6 +718,18 @@ function getRolOrdenActual() {
     const activo = document.querySelector('.module-btn.active');
     return activo ? activo.dataset.role : 'administrador';
 }
+function cargarSelectorTecnicos() {
+    const selector = document.getElementById('tecnico-asignado');
+    if (!selector) return;
+    const tecnicoAnterior = selector.value;
+    const usuario = JSON.parse(localStorage.getItem('MantTI_User') || 'null');
+    const tecnicosActivos = DB.tecnicos.filter(tecnico => tecnico.activo);
+    selector.replaceChildren(...tecnicosActivos.map(tecnico => new Option(tecnico.nombre, tecnico.nombre)));
+    const tecnicoUsuario = tecnicosActivos.find(tecnico => tecnico.nombre === usuario?.name);
+    selector.value = tecnicosActivos.some(tecnico => tecnico.nombre === tecnicoAnterior)
+        ? tecnicoAnterior
+        : tecnicoUsuario?.nombre || tecnicosActivos[0]?.nombre || '';
+}
 function cargarOrdenes() {
     const rol = getRolOrdenActual();
     let datos = DB.ordenes;
@@ -710,7 +737,12 @@ function cargarOrdenes() {
         datos = datos.filter(o => o.estado !== 'Cerrado');
 
     if (rol === 'tecnico') {
-        const tecnicoActual = 'J. Rodríguez';
+        const selectorTecnico = document.getElementById('tecnico-asignado');
+        const usuario = JSON.parse(localStorage.getItem('MantTI_User') || 'null');
+        if (selectorTecnico && !selectorTecnico.options.length) {
+            cargarSelectorTecnicos();
+        }
+        const tecnicoActual = selectorTecnico?.value || usuario?.name || '';
         datos = datos.filter(o => o.tecnico === tecnicoActual);
         document.getElementById('tabla-ordenes-tecnico').innerHTML = datos.map(o => `
             <tr>
@@ -725,7 +757,6 @@ function cargarOrdenes() {
                     ${o.estado !== 'Cerrado' ? `<button class="btn-icon" onclick="cerrarOrden('${o.id}')" title="Cerrar Orden">✅</button>` : ''}
                 </td>
             </tr>`).join('');
-
         document.getElementById('totales-tecnico').textContent = String(DB.ordenes.filter(o => o.tecnico === tecnicoActual).length);
         document.getElementById('pendientes-tecnico').textContent = String(DB.ordenes.filter(o => o.tecnico === tecnicoActual && o.estado !== 'Cerrado').length);
         return;
@@ -1141,20 +1172,15 @@ document.getElementById('modal')?.addEventListener('click', e => {
 // ======================================================
 aplicarTema();
 cargarDB();
-guardarDB();
 const usuarioGuardado = JSON.parse(localStorage.getItem('MantTI_User') || 'null');
 if (usuarioGuardado) {
     mostrarApp().catch(() => {
-        cargarInventario();
-        cargarOrdenes();
-        cargarPreventivos();
-        cargarDashboard();
+        localStorage.removeItem('MantTI_User');
+        cambiarUsuario();
+        alert('No se pudo conectar con PostgreSQL. Revisa la configuración local y vuelve a iniciar sesión.');
     });
 } else {
     document.getElementById('login-screen')?.classList.remove('hidden');
     document.getElementById('app-shell')?.classList.add('hidden');
 }
-cargarDashboard();
-cargarCatalogos();
-cargarInventario();
 console.log('✅ ManténTI Arjona cargado — Datos guardados automáticamente');
