@@ -934,6 +934,7 @@ async function confirmarCierre(e, id) {
 // ======================================================
 function cargarPreventivos() {
     document.getElementById('tabla-preventivos').innerHTML = DB.preventivos.map(p => {
+        const equipo = getEquipo(p.equipo);
         const d = diasEntre(p.proximo);
         let claseDias = '';
         if(d === null || isNaN(d)) claseDias = '';
@@ -941,7 +942,9 @@ function cargarPreventivos() {
         else if(d <= 7) claseDias = 'advertencia';
         return `<tr>
             <td><strong>${p.id}</strong></td>
-            <td>${p.equipo}${getEquipo(p.equipo)?.tipo ? ` — ${getEquipo(p.equipo).tipo}` : ''}</td>
+            <td>${p.equipo}</td>
+            <td>${equipo ? `${equipo.tipo} ${equipo.marca} ${equipo.modelo}`.trim() : '—'}</td>
+            <td>${equipo?.dependencia || p.dependencia || '—'}</td>
             <td>${p.frecuencia}</td>
             <td>${p.ultimo||'—'}</td>
             <td>${p.proximo}</td>
