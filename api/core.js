@@ -427,6 +427,34 @@ export default async function handler(req, res) {
       return sendJson(res, 200, { ok: true, data: { dependencias, tecnicos, repuestos } });
     }
 
+    if (action === 'tecnicos') {
+      if (!requireMethod(req, res, ['POST'])) return;
+      if (!requireRole(res, user, ['administrador', 'director', 'supervisor'])) return;
+      const input = await readBody(req);
+      const nombre = String(input.nombre || '').trim();
+      const cargo = String(input.cargo || '').trim();
+      const correo = String(input.correo || '').trim();
+      const telefono = String(input.telefono || '').trim();
+      const activo = input.activo === true;
+      if (!nombre || !cargo || !correo || !telefono ||
+          nombre.length > 120 || cargo.length > 120 || correo.length > 120 || telefono.length > 50 ||
+          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+        return sendJson(res, 422, { ok: false, error: 'Los datos del técnico son inválidos o están incompletos' });
+      }
+
+      const result = await db.query(
+        `INSERT INTO tecnicos (nombre, cargo, correo, telefono, activo)
+         SELECT $1, $2, $3, $4, $5
+         WHERE NOT EXISTS (
+           SELECT 1 FROM tecnicos WHERE lower(trim(nombre)) = lower(trim($1))
+         )
+         RETURNING id, nombre, cargo, correo, telefono, activo`,
+        [nombre, cargo, correo, telefono, activo ? 1 : 0]
+      );
+      if (!result.rowCount) return sendJson(res, 409, { ok: false, error: 'El técnico ya existe en el servidor' });
+      return sendJson(res, 201, { ok: true, data: result.rows[0] });
+    }
+
     return notFound(res);
   } catch (error) {
     console.error('API error:', error);
