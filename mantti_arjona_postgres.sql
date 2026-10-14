@@ -181,6 +181,7 @@ CREATE TABLE "preventivos" (
   "tecnico" varchar(120) NOT NULL,
   "actividades" text NOT NULL,
   "observaciones" text DEFAULT NULL,
+  "firma" varchar(3) NOT NULL DEFAULT 'No' CHECK ("firma" IN ('Sí', 'No')),
   "estado" varchar(40) NOT NULL DEFAULT 'Programado',
   "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -339,5 +340,41 @@ SELECT setval(pg_get_serial_sequence('"tecnicos"', 'id'), COALESCE(MAX("id"), 1)
 SELECT setval(pg_get_serial_sequence('"usuarios"', 'id'), COALESCE(MAX("id"), 1), MAX("id") IS NOT NULL) FROM "usuarios";
 
 SELECT setval(pg_get_serial_sequence('"impresoras"', 'ID_Impresora'), COALESCE(MAX("ID_Impresora"), 1), MAX("ID_Impresora") IS NOT NULL) FROM "impresoras";
+
+COMMIT;
+
+-- Cambios idempotentes para actualizar una base existente.
+-- Al importar desde cero, también se aplican estos cambios al final del esquema.
+BEGIN;
+
+ALTER TABLE preventivos
+  ADD COLUMN IF NOT EXISTS firma varchar(3) NOT NULL DEFAULT 'No';
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'preventivos_firma_check'
+      AND conrelid = 'preventivos'::regclass
+  ) THEN
+    ALTER TABLE preventivos
+      ADD CONSTRAINT preventivos_firma_check CHECK (firma IN ('Sí', 'No'));
+  END IF;
+END;
+$$;
+
+INSERT INTO tecnicos (nombre, cargo, correo, telefono, activo)
+VALUES
+  ('Jairo Simancas Cogollo', 'Técnico TI', 'jsimancasc14@gmail.com', '3006051812', 1),
+  ('Juan Diaz Pardo', 'Técnico TI', 'juancadg007@gmail.com', '3002018036', 1)
+ON CONFLICT (nombre) DO UPDATE SET
+  cargo = EXCLUDED.cargo,
+  correo = EXCLUDED.correo,
+  telefono = EXCLUDED.telefono,
+  activo = EXCLUDED.activo;
+
+DELETE FROM tecnicos
+WHERE nombre NOT IN ('Jairo Simancas Cogollo', 'Juan Diaz Pardo');
 
 COMMIT;

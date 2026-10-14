@@ -473,6 +473,7 @@ async function cargarOperacionesDesdeBackend() {
         ultimo: plan.ultimo_mantenimiento || '',
         proximo: plan.proximo_mantenimiento,
         tecnico: plan.tecnico,
+        firma: plan.firma || 'No',
         estado: plan.estado,
         actividades: plan.actividades,
         observaciones: plan.observaciones || ''
@@ -951,6 +952,12 @@ function cargarPreventivos() {
             <td class="${claseDias}">${d===null||isNaN(d)?'—':d<0?`${d} días`:`${d} días`}</td>
             <td>${etiquetaEstado(d<0 && p.estado==='Programado'?'Vencido':p.estado)}</td>
             <td>
+                <select aria-label="Firma del plan ${p.id}" data-firma="${p.firma || 'No'}" onchange="guardarFirmaPreventivo('${p.id}', this.value, this)">
+                    <option value="Sí" ${(p.firma || 'No') === 'Sí' ? 'selected' : ''}>Sí firmó</option>
+                    <option value="No" ${(p.firma || 'No') === 'No' ? 'selected' : ''}>No firmó</option>
+                </select>
+            </td>
+            <td>
                 ${p.estado==='Programado'?`<button class="btn-icon" onclick="marcarPreventivoRealizado('${p.id}')" title="Marcar Realizado">✅</button>`:''}
             </td>
         </tr>`;
@@ -997,6 +1004,7 @@ async function guardarPreventivo(e) {
         proximo: f.get('proximo'),
         tecnico: f.get('tecnico'),
         estado: 'Programado',
+        firma: 'No',
         actividades: f.get('actividades'),
         observaciones: ''
     };
@@ -1017,6 +1025,33 @@ async function guardarPreventivo(e) {
     }
     DB.preventivos.unshift(nuevoPlan);
     guardarDB(); cerrarModal(); cargarPreventivos(); cargarDashboard();
+}
+async function guardarFirmaPreventivo(id, firma, selector) {
+    const firmaAnterior = selector.dataset.firma || 'No';
+    selector.disabled = true;
+    try {
+        const response = await fetch('backend/api.php?action=preventivos', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            credentials: 'same-origin',
+            body: JSON.stringify({ codigo: id, firma })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.ok) {
+            selector.value = firmaAnterior;
+            alert(result.error || 'No se pudo guardar la firma.');
+            return;
+        }
+        const plan = DB.preventivos.find(item => item.id === id);
+        if (plan) plan.firma = firma;
+        selector.dataset.firma = firma;
+        guardarDB();
+    } catch (error) {
+        selector.value = firmaAnterior;
+        alert('No se pudo conectar con el servidor para guardar la firma.');
+    } finally {
+        selector.disabled = false;
+    }
 }
 async function marcarPreventivoRealizado(id) {
     const p = DB.preventivos.find(x => x.id === id);

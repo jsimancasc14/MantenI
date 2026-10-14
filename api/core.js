@@ -395,6 +395,16 @@ export default async function handler(req, res) {
       }
       if (req.method === 'PUT') {
         if (!requireRole(res, user, ['administrador', 'director', 'supervisor', 'tecnico'])) return;
+        if (Object.hasOwn(input, 'firma')) {
+          const firma = String(input.firma).trim();
+          const codigo = String(input.codigo || '').trim();
+          if (!codigo || !['Sí', 'No'].includes(firma)) {
+            return sendJson(res, 422, { ok: false, error: 'Código y firma válida (Sí o No) son obligatorios' });
+          }
+          const result = await db.query('UPDATE preventivos SET firma = $1 WHERE codigo = $2', [firma, codigo]);
+          if (!result.rowCount) return sendJson(res, 404, { ok: false, error: 'Plan no encontrado' });
+          return sendJson(res, 200, { ok: true });
+        }
         const fields = ['codigo', 'estado', 'proximo_mantenimiento'];
         if (fields.some(field => !String(input[field] || '').trim())) return sendJson(res, 422, { ok: false, error: 'Código, estado y próxima fecha son obligatorios' });
         const connection = await db.connect();
