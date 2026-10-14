@@ -7,6 +7,7 @@ const { Pool } = pg;
 const SESSION_COOKIE = 'mantti_session';
 const SESSION_TTL_SECONDS = 30 * 60;
 const WRITE_METHODS = new Set(['POST', 'PUT', 'DELETE']);
+const ALLOWED_TECHNICIANS = new Set(['Juan Diaz Pardo', 'Jairo Simancas Cogollo']);
 let pool;
 
 function sendJson(res, statusCode, payload) {
@@ -323,6 +324,9 @@ export default async function handler(req, res) {
         if (!requireRole(res, user, ['administrador', 'director', 'supervisor'])) return;
         const fields = ['codigo', 'equipo_codigo', 'tipo', 'prioridad', 'solicitante', 'dependencia_solicitante', 'tecnico', 'falla', 'fecha_solicitud', 'fecha_programada'];
         if (fields.some(field => !String(input[field] || '').trim())) return sendJson(res, 422, { ok: false, error: 'Faltan campos obligatorios de la orden' });
+        if (!ALLOWED_TECHNICIANS.has(String(input.tecnico).trim())) {
+          return sendJson(res, 422, { ok: false, error: 'El técnico asignado no está habilitado' });
+        }
           const result = await db.query(
           `INSERT INTO ordenes_trabajo (codigo, equipo_codigo, tipo, prioridad, solicitante, dependencia_solicitante, tecnico, falla, diagnostico_inicial, fecha_solicitud, fecha_programada, estado)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'Programado') RETURNING id`,
@@ -378,6 +382,9 @@ export default async function handler(req, res) {
         if (!requireRole(res, user, ['administrador', 'director', 'supervisor'])) return;
         const fields = ['codigo', 'equipo_codigo', 'dependencia', 'frecuencia', 'proximo_mantenimiento', 'tecnico', 'actividades'];
         if (fields.some(field => !String(input[field] || '').trim())) return sendJson(res, 422, { ok: false, error: 'Faltan campos obligatorios del preventivo' });
+        if (!ALLOWED_TECHNICIANS.has(String(input.tecnico).trim())) {
+          return sendJson(res, 422, { ok: false, error: 'El técnico asignado no está habilitado' });
+        }
           const result = await db.query(
           `INSERT INTO preventivos (codigo, equipo_codigo, dependencia, frecuencia, ultimo_mantenimiento, proximo_mantenimiento, tecnico, actividades, estado)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Programado') RETURNING id`,
@@ -421,7 +428,7 @@ export default async function handler(req, res) {
       if (!requireMethod(req, res, ['GET'])) return;
       const [{ rows: dependencias }, { rows: tecnicos }, { rows: repuestos }] = await Promise.all([
         db.query('SELECT * FROM dependencias ORDER BY id DESC'),
-        db.query('SELECT * FROM tecnicos ORDER BY id DESC'),
+        db.query('SELECT * FROM tecnicos WHERE nombre IN ($1, $2) ORDER BY id DESC', ['Juan Diaz Pardo', 'Jairo Simancas Cogollo']),
         db.query('SELECT * FROM repuestos ORDER BY id DESC')
       ]);
       return sendJson(res, 200, { ok: true, data: { dependencias, tecnicos, repuestos } });

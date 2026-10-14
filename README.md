@@ -26,4 +26,8 @@ Vercel no ejecuta PHP ni aloja la base de datos; se necesita PostgreSQL remoto. 
 
 La autenticación usa una cookie firmada con vencimiento de 30 minutos, protección CSRF y validación del usuario activo y su rol. La copia de seguridad excluye los hashes de contraseñas.
 
+## Mantener solo dos técnicos
+
+Para actualizar una base PostgreSQL ya existente, ejecuta una sola vez `database/migrations/20261014_keep_two_technicians.sql`. La migración conserva o agrega a Juan Diaz Pardo y Jairo Simancas Cogollo y elimina los demás registros de la tabla `tecnicos`.
+
 La carga y descarga de documentos no está activada: las funciones serverless no ofrecen almacenamiento persistente. Se debe integrar almacenamiento de objetos antes de habilitarla. `admin.php` (importación directa de base de datos) tampoco forma parte del despliegue web.

@@ -3,6 +3,8 @@
 // Base de datos local (almacenada en navegador)
 // ======================================================
 
+const TECNICOS_PERMITIDOS = new Set(['Juan Diaz Pardo', 'Jairo Simancas Cogollo']);
+
 // DATOS INICIALES — Cargados desde tu documento
 const DB = {
     inventario: [
@@ -29,9 +31,7 @@ const DB = {
     ],
     tecnicos: [
         { nombre: "Jairo Simancas Cogollo", cargo: "Técnico TI", correo: "jsimancasc14@gmail.com", telefono: "3006051812", activo: true },
-        { nombre: "Juan Diaz Pardo", cargo: "Técnico TI", correo: "juancadg007@gmail.com", telefono: "3002018036", activo: true },
-        { nombre: "C. Martínez", cargo: "Técnico TI", correo: "ti2@arjona-bolivar.gov.co", telefono: "310 222 3344", activo: true },
-        { nombre: "L. Gómez", cargo: "Técnico TI", correo: "ti3@arjona-bolivar.gov.co", telefono: "310 333 4455", activo: true }
+        { nombre: "Juan Diaz Pardo", cargo: "Técnico TI", correo: "juancadg007@gmail.com", telefono: "3002018036", activo: true }
     ],
     repuestos: [
         { id: "REP-001", nombre: "Disco SSD 240 GB", descripcion: "Disco sólido SATA 2.5 240 GB", unidad: "Unidad", costo: 120000, proveedor: "Proveedor XYZ SAS", existencia: 0 },
@@ -57,6 +57,7 @@ function cargarDB() {
         Object.keys(DB).forEach(clave => {
             if (Array.isArray(datos?.[clave])) DB[clave] = datos[clave];
         });
+        DB.tecnicos = DB.tecnicos.filter(tecnico => TECNICOS_PERMITIDOS.has(tecnico.nombre));
     } catch (error) {
         console.warn('No se pudo leer la base local; se conservaron los datos iniciales.', error);
     }
@@ -281,6 +282,16 @@ document.querySelectorAll('.pestana-int').forEach(btn => {
 // FUNCIONES AUXILIARES
 // ======================================================
 function hoy() { return new Date().toISOString().split('T')[0]; }
+function sumarMeses(fecha, meses) {
+    const [año, mes, dia] = fecha.split('-').map(Number);
+    const destino = new Date(año, mes - 1 + meses, 1);
+    const ultimoDia = new Date(destino.getFullYear(), destino.getMonth() + 1, 0).getDate();
+    destino.setDate(Math.min(dia, ultimoDia));
+    return `${destino.getFullYear()}-${String(destino.getMonth() + 1).padStart(2, '0')}-${String(destino.getDate()).padStart(2, '0')}`;
+}
+function mesesPorFrecuencia(frecuencia) {
+    return { Mensual: 1, Trimestral: 3, Semestral: 6, Anual: 12 }[frecuencia] || 3;
+}
 function diasEntre(fecha) {
     if(!fecha) return null;
     const f = new Date(fecha);
@@ -468,13 +479,13 @@ async function cargarOperacionesDesdeBackend() {
     }));
     DB.dependencias = catalogosResult.data.dependencias;
     DB.tecnicos = catalogosResult.data.tecnicos
-        .filter(tecnico => !tecnico.nombre.trim().toLowerCase().startsWith('j.'))
         .map(tecnico => ({
             ...tecnico,
             nombre: tecnico.nombre.trim().toLowerCase() === 'juan diaz' ? 'Juan Diaz Pardo' :
                 tecnico.nombre.trim().toLowerCase() === 'jairo jose simancas cogollo' ? 'Jairo Simancas Cogollo' : tecnico.nombre,
             activo: Number(tecnico.activo) === 1
-        }));
+        }))
+        .filter(tecnico => TECNICOS_PERMITIDOS.has(tecnico.nombre));
     cargarSelectorTecnicos();
     DB.repuestos = catalogosResult.data.repuestos.map(repuesto => ({
         ...repuesto,
@@ -784,12 +795,36 @@ async function iniciarOrden(id) {
     orden.estado = 'En proceso';
     guardarDB(); cargarOrdenes(); cargarDashboard();
 }
+function filtrarEquiposPorDependencia(dependencia, equipoPreseleccionado = '') {
+    const selectorEquipo = document.getElementById('orden-equipo-seleccionado');
+    if (!selectorEquipo) return;
+    const equipos = DB.inventario.filter(equipo => equipo.dependencia === dependencia);
+    selectorEquipo.replaceChildren(
+        new Option('Seleccione un equipo...', ''),
+        ...equipos.map(equipo => new Option(`${equipo.id} — ${equipo.marca} ${equipo.modelo}`, equipo.id))
+    );
+    if (equipos.some(equipo => equipo.id === equipoPreseleccionado)) {
+        selectorEquipo.value = equipoPreseleccionado;
+    }
+}
+
+function actualizarDependenciaEquipoSeleccionado(equipoId, campoId = 'preventivo-dependencia-equipo') {
+    const textoDependencia = document.getElementById(campoId);
+    if (!textoDependencia) return;
+    textoDependencia.textContent = getEquipo(equipoId)?.dependencia || 'Seleccione un equipo';
+}
+
 function abrirFormOrden(equipoPreseleccionado='') {
+    const dependenciaPreseleccionada = getEquipo(equipoPreseleccionado)?.dependencia || '';
+    const dependencias = [...new Set(DB.inventario.map(equipo => equipo.dependencia).filter(Boolean))];
     document.getElementById('modal-cuerpo').innerHTML = `
         <h2>Nueva Orden de Trabajo</h2><form onsubmit="guardarOrden(event)">
-        <label>Equipo</label><select name="equipo" required>
-            <option value="">Seleccione...</option>
-            ${DB.inventario.map(e=>`<option value="${e.id}" ${e.id===equipoPreseleccionado?'selected':''}>${e.id} — ${e.marca} ${e.modelo}</option>`).join('')}
+        <label>Dependencia</label><select id="orden-dependencia-seleccionada" required onchange="filtrarEquiposPorDependencia(this.value)">
+            <option value="">Seleccione una dependencia...</option>
+            ${dependencias.map(dependencia=>`<option value="${dependencia}" ${dependencia===dependenciaPreseleccionada?'selected':''}>${dependencia}</option>`).join('')}
+        </select>
+        <label>Equipo</label><select id="orden-equipo-seleccionado" name="equipo" required>
+            <option value="">Seleccione primero una dependencia...</option>
         </select>
         <label>Tipo de Mantenimiento</label><select name="tipo" required>
             <option>Correctivo</option><option>Preventivo</option><option>Mejora / actualización</option>
@@ -806,6 +841,7 @@ function abrirFormOrden(equipoPreseleccionado='') {
         <button type="submit" class="btn-primario">Crear Orden</button>
         </form>`;
     document.getElementById('modal').classList.add('active');
+    filtrarEquiposPorDependencia(dependenciaPreseleccionada, equipoPreseleccionado);
 }
 async function guardarOrden(e) {
     e.preventDefault();
@@ -905,7 +941,7 @@ function cargarPreventivos() {
         else if(d <= 7) claseDias = 'advertencia';
         return `<tr>
             <td><strong>${p.id}</strong></td>
-            <td>${p.equipo}</td>
+            <td>${p.equipo}${getEquipo(p.equipo)?.tipo ? ` — ${getEquipo(p.equipo).tipo}` : ''}</td>
             <td>${p.frecuencia}</td>
             <td>${p.ultimo||'—'}</td>
             <td>${p.proximo}</td>
@@ -920,14 +956,15 @@ function cargarPreventivos() {
 function abrirFormPreventivo() {
     document.getElementById('modal-cuerpo').innerHTML = `
         <h2>Nuevo Plan de Mantenimiento Preventivo</h2><form onsubmit="guardarPreventivo(event)">
-        <label>Equipo</label><select name="equipo" required>
-            ${DB.inventario.map(e=>`<option>${e.id}</option>`).join('')}
+        <label>Equipo o impresora</label><select id="preventivo-equipo-seleccionado" name="equipo" required onchange="actualizarDependenciaEquipoSeleccionado(this.value, 'preventivo-dependencia-equipo')">
+            ${DB.inventario.map(e=>`<option value="${e.id}">${e.id} — ${e.tipo} — ${e.marca} ${e.modelo}</option>`).join('')}
         </select>
-        <label>Frecuencia</label><select name="frecuencia" required>
-            <option>Mensual</option><option>Trimestral</option><option>Semestral</option><option>Anual</option>
+        <p>Dependencia: <strong id="preventivo-dependencia-equipo">${DB.inventario[0]?.dependencia || 'Seleccione un equipo'}</strong></p>
+        <label>Frecuencia</label><select id="preventivo-frecuencia" name="frecuencia" required onchange="actualizarProximaFechaPreventivo()">
+            <option>Mensual</option><option selected>Trimestral</option><option>Semestral</option><option>Anual</option>
         </select>
-        <label>Fecha Último Mantenimiento</label><input type="date" name="ultimo" value="${hoy()}">
-        <label>Fecha Próximo Mantenimiento</label><input type="date" name="proximo" required>
+        <label>Fecha Último Mantenimiento</label><input id="preventivo-ultimo" type="date" name="ultimo" value="${hoy()}" required onchange="actualizarProximaFechaPreventivo()">
+        <label>Próximo mantenimiento (fecha proyectada)</label><input id="preventivo-proximo" type="date" name="proximo" required readonly>
         <label>Técnico Responsable</label><select name="tecnico" required>
             ${DB.tecnicos.filter(t=>t.activo).map(t=>`<option>${t.nombre}</option>`).join('')}
         </select>
@@ -935,6 +972,14 @@ function abrirFormPreventivo() {
         <button type="submit" class="btn-primario">Crear Plan</button>
         </form>`;
     document.getElementById('modal').classList.add('active');
+    actualizarDependenciaEquipoSeleccionado(document.getElementById('preventivo-equipo-seleccionado')?.value || '', 'preventivo-dependencia-equipo');
+    actualizarProximaFechaPreventivo();
+}
+function actualizarProximaFechaPreventivo() {
+    const fechaUltimo = document.getElementById('preventivo-ultimo')?.value;
+    const frecuencia = document.getElementById('preventivo-frecuencia')?.value || 'Trimestral';
+    const campoProximo = document.getElementById('preventivo-proximo');
+    if (campoProximo) campoProximo.value = fechaUltimo ? sumarMeses(fechaUltimo, mesesPorFrecuencia(frecuencia)) : '';
 }
 async function guardarPreventivo(e) {
     e.preventDefault();
@@ -975,14 +1020,7 @@ async function marcarPreventivoRealizado(id) {
     if(!p) return;
     p.estado = 'Realizado';
     p.ultimo = hoy();
-    const sig = new Date();
-    switch(p.frecuencia) {
-        case 'Mensual': sig.setMonth(sig.getMonth()+1); break;
-        case 'Trimestral': sig.setMonth(sig.getMonth()+3); break;
-        case 'Semestral': sig.setMonth(sig.getMonth()+6); break;
-        case 'Anual': sig.setFullYear(sig.getFullYear()+1); break;
-    }
-    p.proximo = sig.toISOString().split('T')[0];
+    p.proximo = sumarMeses(p.ultimo, mesesPorFrecuencia(p.frecuencia));
     const response = await fetch('backend/api.php?action=preventivos', { method: 'PUT', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken}, credentials: 'same-origin', body: JSON.stringify({ codigo: id, estado: p.estado, ultimo_mantenimiento: p.ultimo, proximo_mantenimiento: p.proximo }) });
     const result = await response.json();
     if (!response.ok || !result.ok) return alert(result.error || 'No se pudo actualizar el preventivo.');
