@@ -49,9 +49,10 @@ html {
 
 body {
     background:
-        radial-gradient(ellipse at 0% 0%, rgba(9, 45, 98, 0.1), transparent 40%),
-        radial-gradient(ellipse at 100% 100%, rgba(19, 166, 106, 0.09), transparent 36%),
-        linear-gradient(135deg, #eef3fa 0%, #f8fafc 50%, #edf6f1 100%);
+        radial-gradient(ellipse at 8% 8%, rgba(32, 91, 177, 0.16), transparent 38%),
+        radial-gradient(ellipse at 95% 90%, rgba(19, 166, 106, 0.12), transparent 34%),
+        radial-gradient(ellipse at 90% 0%, rgba(56, 126, 231, 0.08), transparent 32%),
+        linear-gradient(135deg, #eaf0f9 0%, #f8fafc 52%, #eaf4f0 100%);
     color: var(--texto);
     line-height: 1.6;
     min-height: 100vh;
@@ -76,7 +77,10 @@ body::before {
 .login-screen {
     position: fixed;
     inset: 0;
-    background: linear-gradient(135deg, rgba(9, 45, 98, 0.92), rgba(10, 40, 66, 0.94) 58%, rgba(8, 64, 53, 0.92));
+    background:
+        radial-gradient(ellipse at 15% 10%, rgba(54, 116, 215, 0.3), transparent 38%),
+        radial-gradient(ellipse at 92% 88%, rgba(19, 166, 106, 0.2), transparent 36%),
+        linear-gradient(135deg, #071b35 0%, #0c3156 55%, #082c3e 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -84,16 +88,29 @@ body::before {
     padding: 1.2rem;
 }
 
+.login-screen::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(220, 235, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(220, 235, 255, 0.035) 1px, transparent 1px);
+    background-size: 36px 36px;
+    pointer-events: none;
+}
+
 .login-screen.hidden {
     display: none;
 }
 
 .login-card {
+    position: relative;
+    z-index: 1;
     width: min(100%, 420px);
     background: rgba(255,255,255,0.96);
-    border: 1px solid rgba(15,31,53,0.08);
+    border: 1px solid rgba(220,232,248,0.8);
     border-radius: 26px;
-    box-shadow: 0 28px 60px rgba(0,0,0,0.28);
+    box-shadow: 0 28px 70px rgba(0,12,30,0.38), 0 1px 0 rgba(255,255,255,0.7) inset;
     padding: 2rem 1.5rem;
 }
 
@@ -105,9 +122,9 @@ body::before {
 }
 
 .brand-mark.login-brand {
-    width: 112px;
-    height: 63px;
-    flex-basis: 112px;
+    width: 140px;
+    height: 79px;
+    flex-basis: 140px;
 }
 
 #login-form {
@@ -183,6 +200,11 @@ body::before {
     width: 112px;
     height: 63px;
     flex: 0 0 112px;
+    overflow: hidden;
+    border: 1px solid rgba(151, 192, 255, 0.24);
+    border-radius: 8px;
+    background: linear-gradient(145deg, #071b35, #0b3155);
+    box-shadow: 0 8px 22px rgba(0, 12, 30, 0.22);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -198,8 +220,7 @@ body::before {
 
 .brand-mark video {
     object-fit: contain;
-    border-radius: 6px;
-    background: #071b3b;
+    background: #071b35;
 }
 
 .brand-mark:hover {
