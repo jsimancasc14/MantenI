@@ -196,6 +196,10 @@ body::before {
     transform-origin: center;
 }
 
+.brand-mark video {
+    object-fit: cover;
+}
+
 .brand-mark:hover {
     transform: translateY(-2px) rotate(-2deg) scale(1.04);
 }
