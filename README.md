@@ -16,8 +16,6 @@ Necesitas Node.js LTS (incluye `npm`) y PostgreSQL instalados y en ejecución.
 
 La pantalla carga inventario, órdenes, mantenimientos preventivos y catálogos desde PostgreSQL. Si la conexión o las consultas fallan, no se muestran los registros de demostración como si fueran datos reales.
 
-Los técnicos que se agreguen desde **Catálogos → Técnicos** se guardan en PostgreSQL y se comparten entre quienes usan la aplicación.
-
 ## Requisitos para desplegar
 
 - Una instancia PostgreSQL accesible desde Internet con la base migrada.
@@ -25,8 +23,6 @@ Los técnicos que se agreguen desde **Catálogos → Técnicos** se guardan en P
 - `AUTH_SECRET` debe ser una cadena aleatoria de al menos 32 bytes; no reutilices contraseñas de la base.
 
 Vercel no ejecuta PHP ni aloja la base de datos; se necesita PostgreSQL remoto. `DATABASE_URL` debe copiarse del proveedor y cargarse como secreto en Vercel, nunca publicarse. Para una CA personalizada, configurar `DB_SSL_CA` con el certificado PEM.
-
-Si la base de Neon ya existe, ejecuta una sola vez `database/migrations/20261013_tecnicos_jairo_juan.sql` en el SQL Editor de Neon para guardar a Jairo Simancas Cogollo y Juan Diaz Pardo en el catálogo remoto. El script no duplica técnicos con el mismo nombre.
 
 La autenticación usa una cookie firmada con vencimiento de 30 minutos, protección CSRF y validación del usuario activo y su rol. La copia de seguridad excluye los hashes de contraseñas.
 

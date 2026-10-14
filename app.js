@@ -1088,7 +1088,7 @@ function abrirFormTecnico() {
     document.getElementById('modal').classList.add('active');
 }
 
-async function guardarTecnico(e) {
+function guardarTecnico(e) {
     e.preventDefault();
     const f = new FormData(e.target);
     const nombre = String(f.get('nombre') || '').trim();
@@ -1097,30 +1097,13 @@ async function guardarTecnico(e) {
         alert('El técnico ya existe.');
         return;
     }
-    const tecnico = {
+    DB.tecnicos.push({
         nombre,
         cargo: String(f.get('cargo') || '').trim(),
         correo: String(f.get('correo') || '').trim(),
         telefono: String(f.get('telefono') || '').trim(),
         activo: f.get('activo') === 'true'
-    };
-    try {
-        const response = await fetch('backend/api.php?action=tecnicos', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-            credentials: 'same-origin',
-            body: JSON.stringify(tecnico)
-        });
-        const result = await response.json();
-        if (!response.ok || !result.ok) {
-            alert(result.error || 'No se pudo guardar el técnico en el servidor.');
-            return;
-        }
-    } catch (error) {
-        alert('No se pudo conectar con el servidor para guardar el técnico.');
-        return;
-    }
-    DB.tecnicos.unshift(tecnico);
+    });
     guardarDB(); cerrarModal(); cargarCatalogos();
 }
 
