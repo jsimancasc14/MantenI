@@ -180,9 +180,9 @@ body::before {
     isolation: isolate;
     display: grid;
     place-items: center;
-    width: 64px;
-    height: 64px;
-    flex: 0 0 64px;
+    width: 80px;
+    height: 80px;
+    flex: 0 0 80px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
