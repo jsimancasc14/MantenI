@@ -22,13 +22,7 @@ const DB = {
         { id: "PR-002", equipo: "PC-ARJ-063", dependencia: "Planeacion", frecuencia: "Semestral", ultimo: "2026-02-15", proximo: "2026-08-15", tecnico: "C. Martínez", estado: "Programado", actividades: "Limpieza interna y externa, actualización SO y antivirus, revisión de disco y RAM", observaciones: "" },
         { id: "PR-003", equipo: "PC-ARJ-022", dependencia: "Talento Humano", frecuencia: "Semestral", ultimo: "2026-02-20", proximo: "2026-08-20", tecnico: "J. Rodríguez", estado: "Realizado", actividades: "Limpieza interna y externa, actualización SO, revisión de antivirus", observaciones: "Se recomienda cambio a SSD para mejorar rendimiento" }
     ],
-    dependencias: [
-        { nombre: "Hacienda", responsable: "Maria Perez", correo: "hacienda@arjona-bolivar.gov.co", telefono: "(605) 123 4567" },
-        { nombre: "Planeacion", responsable: "Carlos Diaz", correo: "planeacion@arjona-bolivar.gov.co", telefono: "(605) 123 4568" },
-        { nombre: "Talento Humano", responsable: "Ana Gomez", correo: "talento@arjona-bolivar.gov.co", telefono: "(605) 123 4569" },
-        { nombre: "Jurídica", responsable: "Luis Torres", correo: "juridica@arjona-bolivar.gov.co", telefono: "(605) 123 4570" },
-        { nombre: "Despacho del Alcalde", responsable: "Secretaria General", correo: "despacho@arjona-bolivar.gov.co", telefono: "(605) 123 4571" }
-    ],
+    dependencias: [],
     tecnicos: [
         { nombre: "Jairo Simancas Cogollo", cargo: "Técnico TI", correo: "jsimancasc14@gmail.com", telefono: "3006051812", activo: true },
         { nombre: "Juan Diaz Pardo", cargo: "Técnico TI", correo: "juancadg007@gmail.com", telefono: "3002018036", activo: true }
