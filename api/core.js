@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs';
 const { Pool } = pg;
 
 const SESSION_COOKIE = 'mantti_session';
-const SESSION_TTL_SECONDS = 30 * 60;
+const SESSION_TTL_SECONDS = 8 * 60 * 60;
 const WRITE_METHODS = new Set(['POST', 'PUT', 'DELETE']);
 let pool;
 

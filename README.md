@@ -25,7 +25,7 @@ Los técnicos nuevos y su estado activo se guardan en PostgreSQL desde el catál
 
 Vercel no ejecuta PHP ni aloja la base de datos; se necesita PostgreSQL remoto. `DATABASE_URL` debe copiarse del proveedor y cargarse como secreto en Vercel, nunca publicarse. Para una CA personalizada, configurar `DB_SSL_CA` con el certificado PEM.
 
-La autenticación usa una cookie firmada con vencimiento de 30 minutos, protección CSRF y validación del usuario activo y su rol. La copia de seguridad excluye los hashes de contraseñas.
+La autenticación usa una cookie firmada con vencimiento de 8 horas, protección CSRF y validación del usuario activo y su rol. Si la sesión vence, la aplicación vuelve al inicio de sesión antes de reintentar una operación. La copia de seguridad excluye los hashes de contraseñas.
 
 ## Actualizar la base de datos
 

@@ -124,9 +124,17 @@ async function cargarSesionSegura() {
 
 function cambiarUsuario() {
     localStorage.removeItem('MantTI_User');
+    csrfToken = '';
     document.getElementById('login-screen')?.classList.remove('hidden');
     document.getElementById('app-shell')?.classList.add('hidden');
     document.getElementById('login-form')?.reset();
+}
+
+function manejarSesionNoAutenticada(response) {
+    if (response.status !== 401) return false;
+    cambiarUsuario();
+    alert('Tu sesión venció o ya no está activa. Inicia sesión nuevamente y vuelve a enviar la operación; no se guardó.');
+    return true;
 }
 
 function cerrarSesion() {
@@ -808,6 +816,7 @@ function actualizarDependenciaEquipoSeleccionado(equipoId, campoId = 'preventivo
 
 async function cargarTecnicosDesdeBackend() {
     const response = await fetch('backend/api.php?action=catalogos', { credentials: 'same-origin' });
+    if (manejarSesionNoAutenticada(response)) return null;
     const result = await response.json();
     if (!response.ok || !result.ok || !Array.isArray(result.data?.tecnicos)) {
         throw new Error(result.error || 'No se pudo cargar el catálogo de técnicos.');
@@ -824,6 +833,7 @@ async function abrirFormOrden(equipoPreseleccionado='') {
         alert(error.message || 'No se pudieron cargar los técnicos habilitados.');
         return;
     }
+    if (!tecnicosActivos) return;
     if (!tecnicosActivos.length) {
         alert('No hay técnicos habilitados para asignar.');
         return;
@@ -893,6 +903,7 @@ async function guardarOrden(e) {
                 fecha_solicitud: nuevaOrden.solicitud, fecha_programada: nuevaOrden.programada
             })
         });
+        if (manejarSesionNoAutenticada(response)) return;
         const result = await response.json();
         if (!response.ok || !result.ok) return alert(result.error || 'No se pudo guardar la orden.');
     } catch (error) {
@@ -984,6 +995,7 @@ async function abrirFormPreventivo() {
         alert(error.message || 'No se pudieron cargar los técnicos habilitados.');
         return;
     }
+    if (!tecnicosActivos) return;
     if (!tecnicosActivos.length) {
         alert('No hay técnicos habilitados para asignar.');
         return;
@@ -1043,6 +1055,7 @@ async function guardarPreventivo(e) {
                 actividades: nuevoPlan.actividades
             })
         });
+        if (manejarSesionNoAutenticada(response)) return;
         const result = await response.json();
         if (!response.ok || !result.ok) return alert(result.error || 'No se pudo guardar el plan.');
     } catch (error) {
@@ -1096,6 +1109,7 @@ async function marcarPreventivoRealizado(id) {
 async function cargarCatalogos() {
     try {
         const response = await fetch('backend/api.php?action=tecnicos', { credentials: 'same-origin' });
+        if (manejarSesionNoAutenticada(response)) return;
         const result = await response.json();
         if (!response.ok || !result.ok || !Array.isArray(result.data)) {
             throw new Error(result.error || 'No se pudo actualizar el catálogo de técnicos.');
@@ -1241,6 +1255,7 @@ async function guardarTecnico(e) {
                 activo: f.get('activo') === 'true'
             })
         });
+        if (manejarSesionNoAutenticada(response)) return;
         const result = await response.json();
         if (!response.ok || !result.ok) {
             alert(result.error || 'No se pudo guardar el técnico.');
