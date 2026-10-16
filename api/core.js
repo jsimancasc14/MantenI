@@ -441,6 +441,54 @@ export default async function handler(req, res) {
       return requireMethod(req, res, ['GET', 'POST', 'PUT']);
     }
 
+    if (action === 'tecnicos') {
+      if (req.method === 'GET') {
+        if (!requireRole(res, user, ['administrador', 'director', 'supervisor'])) return;
+        const { rows } = await db.query('SELECT * FROM tecnicos ORDER BY id DESC');
+        return sendJson(res, 200, { ok: true, data: rows });
+      }
+      if (!['POST', 'PUT'].includes(req.method)) return requireMethod(req, res, ['GET', 'POST', 'PUT']);
+      if (!requireRole(res, user, ['administrador', 'director', 'supervisor'])) return;
+      const input = await readBody(req);
+      const activoValue = String(input.activo ?? '').trim().toLowerCase();
+      if (req.method === 'PUT') {
+        const id = String(input.id || '').trim();
+        if (!/^\d+$/.test(id) || !['true', 'false', '1', '0'].includes(activoValue)) {
+          return sendJson(res, 422, { ok: false, error: 'Identificador y estado válido son obligatorios' });
+        }
+        const { rows } = await db.query(
+          `UPDATE tecnicos SET activo = $1
+            WHERE id = $2
+            RETURNING id, nombre, cargo, correo, telefono, activo`,
+          [['true', '1'].includes(activoValue) ? 1 : 0, Number(id)]
+        );
+        if (!rows.length) return sendJson(res, 404, { ok: false, error: 'Técnico no encontrado' });
+        return sendJson(res, 200, { ok: true, data: rows[0] });
+      }
+      const fields = ['nombre', 'cargo', 'correo', 'telefono'];
+      if (fields.some(field => !String(input[field] || '').trim())) {
+        return sendJson(res, 422, { ok: false, error: 'Nombre, cargo, correo y teléfono son obligatorios' });
+      }
+      const nuevoEstado = String(input.activo ?? 'true').trim().toLowerCase();
+      if (!['true', 'false', '1', '0'].includes(nuevoEstado)) {
+        return sendJson(res, 422, { ok: false, error: 'El estado del técnico no es válido' });
+      }
+      const nombre = String(input.nombre).trim();
+      const { rows: duplicates } = await db.query(
+        'SELECT 1 FROM tecnicos WHERE LOWER(BTRIM(nombre)) = LOWER(BTRIM($1)) LIMIT 1',
+        [nombre]
+      );
+      if (duplicates.length) return sendJson(res, 409, { ok: false, error: 'Ya existe un técnico con ese nombre' });
+      const { rows } = await db.query(
+        `INSERT INTO tecnicos (nombre, cargo, correo, telefono, activo)
+          VALUES ($1, $2, $3, $4, $5)
+          RETURNING id, nombre, cargo, correo, telefono, activo`,
+        [nombre, String(input.cargo).trim(), String(input.correo).trim(), String(input.telefono).trim(),
+          ['true', '1'].includes(nuevoEstado) ? 1 : 0]
+      );
+      return sendJson(res, 201, { ok: true, data: rows[0] });
+    }
+
     if (action === 'catalogos') {
       if (!requireMethod(req, res, ['GET'])) return;
       const [{ rows: dependencias }, { rows: tecnicos }, { rows: repuestos }] = await Promise.all([

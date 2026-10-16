@@ -3,8 +3,6 @@
 // Base de datos local (almacenada en navegador)
 // ======================================================
 
-const TECNICOS_PERMITIDOS = new Set(['Juan Diaz Pardo', 'Jairo Simancas Cogollo']);
-
 // DATOS INICIALES — Cargados desde tu documento
 const DB = {
     inventario: [
@@ -51,7 +49,6 @@ function cargarDB() {
         Object.keys(DB).forEach(clave => {
             if (Array.isArray(datos?.[clave])) DB[clave] = datos[clave];
         });
-        DB.tecnicos = DB.tecnicos.filter(tecnico => TECNICOS_PERMITIDOS.has(tecnico.nombre));
     } catch (error) {
         console.warn('No se pudo leer la base local; se conservaron los datos iniciales.', error);
     }
@@ -809,20 +806,20 @@ function actualizarDependenciaEquipoSeleccionado(equipoId, campoId = 'preventivo
     textoDependencia.textContent = getEquipo(equipoId)?.dependencia || 'Seleccione un equipo';
 }
 
-async function cargarTecnicosActivosDesdeBackend() {
+async function cargarTecnicosDesdeBackend() {
     const response = await fetch('backend/api.php?action=catalogos', { credentials: 'same-origin' });
     const result = await response.json();
     if (!response.ok || !result.ok || !Array.isArray(result.data?.tecnicos)) {
-        throw new Error(result.error || 'No se pudieron cargar los técnicos habilitados.');
+        throw new Error(result.error || 'No se pudo cargar el catálogo de técnicos.');
     }
-    DB.tecnicos = result.data.tecnicos.filter(tecnico => Number(tecnico.activo) === 1);
-    return DB.tecnicos;
+    DB.tecnicos = result.data.tecnicos;
+    return DB.tecnicos.filter(tecnico => Number(tecnico.activo) === 1);
 }
 
 async function abrirFormOrden(equipoPreseleccionado='') {
     let tecnicosActivos;
     try {
-        tecnicosActivos = await cargarTecnicosActivosDesdeBackend();
+        tecnicosActivos = await cargarTecnicosDesdeBackend();
     } catch (error) {
         alert(error.message || 'No se pudieron cargar los técnicos habilitados.');
         return;
@@ -979,7 +976,19 @@ function cargarPreventivos() {
         </tr>`;
     }).join('');
 }
-function abrirFormPreventivo() {
+async function abrirFormPreventivo() {
+    let tecnicosActivos;
+    try {
+        tecnicosActivos = await cargarTecnicosDesdeBackend();
+    } catch (error) {
+        alert(error.message || 'No se pudieron cargar los técnicos habilitados.');
+        return;
+    }
+    if (!tecnicosActivos.length) {
+        alert('No hay técnicos habilitados para asignar.');
+        return;
+    }
+
     document.getElementById('modal-cuerpo').innerHTML = `
         <h2>Nuevo Plan de Mantenimiento Preventivo</h2><form onsubmit="guardarPreventivo(event)">
         <label>Equipo o impresora</label><select id="preventivo-equipo-seleccionado" name="equipo" required onchange="actualizarDependenciaEquipoSeleccionado(this.value, 'preventivo-dependencia-equipo')">
@@ -992,7 +1001,7 @@ function abrirFormPreventivo() {
         <label>Fecha Último Mantenimiento</label><input id="preventivo-ultimo" type="date" name="ultimo" value="${hoy()}" required onchange="actualizarProximaFechaPreventivo()">
         <label>Próximo mantenimiento (fecha proyectada)</label><input id="preventivo-proximo" type="date" name="proximo" required readonly>
         <label>Técnico Responsable</label><select name="tecnico" required>
-            ${DB.tecnicos.filter(t=>t.activo).map(t=>`<option>${t.nombre}</option>`).join('')}
+            ${tecnicosActivos.map(t=>`<option>${t.nombre}</option>`).join('')}
         </select>
         <label>Actividades Estándar</label><textarea name="actividades" required rows="3">Limpieza interna y externa, actualización SO y antivirus, revisión de disco y RAM</textarea>
         <button type="submit" class="btn-primario">Crear Plan</button>
@@ -1084,14 +1093,48 @@ async function marcarPreventivoRealizado(id) {
 // ======================================================
 // CATÁLOGOS
 // ======================================================
-function cargarCatalogos() {
+async function cargarCatalogos() {
+    try {
+        const response = await fetch('backend/api.php?action=tecnicos', { credentials: 'same-origin' });
+        const result = await response.json();
+        if (!response.ok || !result.ok || !Array.isArray(result.data)) {
+            throw new Error(result.error || 'No se pudo actualizar el catálogo de técnicos.');
+        }
+        DB.tecnicos = result.data;
+    } catch (error) {
+        alert(error.message || 'No se pudo actualizar el catálogo de técnicos.');
+    }
     document.getElementById('tabla-dependencias').innerHTML = DB.dependencias.map(d => `
         <tr><td>${d.nombre}</td><td>${d.responsable}</td><td>${d.correo}</td><td>${d.telefono}</td><td>—</td></tr>`).join('');
     document.getElementById('tabla-tecnicos').innerHTML = DB.tecnicos.map(t => `
-        <tr><td>${t.nombre}</td><td>${t.cargo}</td><td>${t.correo}</td><td>${t.activo?'✅':'❌'}</td><td>—</td></tr>`).join('');
+        <tr><td>${t.nombre}</td><td>${t.cargo}</td><td>${t.correo}</td><td>${Number(t.activo) === 1?'✅':'❌'}</td>
+        <td><button class="btn-icon" type="button" onclick="cambiarEstadoTecnico(${Number(t.id)}, ${Number(t.activo) !== 1})" title="${Number(t.activo) === 1?'Deshabilitar':'Habilitar'} técnico">${Number(t.activo) === 1?'⛔':'✅'}</button></td></tr>`).join('');
     document.getElementById('tabla-repuestos').innerHTML = DB.repuestos.map(r => `
         <tr><td>${r.nombre}</td><td>${r.unidad}</td><td>$${r.costo.toLocaleString()}</td><td>${r.existencia}</td><td>—</td></tr>`).join('');
 }
+
+async function cambiarEstadoTecnico(id, activo) {
+    try {
+        const response = await fetch('backend/api.php?action=tecnicos', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            credentials: 'same-origin',
+            body: JSON.stringify({ id, activo })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.ok) {
+            alert(result.error || 'No se pudo actualizar el estado del técnico.');
+            return;
+        }
+        const index = DB.tecnicos.findIndex(tecnico => Number(tecnico.id) === Number(id));
+        if (index !== -1) DB.tecnicos[index] = result.data;
+        guardarDB();
+        await cargarCatalogos();
+    } catch (error) {
+        alert('No se pudo conectar con el servidor para actualizar el técnico.');
+    }
+}
+
 function cargarReportes() {
     const total = DB.inventario.length;
     const operativos = DB.inventario.filter(e => e.estado === 'Operativo').length;
@@ -1180,23 +1223,36 @@ function abrirFormTecnico() {
     document.getElementById('modal').classList.add('active');
 }
 
-function guardarTecnico(e) {
+async function guardarTecnico(e) {
     e.preventDefault();
     const f = new FormData(e.target);
     const nombre = String(f.get('nombre') || '').trim();
     if (!nombre) return;
-    if (DB.tecnicos.some(t => t.nombre.toLowerCase() === nombre.toLowerCase())) {
-        alert('El técnico ya existe.');
-        return;
+    try {
+        const response = await fetch('backend/api.php?action=tecnicos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                nombre,
+                cargo: String(f.get('cargo') || '').trim(),
+                correo: String(f.get('correo') || '').trim(),
+                telefono: String(f.get('telefono') || '').trim(),
+                activo: f.get('activo') === 'true'
+            })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.ok) {
+            alert(result.error || 'No se pudo guardar el técnico.');
+            return;
+        }
+        DB.tecnicos = [result.data, ...DB.tecnicos.filter(tecnico => tecnico.id !== result.data.id)];
+        guardarDB();
+        cerrarModal();
+        await cargarCatalogos();
+    } catch (error) {
+        alert('No se pudo conectar con el servidor para guardar el técnico.');
     }
-    DB.tecnicos.push({
-        nombre,
-        cargo: String(f.get('cargo') || '').trim(),
-        correo: String(f.get('correo') || '').trim(),
-        telefono: String(f.get('telefono') || '').trim(),
-        activo: f.get('activo') === 'true'
-    });
-    guardarDB(); cerrarModal(); cargarCatalogos();
 }
 
 function abrirFormRepuesto() {

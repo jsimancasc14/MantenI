@@ -366,10 +366,6 @@ VALUES
 ON CONFLICT (nombre) DO UPDATE SET
   cargo = EXCLUDED.cargo,
   correo = EXCLUDED.correo,
-  telefono = EXCLUDED.telefono,
-  activo = EXCLUDED.activo;
-
-DELETE FROM tecnicos
-WHERE nombre NOT IN ('Jairo Simancas Cogollo', 'Juan Diaz Pardo');
+  telefono = EXCLUDED.telefono;
 
 COMMIT;

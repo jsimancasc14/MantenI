@@ -15,6 +15,7 @@ Necesitas Node.js LTS (incluye `npm`) y PostgreSQL instalados y en ejecución.
 `.env.local` contiene credenciales y no se debe compartir ni subir al repositorio. El servidor local incluido inicia tanto la web como la API; abrir `index.html` directamente o servirlo solo desde Apache/XAMPP no ejecuta las rutas de PostgreSQL.
 
 La pantalla carga inventario, órdenes, mantenimientos preventivos y catálogos desde PostgreSQL. Si la conexión o las consultas fallan, no se muestran los registros de demostración como si fueran datos reales.
+Los técnicos nuevos y su estado activo se guardan en PostgreSQL desde el catálogo; el navegador no habilita por sí solo a una persona para asignarla a una orden.
 
 ## Requisitos para desplegar
 
@@ -28,6 +29,6 @@ La autenticación usa una cookie firmada con vencimiento de 30 minutos, protecci
 
 ## Actualizar la base de datos
 
-`mantti_arjona_postgres.sql` es el archivo único del esquema inicial y sus cambios. Al crear una base nueva, importa el archivo completo. Para una base existente, ejecuta solamente el bloque final `Cambios idempotentes para actualizar una base existente`; agrega el campo de firma y conserva únicamente a Juan Diaz Pardo y Jairo Simancas Cogollo en el catálogo de técnicos.
+`mantti_arjona_postgres.sql` es el archivo único del esquema inicial y sus cambios. Al crear una base nueva, importa el archivo completo. Para una base existente, ejecuta solamente el bloque final `Cambios idempotentes para actualizar una base existente`; agrega el campo de firma y asegura que Juan Diaz Pardo y Jairo Simancas Cogollo estén registrados sin eliminar los demás técnicos.
 
 La carga y descarga de documentos no está activada: las funciones serverless no ofrecen almacenamiento persistente. Se debe integrar almacenamiento de objetos antes de habilitarla. `admin.php` (importación directa de base de datos) tampoco forma parte del despliegue web.
