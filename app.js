@@ -484,8 +484,7 @@ async function cargarOperacionesDesdeBackend() {
             nombre: tecnico.nombre.trim().toLowerCase() === 'juan diaz' ? 'Juan Diaz Pardo' :
                 tecnico.nombre.trim().toLowerCase() === 'jairo jose simancas cogollo' ? 'Jairo Simancas Cogollo' : tecnico.nombre,
             activo: Number(tecnico.activo) === 1
-        }))
-        .filter(tecnico => TECNICOS_PERMITIDOS.has(tecnico.nombre));
+        }));
     cargarSelectorTecnicos();
     DB.repuestos = catalogosResult.data.repuestos.map(repuesto => ({
         ...repuesto,
