@@ -1,0 +1,5 @@
+.local-pgdata/
+.env*
+.git/
+node_modules/
+.vercel/

@@ -7,7 +7,6 @@ const { Pool } = pg;
 const SESSION_COOKIE = 'mantti_session';
 const SESSION_TTL_SECONDS = 30 * 60;
 const WRITE_METHODS = new Set(['POST', 'PUT', 'DELETE']);
-const ALLOWED_TECHNICIANS = new Set(['Juan Diaz Pardo', 'Jairo Simancas Cogollo']);
 let pool;
 
 function sendJson(res, statusCode, payload) {
@@ -127,6 +126,14 @@ function requireRole(res, user, roles) {
     return false;
   }
   return true;
+}
+
+async function isActiveTechnician(db, name) {
+  const { rows } = await db.query(
+    'SELECT EXISTS (SELECT 1 FROM tecnicos WHERE LOWER(BTRIM(nombre)) = LOWER(BTRIM($1)) AND activo = 1) AS enabled',
+    [name]
+  );
+  return rows[0].enabled;
 }
 
 function csrfIsValid(req, session) {
@@ -324,7 +331,7 @@ export default async function handler(req, res) {
         if (!requireRole(res, user, ['administrador', 'director', 'supervisor'])) return;
         const fields = ['codigo', 'equipo_codigo', 'tipo', 'prioridad', 'solicitante', 'dependencia_solicitante', 'tecnico', 'falla', 'fecha_solicitud', 'fecha_programada'];
         if (fields.some(field => !String(input[field] || '').trim())) return sendJson(res, 422, { ok: false, error: 'Faltan campos obligatorios de la orden' });
-        if (!ALLOWED_TECHNICIANS.has(String(input.tecnico).trim())) {
+        if (!await isActiveTechnician(db, input.tecnico)) {
           return sendJson(res, 422, { ok: false, error: 'El técnico asignado no está habilitado' });
         }
           const result = await db.query(
@@ -382,7 +389,7 @@ export default async function handler(req, res) {
         if (!requireRole(res, user, ['administrador', 'director', 'supervisor'])) return;
         const fields = ['codigo', 'equipo_codigo', 'dependencia', 'frecuencia', 'proximo_mantenimiento', 'tecnico', 'actividades'];
         if (fields.some(field => !String(input[field] || '').trim())) return sendJson(res, 422, { ok: false, error: 'Faltan campos obligatorios del preventivo' });
-        if (!ALLOWED_TECHNICIANS.has(String(input.tecnico).trim())) {
+        if (!await isActiveTechnician(db, input.tecnico)) {
           return sendJson(res, 422, { ok: false, error: 'El técnico asignado no está habilitado' });
         }
           const result = await db.query(
@@ -438,7 +445,7 @@ export default async function handler(req, res) {
       if (!requireMethod(req, res, ['GET'])) return;
       const [{ rows: dependencias }, { rows: tecnicos }, { rows: repuestos }] = await Promise.all([
         db.query('SELECT * FROM dependencias ORDER BY id DESC'),
-        db.query('SELECT * FROM tecnicos WHERE nombre IN ($1, $2) ORDER BY id DESC', ['Juan Diaz Pardo', 'Jairo Simancas Cogollo']),
+        db.query('SELECT * FROM tecnicos WHERE activo = 1 ORDER BY id DESC'),
         db.query('SELECT * FROM repuestos ORDER BY id DESC')
       ]);
       return sendJson(res, 200, { ok: true, data: { dependencias, tecnicos, repuestos } });

@@ -809,7 +809,29 @@ function actualizarDependenciaEquipoSeleccionado(equipoId, campoId = 'preventivo
     textoDependencia.textContent = getEquipo(equipoId)?.dependencia || 'Seleccione un equipo';
 }
 
-function abrirFormOrden(equipoPreseleccionado='') {
+async function cargarTecnicosActivosDesdeBackend() {
+    const response = await fetch('backend/api.php?action=catalogos', { credentials: 'same-origin' });
+    const result = await response.json();
+    if (!response.ok || !result.ok || !Array.isArray(result.data?.tecnicos)) {
+        throw new Error(result.error || 'No se pudieron cargar los técnicos habilitados.');
+    }
+    DB.tecnicos = result.data.tecnicos.filter(tecnico => Number(tecnico.activo) === 1);
+    return DB.tecnicos;
+}
+
+async function abrirFormOrden(equipoPreseleccionado='') {
+    let tecnicosActivos;
+    try {
+        tecnicosActivos = await cargarTecnicosActivosDesdeBackend();
+    } catch (error) {
+        alert(error.message || 'No se pudieron cargar los técnicos habilitados.');
+        return;
+    }
+    if (!tecnicosActivos.length) {
+        alert('No hay técnicos habilitados para asignar.');
+        return;
+    }
+
     const dependenciaPreseleccionada = getEquipo(equipoPreseleccionado)?.dependencia || '';
     const dependencias = [...new Set(DB.inventario.map(equipo => equipo.dependencia).filter(Boolean))];
     document.getElementById('modal-cuerpo').innerHTML = `
@@ -829,7 +851,7 @@ function abrirFormOrden(equipoPreseleccionado='') {
         </select>
         <label>Fecha Programada</label><input type="date" name="programada" required value="${hoy()}">
         <label>Técnico Asignado</label><select name="tecnico" required>
-            ${DB.tecnicos.filter(t=>t.activo).map(t=>`<option>${t.nombre}</option>`).join('')}
+            ${tecnicosActivos.map(t=>`<option>${t.nombre}</option>`).join('')}
         </select>
         <label>Falla / Motivo</label><textarea name="falla" required rows="3"></textarea>
         <label>Diagnóstico Inicial</label><textarea name="diagnostico" rows="2"></textarea>
