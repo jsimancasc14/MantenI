@@ -894,6 +894,38 @@ form button[type="submit"] {
     min-width: 0;
 }
 
+.inventory-balance {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+    margin: 1rem 0 1.25rem;
+}
+
+.inventory-balance-item {
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--borde);
+    border-radius: 14px;
+    background: var(--fondo-2);
+}
+
+.inventory-balance-item span {
+    color: var(--texto-suave);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.inventory-balance-item strong {
+    color: var(--primario);
+    font-size: 1.55rem;
+    line-height: 1.2;
+}
+
+.inventory-balance-item.total {
+    background: var(--primario-claro);
+}
+
 .chart-layout {
     display: grid;
     grid-template-columns: minmax(190px, 0.45fr) minmax(0, 1fr);
@@ -1394,6 +1426,14 @@ form button[type="submit"] {
     .chart-layout {
         grid-template-columns: 1fr;
         gap: 1.5rem;
+    }
+
+    .inventory-balance {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .inventory-balance-item.total {
+        grid-column: 1 / -1;
     }
 
     .donut-chart {

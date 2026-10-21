@@ -224,16 +224,19 @@ export default async function handler(req, res) {
 
     if (action === 'dashboard') {
       if (!requireMethod(req, res, ['GET'])) return;
-      const [{ rows: inventoryRows }, { rows: orderRows }, { rows: preventiveRows }] = await Promise.all([
+      const [{ rows: inventoryRows }, { rows: printerRows }, { rows: orderRows }, { rows: preventiveRows }] = await Promise.all([
         db.query('SELECT COUNT(*) AS total FROM equipos'),
+        db.query('SELECT COUNT(*) AS total FROM impresoras'),
         db.query("SELECT COUNT(*) AS total FROM ordenes_trabajo WHERE estado != 'Cerrado'"),
         db.query("SELECT COUNT(*) AS total FROM preventivos WHERE estado = 'Programado'")
       ]);
       const inventory = inventoryRows[0];
+      const printers = printerRows[0];
       const orders = orderRows[0];
       const preventives = preventiveRows[0];
       return sendJson(res, 200, { ok: true, dashboard: {
         total_equipos: Number(inventory.total),
+        total_impresoras: Number(printers.total),
         ordenes_abiertas: Number(orders.total),
         preventivos_programados: Number(preventives.total)
       } });

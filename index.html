@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ManténTI Arjona - Control de Mantenimiento</title>
-    <link rel="stylesheet" href="estilos.css?v=7">
+    <link rel="stylesheet" href="estilos.css?v=8">
 </head>
 <body>
     <div id="login-screen" class="login-screen active">
@@ -148,6 +148,20 @@
                             <h2>Estado del inventario</h2>
                         </div>
                         <span class="cool-badge neutral">Actualizado</span>
+                    </div>
+                    <div class="inventory-balance" aria-label="Balance de equipos e impresoras">
+                        <div class="inventory-balance-item">
+                            <span>Equipos</span>
+                            <strong id="balance-equipos">0</strong>
+                        </div>
+                        <div class="inventory-balance-item">
+                            <span>Impresoras</span>
+                            <strong id="balance-impresoras">0</strong>
+                        </div>
+                        <div class="inventory-balance-item total">
+                            <span>Total de activos</span>
+                            <strong id="balance-total">0</strong>
+                        </div>
                     </div>
                     <div class="chart-layout">
                         <div id="grafica-dona" class="donut-chart" aria-label="Distribución del estado del inventario">
@@ -323,6 +337,6 @@
         </main>
     </div>
 
-    <script src="app.js?v=6"></script>
+    <script src="app.js?v=7"></script>
 </body>
 </html>

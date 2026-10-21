@@ -38,6 +38,7 @@ const DB = {
 const DB_STORAGE_KEY = 'MantTI_Arjona_DB';
 const DB_STORAGE_VERSION = 2;
 let csrfToken = '';
+let totalImpresoras = 0;
 
 function cargarDB() {
     const guardado = localStorage.getItem(DB_STORAGE_KEY);
@@ -102,7 +103,8 @@ async function mostrarApp() {
     await cargarSesionSegura();
     await Promise.all([
         cargarInventarioDesdeBackend(),
-        cargarOperacionesDesdeBackend()
+        cargarOperacionesDesdeBackend(),
+        cargarResumenImpresorasDesdeBackend()
     ]);
     document.getElementById('login-screen')?.classList.add('hidden');
     document.getElementById('app-shell')?.classList.remove('hidden');
@@ -322,6 +324,10 @@ function etiquetaEstado(estado) {
 // ======================================================
 function cargarDashboard() {
     document.getElementById('total-equipos').textContent = DB.inventario.length;
+    const totalEquipos = DB.inventario.length;
+    document.getElementById('balance-equipos').textContent = totalEquipos;
+    document.getElementById('balance-impresoras').textContent = totalImpresoras;
+    document.getElementById('balance-total').textContent = totalEquipos + totalImpresoras;
     const abiertas = DB.ordenes.filter(o => o.estado !== 'Cerrado').length;
     document.getElementById('ordenes-abiertas').textContent = abiertas;
     const prox = DB.preventivos.filter(p => {
@@ -354,6 +360,18 @@ function cargarDashboard() {
     }).join('') : '<p>Sin mantenimientos próximos</p>';
 
     cargarGraficaEstados();
+}
+
+async function cargarResumenImpresorasDesdeBackend() {
+    const response = await fetch('backend/api.php?action=dashboard', {
+        credentials: 'same-origin'
+    });
+    const result = await response.json();
+    const total = Number(result.dashboard?.total_impresoras);
+    if (!response.ok || !result.ok || !Number.isSafeInteger(total) || total < 0) {
+        throw new Error(result.error || 'No se pudo leer la cantidad de impresoras de PostgreSQL.');
+    }
+    totalImpresoras = total;
 }
 
 function cargarGraficaEstados() {
