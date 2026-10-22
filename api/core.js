@@ -473,9 +473,16 @@ export default async function handler(req, res) {
         const { rows } = await db.query('SELECT * FROM tecnicos ORDER BY id DESC');
         return sendJson(res, 200, { ok: true, data: rows });
       }
-      if (!['POST', 'PUT'].includes(req.method)) return requireMethod(req, res, ['GET', 'POST', 'PUT']);
+      if (!['POST', 'PUT', 'DELETE'].includes(req.method)) return requireMethod(req, res, ['GET', 'POST', 'PUT', 'DELETE']);
       if (!requireRole(res, user, ['administrador', 'director', 'supervisor'])) return;
       const input = await readBody(req);
+      if (req.method === 'DELETE') {
+        const id = Number(input.id);
+        if (!Number.isSafeInteger(id) || id < 1) return sendJson(res, 422, { ok: false, error: 'Identificador de técnico no válido' });
+        const { rows } = await db.query('DELETE FROM tecnicos WHERE id = $1 RETURNING id', [id]);
+        if (!rows.length) return sendJson(res, 404, { ok: false, error: 'Técnico no encontrado' });
+        return sendJson(res, 200, { ok: true });
+      }
       const activoValue = String(input.activo ?? '').trim().toLowerCase();
       if (req.method === 'PUT') {
         const id = String(input.id || '').trim();

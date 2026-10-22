@@ -1191,7 +1191,10 @@ async function cargarCatalogos() {
         <tr><td>${d.nombre}</td><td>${d.responsable}</td><td>${d.correo}</td><td>${d.telefono}</td><td>—</td></tr>`).join('');
     document.getElementById('tabla-tecnicos').innerHTML = DB.tecnicos.map(t => `
         <tr><td>${t.nombre}</td><td>${t.cargo}</td><td>${t.correo}</td><td>${Number(t.activo) === 1?'✅':'❌'}</td>
-        <td><button class="btn-icon" type="button" onclick="cambiarEstadoTecnico(${Number(t.id)}, ${Number(t.activo) !== 1})" title="${Number(t.activo) === 1?'Deshabilitar':'Habilitar'} técnico">${Number(t.activo) === 1?'⛔':'✅'}</button></td></tr>`).join('');
+        <td>
+            <button class="btn-icon" type="button" onclick="cambiarEstadoTecnico(${Number(t.id)}, ${Number(t.activo) !== 1})" title="${Number(t.activo) === 1?'Deshabilitar':'Habilitar'} técnico">${Number(t.activo) === 1?'⛔':'✅'}</button>
+            <button class="btn-icon" type="button" onclick="eliminarTecnico(${Number(t.id)})" title="Eliminar técnico">🗑️</button>
+        </td></tr>`).join('');
     document.getElementById('tabla-repuestos').innerHTML = DB.repuestos.map(r => `
         <tr><td>${r.nombre}</td><td>${r.unidad}</td><td>$${r.costo.toLocaleString()}</td><td>${r.existencia}</td><td>—</td></tr>`).join('');
 }
@@ -1215,6 +1218,30 @@ async function cambiarEstadoTecnico(id, activo) {
         await cargarCatalogos();
     } catch (error) {
         alert('No se pudo conectar con el servidor para actualizar el técnico.');
+    }
+}
+
+async function eliminarTecnico(id) {
+    const tecnico = DB.tecnicos.find(item => Number(item.id) === Number(id));
+    if (!tecnico || !confirm(`¿Eliminar al técnico ${tecnico.nombre} del catálogo? Esta acción no se puede deshacer.`)) return;
+    try {
+        const response = await fetch('backend/api.php?action=tecnicos', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            credentials: 'same-origin',
+            body: JSON.stringify({ id })
+        });
+        if (manejarSesionNoAutenticada(response)) return;
+        const result = await response.json();
+        if (!response.ok || !result.ok) {
+            alert(result.error || 'No se pudo eliminar el técnico.');
+            return;
+        }
+        DB.tecnicos = DB.tecnicos.filter(item => Number(item.id) !== Number(id));
+        guardarDB();
+        await cargarCatalogos();
+    } catch (error) {
+        alert('No se pudo conectar con el servidor para eliminar el técnico.');
     }
 }
 
