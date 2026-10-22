@@ -1000,6 +1000,8 @@ function cargarPreventivos() {
             </td>
             <td>
                 ${p.estado==='Programado'?`<button class="btn-icon" onclick="marcarPreventivoRealizado('${p.id}')" title="Marcar Realizado">✅</button>`:''}
+                <button class="btn-icon" onclick="editarPreventivo('${p.id}')" title="Editar plan">✏️</button>
+                <button class="btn-icon" onclick="eliminarPreventivo('${p.id}')" title="Eliminar plan">🗑️</button>
             </td>
         </tr>`;
     }).join('');
@@ -1080,6 +1082,56 @@ async function guardarPreventivo(e) {
     }
     DB.preventivos.unshift(nuevoPlan);
     guardarDB(); cerrarModal(); cargarPreventivos(); cargarDashboard();
+}
+async function editarPreventivo(id) {
+    const plan = DB.preventivos.find(item => item.id === id);
+    if (!plan) return;
+    let tecnicosActivos;
+    try { tecnicosActivos = await cargarTecnicosDesdeBackend(); }
+    catch (error) { return alert(error.message || 'No se pudieron cargar los técnicos habilitados.'); }
+    if (!tecnicosActivos?.length) return alert('No hay técnicos habilitados para asignar.');
+    document.getElementById('modal-cuerpo').innerHTML = `
+        <h2>Editar Plan ${plan.id}</h2><form onsubmit="guardarEdicionPreventivo(event, '${plan.id}')">
+        <label>Equipo o impresora</label><select id="preventivo-equipo-seleccionado" name="equipo" required onchange="actualizarDependenciaEquipoSeleccionado(this.value, 'preventivo-dependencia-equipo')">
+            ${DB.inventario.map(e=>`<option value="${e.id}" ${e.id===plan.equipo?'selected':''}>${e.id} — ${e.tipo} — ${e.marca} ${e.modelo}</option>`).join('')}
+        </select>
+        <p>Dependencia: <strong id="preventivo-dependencia-equipo">${plan.dependencia || ''}</strong></p>
+        <label>Frecuencia</label><select name="frecuencia" required>${['Mensual','Trimestral','Semestral','Anual'].map(f=>`<option ${plan.frecuencia===f?'selected':''}>${f}</option>`).join('')}</select>
+        <label>Fecha último mantenimiento</label><input type="date" name="ultimo" value="${plan.ultimo || ''}">
+        <label>Próximo mantenimiento</label><input type="date" name="proximo" value="${plan.proximo}" required>
+        <label>Técnico responsable</label><select name="tecnico" required>${tecnicosActivos.map(t=>`<option ${t.nombre===plan.tecnico?'selected':''}>${t.nombre}</option>`).join('')}</select>
+        <label>Actividades estándar</label><textarea name="actividades" required rows="3">${plan.actividades || ''}</textarea>
+        <button type="submit" class="btn-primario">Guardar cambios</button></form>`;
+    document.getElementById('modal').classList.add('active');
+}
+async function guardarEdicionPreventivo(e, id) {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const equipo = getEquipo(f.get('equipo'));
+    const plan = DB.preventivos.find(item => item.id === id);
+    const actualizado = { codigo: id, equipo_codigo: f.get('equipo'), dependencia: equipo?.dependencia || '',
+        frecuencia: f.get('frecuencia'), ultimo_mantenimiento: f.get('ultimo') || '', proximo_mantenimiento: f.get('proximo'),
+        tecnico: f.get('tecnico'), actividades: f.get('actividades'), operacion: 'editar' };
+    try {
+        const response = await fetch('backend/api.php?action=preventivos', { method: 'PUT', headers: {'Content-Type':'application/json','X-CSRF-Token':csrfToken}, credentials:'same-origin', body:JSON.stringify(actualizado) });
+        if (manejarSesionNoAutenticada(response)) return;
+        const result = await response.json();
+        if (!response.ok || !result.ok) return alert(result.error || 'No se pudo actualizar el plan.');
+    } catch { return alert('No se pudo conectar con el servidor.'); }
+    Object.assign(plan, { equipo:actualizado.equipo_codigo, dependencia:actualizado.dependencia, frecuencia:actualizado.frecuencia,
+        ultimo:actualizado.ultimo_mantenimiento, proximo:actualizado.proximo_mantenimiento, tecnico:actualizado.tecnico, actividades:actualizado.actividades });
+    guardarDB(); cerrarModal(); cargarPreventivos(); cargarDashboard();
+}
+async function eliminarPreventivo(id) {
+    if (!confirm(`¿Eliminar el plan preventivo ${id}? Esta acción no se puede deshacer.`)) return;
+    try {
+        const response = await fetch('backend/api.php?action=preventivos', { method:'DELETE', headers:{'Content-Type':'application/json','X-CSRF-Token':csrfToken}, credentials:'same-origin', body:JSON.stringify({codigo:id}) });
+        if (manejarSesionNoAutenticada(response)) return;
+        const result = await response.json();
+        if (!response.ok || !result.ok) return alert(result.error || 'No se pudo eliminar el plan.');
+    } catch { return alert('No se pudo conectar con el servidor.'); }
+    DB.preventivos = DB.preventivos.filter(plan => plan.id !== id);
+    guardarDB(); cargarPreventivos(); cargarDashboard();
 }
 async function guardarFirmaPreventivo(id, firma, selector) {
     const firmaAnterior = selector.dataset.firma || 'No';

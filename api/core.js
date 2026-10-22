@@ -405,6 +405,21 @@ export default async function handler(req, res) {
       }
       if (req.method === 'PUT') {
         if (!requireRole(res, user, ['administrador', 'director', 'supervisor', 'tecnico'])) return;
+        if (input.operacion === 'editar') {
+          if (!requireRole(res, user, ['administrador', 'director', 'supervisor'])) return;
+          const fields = ['codigo', 'equipo_codigo', 'dependencia', 'frecuencia', 'proximo_mantenimiento', 'tecnico', 'actividades'];
+          if (fields.some(field => !String(input[field] || '').trim())) return sendJson(res, 422, { ok: false, error: 'Faltan campos obligatorios del preventivo' });
+          if (!await isActiveTechnician(db, input.tecnico)) return sendJson(res, 422, { ok: false, error: 'El técnico asignado no está habilitado' });
+          const result = await db.query(
+            `UPDATE preventivos SET equipo_codigo = $1, dependencia = $2, frecuencia = $3,
+              ultimo_mantenimiento = $4, proximo_mantenimiento = $5, tecnico = $6, actividades = $7
+             WHERE codigo = $8 RETURNING codigo`,
+            [input.equipo_codigo, input.dependencia, input.frecuencia, input.ultimo_mantenimiento || null,
+              input.proximo_mantenimiento, input.tecnico, input.actividades, input.codigo]
+          );
+          if (!result.rowCount) return sendJson(res, 404, { ok: false, error: 'Plan no encontrado' });
+          return sendJson(res, 200, { ok: true });
+        }
         if (Object.hasOwn(input, 'firma')) {
           const firma = String(input.firma).trim();
           const codigo = String(input.codigo || '').trim();
@@ -441,7 +456,15 @@ export default async function handler(req, res) {
           connection.release();
         }
       }
-      return requireMethod(req, res, ['GET', 'POST', 'PUT']);
+      if (req.method === 'DELETE') {
+        if (!requireRole(res, user, ['administrador', 'director', 'supervisor'])) return;
+        const codigo = String(input.codigo || '').trim();
+        if (!codigo) return sendJson(res, 422, { ok: false, error: 'Código del plan obligatorio' });
+        const result = await db.query('DELETE FROM preventivos WHERE codigo = $1 RETURNING codigo', [codigo]);
+        if (!result.rowCount) return sendJson(res, 404, { ok: false, error: 'Plan no encontrado' });
+        return sendJson(res, 200, { ok: true });
+      }
+      return requireMethod(req, res, ['GET', 'POST', 'PUT', 'DELETE']);
     }
 
     if (action === 'tecnicos') {
