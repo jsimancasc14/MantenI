@@ -410,16 +410,32 @@ export default async function handler(req, res) {
         if (!await isActiveTechnician(db, input.tecnico)) {
           return sendJson(res, 422, { ok: false, error: 'El tecnico asignado no esta habilitado' });
         }
+        const grupoCodigo = String(input.grupo_codigo || '').trim();
         const connection = await db.connect();
         try {
           await connection.query('BEGIN');
-          for (const plan of planes) {
+          if (grupoCodigo) await connection.query('ALTER TABLE preventivos ADD COLUMN IF NOT EXISTS grupo_codigo VARCHAR(50)');
+          if (grupoCodigo) {
             await connection.query(
-              `INSERT INTO preventivos (codigo, equipo_codigo, dependencia, frecuencia, ultimo_mantenimiento, proximo_mantenimiento, tecnico, actividades, estado)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Programado')`,
-              [String(plan.codigo).trim(), String(plan.equipo_codigo).trim(), String(plan.dependencia).trim(), input.frecuencia,
-                input.ultimo_mantenimiento || null, input.proximo_mantenimiento, input.tecnico, input.actividades]
+              `UPDATE preventivos p SET grupo_codigo = 'PG-' || md5(p.created_at::text)
+                WHERE p.grupo_codigo IS NULL
+                  AND p.codigo NOT IN ('PR-001', 'PR-002', 'PR-003')
+                  AND p.created_at IN (SELECT created_at FROM preventivos WHERE codigo NOT IN ('PR-001', 'PR-002', 'PR-003') GROUP BY created_at HAVING COUNT(*) > 1)`
             );
+          }
+          for (const plan of planes) {
+            const insertFields = grupoCodigo
+              ? 'codigo, equipo_codigo, dependencia, frecuencia, ultimo_mantenimiento, proximo_mantenimiento, tecnico, actividades, estado, grupo_codigo'
+              : 'codigo, equipo_codigo, dependencia, frecuencia, ultimo_mantenimiento, proximo_mantenimiento, tecnico, actividades, estado';
+            const values = grupoCodigo
+              ? [String(plan.codigo).trim(), String(plan.equipo_codigo).trim(), String(plan.dependencia).trim(), input.frecuencia,
+                  input.ultimo_mantenimiento || null, input.proximo_mantenimiento, input.tecnico, input.actividades, grupoCodigo]
+              : [String(plan.codigo).trim(), String(plan.equipo_codigo).trim(), String(plan.dependencia).trim(), input.frecuencia,
+                  input.ultimo_mantenimiento || null, input.proximo_mantenimiento, input.tecnico, input.actividades];
+            const placeholders = grupoCodigo
+              ? "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Programado', $9)"
+              : "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Programado')";
+            await connection.query('INSERT INTO preventivos (' + insertFields + ') ' + placeholders, values);
           }
           await connection.query('COMMIT');
         } catch (error) {
@@ -485,6 +501,12 @@ export default async function handler(req, res) {
       }
       if (req.method === 'DELETE') {
         if (!requireRole(res, user, ['administrador', 'director', 'supervisor'])) return;
+        const grupoCodigo = String(input.grupo_codigo || '').trim();
+        if (grupoCodigo) {
+          const result = await db.query('DELETE FROM preventivos WHERE grupo_codigo = $1 RETURNING codigo', [grupoCodigo]);
+          if (!result.rowCount) return sendJson(res, 404, { ok: false, error: 'Grupo de planes no encontrado' });
+          return sendJson(res, 200, { ok: true, cantidad: result.rowCount });
+        }
         const codigo = String(input.codigo || '').trim();
         if (!codigo) return sendJson(res, 422, { ok: false, error: 'Código del plan obligatorio' });
         const result = await db.query('DELETE FROM preventivos WHERE codigo = $1 RETURNING codigo', [codigo]);

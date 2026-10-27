@@ -178,6 +178,7 @@ CREATE TABLE "preventivos" (
   "observaciones" text DEFAULT NULL,
   "firma" varchar(3) NOT NULL DEFAULT 'No' CHECK ("firma" IN ('Sí', 'No')),
   "estado" varchar(40) NOT NULL DEFAULT 'Programado',
+  "grupo_codigo" varchar(50) DEFAULT NULL,
   "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

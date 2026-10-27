@@ -493,7 +493,8 @@ async function cargarOperacionesDesdeBackend() {
         firma: plan.firma || 'No',
         estado: plan.estado,
         actividades: plan.actividades,
-        observaciones: plan.observaciones || ''
+        observaciones: plan.observaciones || '',
+        grupo: plan.grupo_codigo || ''
     }));
     DB.dependencias = catalogosResult.data.dependencias;
     DB.tecnicos = catalogosResult.data.tecnicos
@@ -1001,9 +1002,10 @@ async function confirmarCierre(e, id) {
 // PREVENTIVOS
 // ======================================================
 function cargarPreventivos() {
-    document.getElementById('tabla-preventivos').innerHTML = DB.preventivos.map(p => {
+    document.getElementById('tabla-preventivos').innerHTML = DB.preventivos.map((p, indice) => {
         const equipo = getEquipo(p.equipo);
         const d = diasEntre(p.proximo);
+        const primerPlanDelGrupo = p.grupo && DB.preventivos.findIndex(plan => plan.grupo === p.grupo) === indice;
         let claseDias = '';
         if(d === null || isNaN(d)) claseDias = '';
         else if(d < 0) claseDias = 'vencido';
@@ -1025,9 +1027,10 @@ function cargarPreventivos() {
                 </select>
             </td>
             <td>
-                ${p.estado==='Programado'?`<button class="btn-icon" onclick="marcarPreventivoRealizado('${p.id}')" title="Marcar Realizado">✅</button>`:''}
-                <button class="btn-icon" onclick="editarPreventivo('${p.id}')" title="Editar plan">✏️</button>
-                <button class="btn-icon" onclick="eliminarPreventivo('${p.id}')" title="Eliminar plan">🗑️</button>
+                <label class="checkbox-inline"><input type="checkbox" ${p.estado==='Realizado'?'checked':''} onchange="cambiarEstadoPreventivo('${p.id}', this.checked, this)" aria-label="Marcar plan ${p.id} como realizado"> Realizado</label>
+                <button class="btn-text" onclick="editarPreventivo('${p.id}')" title="Editar plan">Editar</button>
+                ${primerPlanDelGrupo?`<button class="btn-text btn-danger" onclick="eliminarPreventivo('${p.id}')" title="Eliminar todo el grupo de planes">Eliminar todo el plan</button>`:''}
+                ${!p.grupo?`<button class="btn-text btn-danger" onclick="eliminarPreventivo('${p.id}')" title="Eliminar plan">Eliminar plan</button>`:''}
             </td>
         </tr>`;
     }).join('');
@@ -1088,6 +1091,7 @@ async function guardarPreventivo(e) {
         const numero = Number(String(plan.id).match(/^PR-(\d+)$/)?.[1] || 0);
         return Math.max(mayor, numero);
     }, 0) + 1;
+    const grupoCodigo = equipoSeleccionado === '__TODOS__' ? `PG-${crypto.randomUUID()}` : '';
     const datosComunes = {
         frecuencia: f.get('frecuencia'),
         ultimo: f.get('ultimo') || '',
@@ -1099,6 +1103,7 @@ async function guardarPreventivo(e) {
         id: `PR-${String(siguienteNumero + indice).padStart(3, '0')}`,
         equipo: equipo.id,
         dependencia: equipo.dependencia || '',
+        grupo: grupoCodigo,
         ...datosComunes,
         estado: 'Programado',
         firma: 'No',
@@ -1110,6 +1115,7 @@ async function guardarPreventivo(e) {
             method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken }, credentials: 'same-origin',
             body: JSON.stringify({
                 planes: nuevosPlanes.map(plan => ({ codigo: plan.id, equipo_codigo: plan.equipo, dependencia: plan.dependencia })),
+                grupo_codigo: grupoCodigo || null,
                 frecuencia: datosComunes.frecuencia,
                 ultimo_mantenimiento: datosComunes.ultimo,
                 proximo_mantenimiento: datosComunes.proximo,
@@ -1166,14 +1172,30 @@ async function guardarEdicionPreventivo(e, id) {
     guardarDB(); cerrarModal(); cargarPreventivos(); cargarDashboard();
 }
 async function eliminarPreventivo(id) {
-    if (!confirm(`¿Eliminar el plan preventivo ${id}? Esta acción no se puede deshacer.`)) return;
+    const plan = DB.preventivos.find(item => item.id === id);
+    if (!plan) return;
+    const grupo = plan.grupo || '';
+    const cantidad = grupo ? DB.preventivos.filter(item => item.grupo === grupo).length : 1;
+    const mensaje = grupo
+        ? `Eliminar los ${cantidad} planes de este grupo? Esta accion no se puede deshacer.`
+        : `Eliminar el plan preventivo ${id}? Esta accion no se puede deshacer.`;
+    if (!confirm(mensaje)) return;
     try {
-        const response = await fetch('backend/api.php?action=preventivos', { method:'DELETE', headers:{'Content-Type':'application/json','X-CSRF-Token':csrfToken}, credentials:'same-origin', body:JSON.stringify({codigo:id}) });
+        const response = await fetch('backend/api.php?action=preventivos', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            credentials: 'same-origin',
+            body: JSON.stringify(grupo ? { grupo_codigo: grupo } : { codigo: id })
+        });
         if (manejarSesionNoAutenticada(response)) return;
         const result = await response.json();
         if (!response.ok || !result.ok) return alert(result.error || 'No se pudo eliminar el plan.');
-    } catch { return alert('No se pudo conectar con el servidor.'); }
-    DB.preventivos = DB.preventivos.filter(plan => plan.id !== id);
+    } catch {
+        return alert('No se pudo conectar con el servidor.');
+    }
+    DB.preventivos = grupo
+        ? DB.preventivos.filter(item => item.grupo !== grupo)
+        : DB.preventivos.filter(item => item.id !== id);
     guardarDB(); cargarPreventivos(); cargarDashboard();
 }
 async function guardarFirmaPreventivo(id, firma, selector) {
@@ -1203,21 +1225,39 @@ async function guardarFirmaPreventivo(id, firma, selector) {
         selector.disabled = false;
     }
 }
-async function marcarPreventivoRealizado(id) {
-    const p = DB.preventivos.find(x => x.id === id);
-    if(!p) return;
-    p.estado = 'Realizado';
-    p.ultimo = hoy();
-    p.proximo = sumarMeses(p.ultimo, mesesPorFrecuencia(p.frecuencia));
-    const response = await fetch('backend/api.php?action=preventivos', { method: 'PUT', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken}, credentials: 'same-origin', body: JSON.stringify({ codigo: id, estado: p.estado, ultimo_mantenimiento: p.ultimo, proximo_mantenimiento: p.proximo }) });
-    const result = await response.json();
-    if (!response.ok || !result.ok) return alert(result.error || 'No se pudo actualizar el preventivo.');
-    guardarDB(); cargarPreventivos(); cargarDashboard();
+async function cambiarEstadoPreventivo(id, realizado, checkbox) {
+    const plan = DB.preventivos.find(item => item.id === id);
+    if (!plan) return;
+    if (!realizado && !confirm(`Reabrir el plan ${id}?`)) {
+        checkbox.checked = true;
+        return;
+    }
+    const anterior = { estado: plan.estado, ultimo: plan.ultimo, proximo: plan.proximo };
+    plan.estado = realizado ? 'Realizado' : 'Programado';
+    if (realizado) {
+        plan.ultimo = hoy();
+        plan.proximo = sumarMeses(plan.ultimo, mesesPorFrecuencia(plan.frecuencia));
+    }
+    checkbox.disabled = true;
+    try {
+        const response = await fetch('backend/api.php?action=preventivos', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            credentials: 'same-origin',
+            body: JSON.stringify({ codigo: id, estado: plan.estado, ultimo_mantenimiento: plan.ultimo, proximo_mantenimiento: plan.proximo })
+        });
+        if (manejarSesionNoAutenticada(response)) throw new Error('La sesion no esta activa.');
+        const result = await response.json();
+        if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo actualizar el preventivo.');
+        guardarDB(); cargarPreventivos(); cargarDashboard();
+    } catch (error) {
+        Object.assign(plan, anterior);
+        checkbox.checked = anterior.estado === 'Realizado';
+        alert(error.message || 'No se pudo conectar con el servidor.');
+    } finally {
+        checkbox.disabled = false;
+    }
 }
-
-// ======================================================
-// CATÁLOGOS
-// ======================================================
 async function cargarCatalogos() {
     try {
         const response = await fetch('backend/api.php?action=tecnicos', { credentials: 'same-origin' });
