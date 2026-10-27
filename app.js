@@ -748,6 +748,13 @@ function getRolOrdenActual() {
     const activo = document.querySelector('.module-btn.active');
     return activo ? activo.dataset.role : 'administrador';
 }
+function normalizarNombreTecnico(nombre) {
+    const texto = String(nombre || '').trim();
+    const minusculas = texto.toLowerCase();
+    if (minusculas === 'juan diaz') return 'Juan Diaz Pardo';
+    if (minusculas === 'jairo jose simancas cogollo') return 'Jairo Simancas Cogollo';
+    return texto;
+}
 function cargarSelectorTecnicos() {
     const selector = document.getElementById('tecnico-asignado');
     if (!selector) return;
@@ -773,7 +780,9 @@ function cargarOrdenes() {
             cargarSelectorTecnicos();
         }
         const tecnicoActual = selectorTecnico?.value || usuario?.name || '';
-        datos = datos.filter(o => o.tecnico === tecnicoActual);
+        const tecnicoNormalizado = normalizarNombreTecnico(tecnicoActual);
+        datos = datos.filter(o => normalizarNombreTecnico(o.tecnico) === tecnicoNormalizado);
+        const planesTecnico = DB.preventivos.filter(plan => normalizarNombreTecnico(plan.tecnico) === tecnicoNormalizado);
         document.getElementById('tabla-ordenes-tecnico').innerHTML = datos.map(o => `
             <tr>
                 <td><strong>${o.id}</strong><br><small>${o.solicitud}</small></td>
@@ -787,8 +796,20 @@ function cargarOrdenes() {
                     ${o.estado !== 'Cerrado' ? `<button class="btn-icon" onclick="cerrarOrden('${o.id}')" title="Cerrar Orden">✅</button>` : ''}
                 </td>
             </tr>`).join('');
-        document.getElementById('totales-tecnico').textContent = String(DB.ordenes.filter(o => o.tecnico === tecnicoActual).length);
-        document.getElementById('pendientes-tecnico').textContent = String(DB.ordenes.filter(o => o.tecnico === tecnicoActual && o.estado !== 'Cerrado').length);
+        document.getElementById('totales-tecnico').textContent = String(DB.ordenes.filter(o => normalizarNombreTecnico(o.tecnico) === tecnicoNormalizado).length);
+        document.getElementById('pendientes-tecnico').textContent = String(DB.ordenes.filter(o => normalizarNombreTecnico(o.tecnico) === tecnicoNormalizado && o.estado !== 'Cerrado').length);
+        document.getElementById('planes-preventivos-tecnico').textContent = String(planesTecnico.length);
+        document.getElementById('tabla-preventivos-tecnico').innerHTML = planesTecnico.length ? planesTecnico.map(plan => {
+            const equipo = getEquipo(plan.equipo);
+            return `<tr>
+                <td><strong>${plan.id}</strong></td>
+                <td>${plan.equipo}</td>
+                <td>${equipo ? `${equipo.tipo} ${equipo.marca} ${equipo.modelo}`.trim() : '-'}</td>
+                <td>${plan.frecuencia}</td>
+                <td>${plan.proximo || '-'}</td>
+                <td>${etiquetaEstado(plan.estado)}</td>
+            </tr>`;
+        }).join('') : '<tr><td colspan="6">No hay planes preventivos asignados a este tecnico.</td></tr>';
         return;
     }
 
