@@ -399,18 +399,36 @@ export default async function handler(req, res) {
       const input = await readBody(req);
       if (req.method === 'POST') {
         if (!requireRole(res, user, ['administrador', 'director', 'supervisor'])) return;
-        const fields = ['codigo', 'equipo_codigo', 'dependencia', 'frecuencia', 'proximo_mantenimiento', 'tecnico', 'actividades'];
-        if (fields.some(field => !String(input[field] || '').trim())) return sendJson(res, 422, { ok: false, error: 'Faltan campos obligatorios del preventivo' });
-        if (!await isActiveTechnician(db, input.tecnico)) {
-          return sendJson(res, 422, { ok: false, error: 'El técnico asignado no está habilitado' });
+        const planes = Array.isArray(input.planes) ? input.planes : [input];
+        const fields = ['frecuencia', 'proximo_mantenimiento', 'tecnico', 'actividades'];
+        if (!planes.length || planes.length > 1000 || fields.some(field => !String(input[field] || '').trim()) ||
+            planes.some(plan => ['codigo', 'equipo_codigo', 'dependencia'].some(field => !String(plan[field] || '').trim()))) {
+          return sendJson(res, 422, { ok: false, error: 'Faltan datos obligatorios del plan preventivo' });
         }
-          const result = await db.query(
-          `INSERT INTO preventivos (codigo, equipo_codigo, dependencia, frecuencia, ultimo_mantenimiento, proximo_mantenimiento, tecnico, actividades, estado)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Programado') RETURNING id`,
-          [input.codigo, input.equipo_codigo, input.dependencia, input.frecuencia, input.ultimo_mantenimiento || null,
-            input.proximo_mantenimiento, input.tecnico, input.actividades]
-        );
-        return sendJson(res, 201, { ok: true, id: result.rows[0].id });
+        const codigos = planes.map(plan => String(plan.codigo).trim());
+        if (new Set(codigos).size !== codigos.length) return sendJson(res, 422, { ok: false, error: 'Los codigos de los planes deben ser unicos' });
+        if (!await isActiveTechnician(db, input.tecnico)) {
+          return sendJson(res, 422, { ok: false, error: 'El tecnico asignado no esta habilitado' });
+        }
+        const connection = await db.connect();
+        try {
+          await connection.query('BEGIN');
+          for (const plan of planes) {
+            await connection.query(
+              `INSERT INTO preventivos (codigo, equipo_codigo, dependencia, frecuencia, ultimo_mantenimiento, proximo_mantenimiento, tecnico, actividades, estado)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Programado')`,
+              [String(plan.codigo).trim(), String(plan.equipo_codigo).trim(), String(plan.dependencia).trim(), input.frecuencia,
+                input.ultimo_mantenimiento || null, input.proximo_mantenimiento, input.tecnico, input.actividades]
+            );
+          }
+          await connection.query('COMMIT');
+        } catch (error) {
+          await connection.query('ROLLBACK');
+          throw error;
+        } finally {
+          connection.release();
+        }
+        return sendJson(res, 201, { ok: true, cantidad: planes.length });
       }
       if (req.method === 'PUT') {
         if (!requireRole(res, user, ['administrador', 'director', 'supervisor', 'tecnico'])) return;

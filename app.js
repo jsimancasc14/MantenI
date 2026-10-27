@@ -850,6 +850,10 @@ function filtrarEquiposPorDependencia(dependencia, equipoPreseleccionado = '') {
 function actualizarDependenciaEquipoSeleccionado(equipoId, campoId = 'preventivo-dependencia-equipo') {
     const textoDependencia = document.getElementById(campoId);
     if (!textoDependencia) return;
+    if (equipoId === '__TODOS__') {
+        textoDependencia.textContent = `Se generaran planes para ${DB.inventario.length} equipos del inventario`;
+        return;
+    }
     textoDependencia.textContent = getEquipo(equipoId)?.dependencia || 'Seleccione un equipo';
 }
 
@@ -1045,8 +1049,10 @@ async function abrirFormPreventivo() {
     document.getElementById('modal-cuerpo').innerHTML = `
         <h2>Nuevo Plan de Mantenimiento Preventivo</h2><form onsubmit="guardarPreventivo(event)">
         <label>Equipo o impresora</label><select id="preventivo-equipo-seleccionado" name="equipo" required onchange="actualizarDependenciaEquipoSeleccionado(this.value, 'preventivo-dependencia-equipo')">
+            <option value="__TODOS__">Todos los equipos e impresoras</option>
             ${DB.inventario.map(e=>`<option value="${e.id}">${e.id} — ${e.tipo} — ${e.marca} ${e.modelo}</option>`).join('')}
         </select>
+        <p id="preventivo-alcance-ayuda">Seleccione un equipo o todos los equipos.</p>
         <p>Dependencia: <strong id="preventivo-dependencia-equipo">${DB.inventario[0]?.dependencia || 'Seleccione un equipo'}</strong></p>
         <label>Frecuencia</label><select id="preventivo-frecuencia" name="frecuencia" required onchange="actualizarProximaFechaPreventivo()">
             <option>Mensual</option><option selected>Trimestral</option><option>Semestral</option><option>Anual</option>
@@ -1072,28 +1078,43 @@ function actualizarProximaFechaPreventivo() {
 async function guardarPreventivo(e) {
     e.preventDefault();
     const f = new FormData(e.target);
-    const eq = getEquipo(f.get('equipo'));
-    const nuevoPlan = {
-        id: `PR-${String(DB.preventivos.length+1).padStart(3,'0')}`,
-        equipo: f.get('equipo'),
-        dependencia: eq?.dependencia || '',
+    const equipoSeleccionado = f.get('equipo');
+    const equipos = equipoSeleccionado === '__TODOS__'
+        ? DB.inventario
+        : [getEquipo(equipoSeleccionado)].filter(Boolean);
+    if (!equipos.length) return alert('No hay equipos en el inventario para crear el plan.');
+
+    const siguienteNumero = DB.preventivos.reduce((mayor, plan) => {
+        const numero = Number(String(plan.id).match(/^PR-(\d+)$/)?.[1] || 0);
+        return Math.max(mayor, numero);
+    }, 0) + 1;
+    const datosComunes = {
         frecuencia: f.get('frecuencia'),
         ultimo: f.get('ultimo') || '',
         proximo: f.get('proximo'),
         tecnico: f.get('tecnico'),
+        actividades: f.get('actividades')
+    };
+    const nuevosPlanes = equipos.map((equipo, indice) => ({
+        id: `PR-${String(siguienteNumero + indice).padStart(3, '0')}`,
+        equipo: equipo.id,
+        dependencia: equipo.dependencia || '',
+        ...datosComunes,
         estado: 'Programado',
         firma: 'No',
-        actividades: f.get('actividades'),
         observaciones: ''
-    };
+    }));
+
     try {
         const response = await fetch('backend/api.php?action=preventivos', {
             method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken }, credentials: 'same-origin',
             body: JSON.stringify({
-                codigo: nuevoPlan.id, equipo_codigo: nuevoPlan.equipo, dependencia: nuevoPlan.dependencia,
-                frecuencia: nuevoPlan.frecuencia, ultimo_mantenimiento: nuevoPlan.ultimo,
-                proximo_mantenimiento: nuevoPlan.proximo, tecnico: nuevoPlan.tecnico,
-                actividades: nuevoPlan.actividades
+                planes: nuevosPlanes.map(plan => ({ codigo: plan.id, equipo_codigo: plan.equipo, dependencia: plan.dependencia })),
+                frecuencia: datosComunes.frecuencia,
+                ultimo_mantenimiento: datosComunes.ultimo,
+                proximo_mantenimiento: datosComunes.proximo,
+                tecnico: datosComunes.tecnico,
+                actividades: datosComunes.actividades
             })
         });
         if (manejarSesionNoAutenticada(response)) return;
@@ -1102,7 +1123,7 @@ async function guardarPreventivo(e) {
     } catch (error) {
         return alert('No se pudo conectar con el servidor.');
     }
-    DB.preventivos.unshift(nuevoPlan);
+    DB.preventivos.unshift(...nuevosPlanes);
     guardarDB(); cerrarModal(); cargarPreventivos(); cargarDashboard();
 }
 async function editarPreventivo(id) {
