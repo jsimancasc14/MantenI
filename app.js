@@ -39,6 +39,7 @@ const DB_STORAGE_KEY = 'MantTI_Arjona_DB';
 const DB_STORAGE_VERSION = 2;
 let csrfToken = '';
 let totalImpresoras = 0;
+const preventivosSeleccionados = new Set();
 
 function cargarDB() {
     const guardado = localStorage.getItem(DB_STORAGE_KEY);
@@ -1012,6 +1013,7 @@ function cargarPreventivos() {
         else if(d <= 7) claseDias = 'advertencia';
         return `<tr>
             <td><strong>${p.id}</strong></td>
+            <td><input type="checkbox" ${preventivosSeleccionados.has(p.id)?'checked':''} onchange="cambiarSeleccionPreventivo('${p.id}', this.checked)" aria-label="Seleccionar plan ${p.id}"></td>
             <td>${p.equipo}</td>
             <td>${equipo ? `${equipo.tipo} ${equipo.marca} ${equipo.modelo}`.trim() : '—'}</td>
             <td>${equipo?.dependencia || p.dependencia || '—'}</td>
@@ -1034,6 +1036,47 @@ function cargarPreventivos() {
             </td>
         </tr>`;
     }).join('');
+    actualizarBotonEliminarPreventivos();
+}
+function actualizarBotonEliminarPreventivos() {
+    const boton = document.getElementById('btn-eliminar-preventivos-seleccionados');
+    if (!boton) return;
+    boton.textContent = `Eliminar seleccionados (${preventivosSeleccionados.size})`;
+    boton.disabled = preventivosSeleccionados.size === 0;
+}
+function cambiarSeleccionPreventivo(id, seleccionado) {
+    if (seleccionado) preventivosSeleccionados.add(id);
+    else preventivosSeleccionados.delete(id);
+    actualizarBotonEliminarPreventivos();
+}
+function limpiarSeleccionPreventivos() {
+    preventivosSeleccionados.clear();
+    cargarPreventivos();
+}
+function seleccionarTodosPreventivos() {
+    DB.preventivos.forEach(plan => preventivosSeleccionados.add(plan.id));
+    cargarPreventivos();
+}
+async function eliminarPreventivosSeleccionados() {
+    const codigos = [...preventivosSeleccionados].filter(id => DB.preventivos.some(plan => plan.id === id));
+    if (!codigos.length) return alert('Selecciona al menos un plan para eliminar.');
+    if (!confirm(`Eliminar los ${codigos.length} planes seleccionados? Esta accion no se puede deshacer.`)) return;
+    try {
+        const response = await fetch('backend/api.php?action=preventivos', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            credentials: 'same-origin',
+            body: JSON.stringify({ codigos })
+        });
+        if (manejarSesionNoAutenticada(response)) return;
+        const result = await response.json();
+        if (!response.ok || !result.ok) return alert(result.error || 'No se pudieron eliminar los planes.');
+    } catch {
+        return alert('No se pudo conectar con el servidor.');
+    }
+    codigos.forEach(id => preventivosSeleccionados.delete(id));
+    DB.preventivos = DB.preventivos.filter(plan => !codigos.includes(plan.id));
+    guardarDB(); cargarPreventivos(); cargarDashboard();
 }
 async function abrirFormPreventivo() {
     let tecnicosActivos;
@@ -1193,6 +1236,8 @@ async function eliminarPreventivo(id) {
     } catch {
         return alert('No se pudo conectar con el servidor.');
     }
+    const eliminados = grupo ? DB.preventivos.filter(item => item.grupo === grupo).map(item => item.id) : [id];
+    eliminados.forEach(codigo => preventivosSeleccionados.delete(codigo));
     DB.preventivos = grupo
         ? DB.preventivos.filter(item => item.grupo !== grupo)
         : DB.preventivos.filter(item => item.id !== id);

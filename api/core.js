@@ -501,6 +501,12 @@ export default async function handler(req, res) {
       }
       if (req.method === 'DELETE') {
         if (!requireRole(res, user, ['administrador', 'director', 'supervisor'])) return;
+        if (Array.isArray(input.codigos)) {
+          const codigos = [...new Set(input.codigos.map(codigo => String(codigo || '').trim()).filter(Boolean))];
+          if (!codigos.length || codigos.length > 1000) return sendJson(res, 422, { ok: false, error: 'Selecciona entre 1 y 1000 planes para eliminar' });
+          const result = await db.query('DELETE FROM preventivos WHERE codigo = ANY($1::varchar[]) RETURNING codigo', [codigos]);
+          return sendJson(res, 200, { ok: true, cantidad: result.rowCount });
+        }
         const grupoCodigo = String(input.grupo_codigo || '').trim();
         if (grupoCodigo) {
           const result = await db.query('DELETE FROM preventivos WHERE grupo_codigo = $1 RETURNING codigo', [grupoCodigo]);

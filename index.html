@@ -254,13 +254,18 @@
         <section id="preventivos" class="tab-content">
             <div class="barra-acciones">
                 <h2>Plan de Mantenimientos Preventivos</h2>
-                <button class="btn-primario" onclick="abrirFormPreventivo()">+ Nuevo Plan</button>
+                <div class="toolbar-actions">
+                    <button class="btn-secundario" type="button" onclick="seleccionarTodosPreventivos()">Seleccionar todos</button>
+                    <button class="btn-text" type="button" onclick="limpiarSeleccionPreventivos()">Limpiar seleccion</button>
+                    <button id="btn-eliminar-preventivos-seleccionados" class="btn-text btn-danger" type="button" onclick="eliminarPreventivosSeleccionados()" disabled>Eliminar seleccionados (0)</button>
+                    <button class="btn-primario" onclick="abrirFormPreventivo()">+ Nuevo Plan</button>
+                </div>
             </div>
             <div class="tabla-contenedor">
                 <table>
                     <thead>
                         <tr>
-                            <th>ID Plan</th><th>Equipo</th><th>Nombre del equipo</th><th>Dependencia</th><th>Frecuencia</th><th>Último</th><th>Próximo</th><th>Días Restantes</th><th>Estado</th><th>Firma</th><th>Acciones</th>
+                            <th>ID Plan</th><th>Seleccionar</th><th>Equipo</th><th>Nombre del equipo</th><th>Dependencia</th><th>Frecuencia</th><th>Último</th><th>Próximo</th><th>Días Restantes</th><th>Estado</th><th>Firma</th><th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-preventivos"></tbody>
