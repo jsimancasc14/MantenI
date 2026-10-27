@@ -400,15 +400,18 @@ export default async function handler(req, res) {
       if (req.method === 'POST') {
         if (!requireRole(res, user, ['administrador', 'director', 'supervisor'])) return;
         const planes = Array.isArray(input.planes) ? input.planes : [input];
-        const fields = ['frecuencia', 'proximo_mantenimiento', 'tecnico', 'actividades'];
+        const fields = ['frecuencia', 'proximo_mantenimiento', 'actividades'];
         if (!planes.length || planes.length > 1000 || fields.some(field => !String(input[field] || '').trim()) ||
-            planes.some(plan => ['codigo', 'equipo_codigo', 'dependencia'].some(field => !String(plan[field] || '').trim()))) {
+            planes.some(plan => ['codigo', 'equipo_codigo', 'dependencia'].some(field => !String(plan[field] || '').trim()) || !String(plan.tecnico || input.tecnico || '').trim())) {
           return sendJson(res, 422, { ok: false, error: 'Faltan datos obligatorios del plan preventivo' });
         }
         const codigos = planes.map(plan => String(plan.codigo).trim());
         if (new Set(codigos).size !== codigos.length) return sendJson(res, 422, { ok: false, error: 'Los codigos de los planes deben ser unicos' });
-        if (!await isActiveTechnician(db, input.tecnico)) {
-          return sendJson(res, 422, { ok: false, error: 'El tecnico asignado no esta habilitado' });
+        const tecnicos = new Set(planes.map(plan => String(plan.tecnico || input.tecnico || '').trim()));
+        for (const tecnico of tecnicos) {
+          if (!await isActiveTechnician(db, tecnico)) {
+            return sendJson(res, 422, { ok: false, error: 'El tecnico asignado no esta habilitado' });
+          }
         }
         const grupoCodigo = String(input.grupo_codigo || '').trim();
         const connection = await db.connect();
@@ -429,9 +432,9 @@ export default async function handler(req, res) {
               : 'codigo, equipo_codigo, dependencia, frecuencia, ultimo_mantenimiento, proximo_mantenimiento, tecnico, actividades, estado';
             const values = grupoCodigo
               ? [String(plan.codigo).trim(), String(plan.equipo_codigo).trim(), String(plan.dependencia).trim(), input.frecuencia,
-                  input.ultimo_mantenimiento || null, input.proximo_mantenimiento, input.tecnico, input.actividades, grupoCodigo]
+                  input.ultimo_mantenimiento || null, input.proximo_mantenimiento, String(plan.tecnico || input.tecnico).trim(), input.actividades, grupoCodigo]
               : [String(plan.codigo).trim(), String(plan.equipo_codigo).trim(), String(plan.dependencia).trim(), input.frecuencia,
-                  input.ultimo_mantenimiento || null, input.proximo_mantenimiento, input.tecnico, input.actividades];
+                  input.ultimo_mantenimiento || null, input.proximo_mantenimiento, String(plan.tecnico || input.tecnico).trim(), input.actividades];
             const placeholders = grupoCodigo
               ? "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Programado', $9)"
               : "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Programado')";

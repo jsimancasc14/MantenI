@@ -1017,6 +1017,7 @@ function cargarPreventivos() {
             <td>${p.equipo}</td>
             <td>${equipo ? `${equipo.tipo} ${equipo.marca} ${equipo.modelo}`.trim() : '—'}</td>
             <td>${equipo?.dependencia || p.dependencia || '—'}</td>
+            <td>${p.tecnico || 'Sin asignar'}</td>
             <td>${p.frecuencia}</td>
             <td>${p.ultimo||'—'}</td>
             <td>${p.proximo}</td>
@@ -1105,9 +1106,7 @@ async function abrirFormPreventivo() {
         </select>
         <label>Fecha Último Mantenimiento</label><input id="preventivo-ultimo" type="date" name="ultimo" value="${hoy()}" required onchange="actualizarProximaFechaPreventivo()">
         <label>Próximo mantenimiento (fecha proyectada)</label><input id="preventivo-proximo" type="date" name="proximo" required readonly>
-        <label>Técnico Responsable</label><select name="tecnico" required>
-            ${tecnicosActivos.map(t=>`<option>${t.nombre}</option>`).join('')}
-        </select>
+        <p class="form-hint">El sistema repartira los nuevos planes entre los ${tecnicosActivos.length} tecnicos activos, equilibrando la cantidad de planes programados.</p>
         <label>Actividades Estándar</label><textarea name="actividades" required rows="3">Limpieza interna y externa, actualización SO y antivirus, revisión de disco y RAM</textarea>
         <button type="submit" class="btn-primario">Crear Plan</button>
         </form>`;
@@ -1130,6 +1129,14 @@ async function guardarPreventivo(e) {
         : [getEquipo(equipoSeleccionado)].filter(Boolean);
     if (!equipos.length) return alert('No hay equipos en el inventario para crear el plan.');
 
+    let tecnicosActivos;
+    try {
+        tecnicosActivos = await cargarTecnicosDesdeBackend();
+    } catch (error) {
+        return alert(error.message || 'No se pudieron cargar los tecnicos activos.');
+    }
+    if (!tecnicosActivos?.length) return alert('No hay tecnicos activos para asignar.');
+
     const siguienteNumero = DB.preventivos.reduce((mayor, plan) => {
         const numero = Number(String(plan.id).match(/^PR-(\d+)$/)?.[1] || 0);
         return Math.max(mayor, numero);
@@ -1139,30 +1146,39 @@ async function guardarPreventivo(e) {
         frecuencia: f.get('frecuencia'),
         ultimo: f.get('ultimo') || '',
         proximo: f.get('proximo'),
-        tecnico: f.get('tecnico'),
         actividades: f.get('actividades')
     };
-    const nuevosPlanes = equipos.map((equipo, indice) => ({
-        id: `PR-${String(siguienteNumero + indice).padStart(3, '0')}`,
-        equipo: equipo.id,
-        dependencia: equipo.dependencia || '',
-        grupo: grupoCodigo,
-        ...datosComunes,
-        estado: 'Programado',
-        firma: 'No',
-        observaciones: ''
-    }));
+    const cargas = new Map(tecnicosActivos.map(tecnico => [
+        tecnico.nombre,
+        DB.preventivos.filter(plan => plan.tecnico === tecnico.nombre && plan.estado === 'Programado').length
+    ]));
+    const nuevosPlanes = equipos.map((equipo, indice) => {
+        const tecnico = tecnicosActivos.reduce((menosCargado, candidato) =>
+            cargas.get(candidato.nombre) < cargas.get(menosCargado.nombre) ? candidato : menosCargado
+        );
+        cargas.set(tecnico.nombre, cargas.get(tecnico.nombre) + 1);
+        return {
+            id: `PR-${String(siguienteNumero + indice).padStart(3, '0')}`,
+            equipo: equipo.id,
+            dependencia: equipo.dependencia || '',
+            grupo: grupoCodigo,
+            tecnico: tecnico.nombre,
+            ...datosComunes,
+            estado: 'Programado',
+            firma: 'No',
+            observaciones: ''
+        };
+    });
 
     try {
         const response = await fetch('backend/api.php?action=preventivos', {
             method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken }, credentials: 'same-origin',
             body: JSON.stringify({
-                planes: nuevosPlanes.map(plan => ({ codigo: plan.id, equipo_codigo: plan.equipo, dependencia: plan.dependencia })),
+                planes: nuevosPlanes.map(plan => ({ codigo: plan.id, equipo_codigo: plan.equipo, dependencia: plan.dependencia, tecnico: plan.tecnico })),
                 grupo_codigo: grupoCodigo || null,
                 frecuencia: datosComunes.frecuencia,
                 ultimo_mantenimiento: datosComunes.ultimo,
                 proximo_mantenimiento: datosComunes.proximo,
-                tecnico: datosComunes.tecnico,
                 actividades: datosComunes.actividades
             })
         });
