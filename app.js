@@ -800,9 +800,31 @@ function cargarOrdenes() {
             <td>${etiquetaEstado(o.estado)}</td>
             <td>
                 ${o.estado!=='Cerrado'?`<button class="btn-icon" onclick="cerrarOrden('${o.id}')" title="Cerrar Orden">✅</button>`:''}
+                <button class="btn-icon" onclick="eliminarOrden('${o.id}')" title="Eliminar Orden" aria-label="Eliminar orden ${o.id}">Eliminar</button>
             </td>
         </tr>`).join('');
 }
+async function eliminarOrden(id) {
+    if (!confirm(`\u00bfEliminar la orden de trabajo ${id}? Esta acci\u00f3n no se puede deshacer.`)) return;
+    try {
+        const response = await fetch('backend/api.php?action=ordenes', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            credentials: 'same-origin',
+            body: JSON.stringify({ codigo: id })
+        });
+        if (manejarSesionNoAutenticada(response)) return;
+        const result = await response.json();
+        if (!response.ok || !result.ok) return alert(result.error || 'No se pudo eliminar la orden.');
+    } catch {
+        return alert('No se pudo conectar con el servidor.');
+    }
+    DB.ordenes = DB.ordenes.filter(orden => orden.id !== id);
+    guardarDB();
+    cargarOrdenes();
+    cargarDashboard();
+}
+
 async function iniciarOrden(id) {
     const orden = DB.ordenes.find(x => x.id === id);
     if(!orden) return;

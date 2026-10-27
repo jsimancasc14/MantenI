@@ -329,6 +329,15 @@ export default async function handler(req, res) {
         const { rows } = await db.query('SELECT * FROM ordenes_trabajo ORDER BY id DESC');
         return sendJson(res, 200, { ok: true, data: rows });
       }
+      if (req.method === 'DELETE') {
+        if (!requireRole(res, user, ['administrador', 'director', 'supervisor'])) return;
+        const input = await readBody(req);
+        const codigo = String(input.codigo || '').trim();
+        if (!codigo) return sendJson(res, 422, { ok: false, error: 'El c\u00f3digo de la orden es obligatorio' });
+        const { rows } = await db.query('DELETE FROM ordenes_trabajo WHERE codigo = $1 RETURNING codigo', [codigo]);
+        if (!rows.length) return sendJson(res, 404, { ok: false, error: 'Orden no encontrada' });
+        return sendJson(res, 200, { ok: true });
+      }
       const input = await readBody(req);
       if (req.method === 'POST') {
         if (!requireRole(res, user, ['administrador', 'director', 'supervisor'])) return;
