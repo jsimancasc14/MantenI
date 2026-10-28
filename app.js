@@ -338,6 +338,10 @@ function cargarDashboard() {
     document.getElementById('preventivos-prox').textContent = prox;
     const noOp = DB.inventario.filter(e => ['En reparación','En espera de repuesto','Obsoleto'].includes(e.estado)).length;
     document.getElementById('no-operativos').textContent = noOp;
+    const operativos = DB.inventario.filter(e => e.estado === 'Operativo').length;
+    const disponibilidad = totalEquipos ? Math.round((operativos / totalEquipos) * 100) : 0;
+    document.getElementById('hero-disponibilidad').textContent = disponibilidad + '%';
+    document.getElementById('hero-ordenes-abiertas').textContent = abiertas;
 
     // Órdenes activas
     const listaActivas = DB.ordenes.filter(o => o.estado !== 'Cerrado');

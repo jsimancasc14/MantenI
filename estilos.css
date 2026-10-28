@@ -1595,3 +1595,67 @@ form button[type="submit"] {
         flex: 1 1 100%;
     }
 }
+/* Pulido de jerarquía, accesibilidad y lectura en pantallas pequeñas */
+:focus-visible {
+    outline: 3px solid rgba(36, 112, 220, 0.72);
+    outline-offset: 3px;
+}
+
+.tab-content > h2,
+.section-title {
+    margin: 0 0 1rem;
+    color: var(--texto);
+    letter-spacing: -0.025em;
+}
+
+.tabla-contenedor {
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tabla-contenedor table {
+    margin: 0;
+}
+
+.panel-card,
+.cat-contenido.active,
+.barra-acciones {
+    background: var(--surface);
+}
+
+body.dark-mode .card.alerta,
+body.dark-mode .card.peligro,
+body.dark-mode .summary-box,
+body.dark-mode th {
+    background: var(--fondo-2);
+}
+
+@media (max-width: 760px) {
+    .tabla-contenedor {
+        position: relative;
+        border-radius: 14px;
+    }
+
+    .tabla-contenedor table {
+        min-width: 720px;
+    }
+
+    .tabla-contenedor th,
+    .tabla-contenedor td {
+        padding: 0.7rem 0.8rem;
+    }
+
+    .cat-contenido.active {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
