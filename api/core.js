@@ -340,8 +340,22 @@ export default async function handler(req, res) {
       });
       const payload = await aiResponse.json().catch(() => ({}));
       if (!aiResponse.ok) {
-        console.error('OpenAI assistant error:', payload.error?.type || aiResponse.status);
-        return sendJson(res, 502, { ok: false, error: 'El asistente no pudo responder ahora. Inténtalo de nuevo más tarde.' });
+        const errorType = String(payload.error?.type || '');
+        const errorCode = String(payload.error?.code || '');
+        console.error('OpenAI assistant error:', errorCode || errorType || aiResponse.status);
+        let message = 'OpenAI no pudo responder. Revisa la configuración del asistente e inténtalo de nuevo.';
+        if (aiResponse.status === 401 || errorCode === 'invalid_api_key' || errorType === 'authentication_error') {
+          message = 'OpenAI rechazó la clave. Confirma que OPENAI_API_KEY sea una clave de API válida y vuelve a desplegar.';
+        } else if (aiResponse.status === 429 && errorCode === 'insufficient_quota') {
+          message = 'La cuenta de API de OpenAI no tiene cuota disponible. Revisa la facturación y los límites del proyecto.';
+        } else if (aiResponse.status === 429) {
+          message = 'OpenAI alcanzó un límite temporal de solicitudes. Espera un momento e inténtalo de nuevo.';
+        } else if (aiResponse.status === 403 || errorType === 'permission_error') {
+          message = 'La clave no tiene permiso para usar la API o el modelo configurado. Revisa los permisos del proyecto de OpenAI.';
+        } else if (aiResponse.status === 404 || errorCode === 'model_not_found') {
+          message = 'El modelo configurado no está disponible para esta cuenta. Revisa OPENAI_MODEL en Vercel.';
+        }
+        return sendJson(res, 502, { ok: false, error: message });
       }
       const answer = (payload.output || []).flatMap(item => item.content || [])
         .filter(item => item.type === 'output_text').map(item => item.text).join('\n').trim();
