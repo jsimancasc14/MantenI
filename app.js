@@ -317,7 +317,17 @@ function etiquetaEstado(estado) {
         'Vencido': 'vencido',
         'Realizado': 'cerrado'
     };
-    return `<span class="etiqueta ${clases[estado] || ''}">${estado}</span>`;
+    return `<span class="etiqueta ${clases[estado] || ''}">${escaparHTML(estado)}</span>`;
+}
+
+function escaparHTML(valor) {
+    return String(valor ?? '').replace(/[&<>"']/g, caracter => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[caracter]);
+}
+
+function argumentoSeguroHTML(valor) {
+    return escaparHTML(JSON.stringify(String(valor ?? '')).replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029'));
 }
 
 // ======================================================
@@ -347,8 +357,8 @@ function cargarDashboard() {
     const listaActivas = DB.ordenes.filter(o => o.estado !== 'Cerrado');
     document.getElementById('lista-ordenes-activas').innerHTML = listaActivas.length ? listaActivas.map(o => `
         <div style="padding:0.7rem; border-bottom:1px solid #eee;">
-            <strong>${o.id}</strong> — ${o.equipo} — ${etiquetaEstado(o.estado)}<br>
-            <small>Técnico: ${o.tecnico} | Falla: ${o.falla.substring(0,40)}...</small>
+            <strong>${escaparHTML(o.id)}</strong> — ${escaparHTML(o.equipo)} — ${etiquetaEstado(o.estado)}<br>
+            <small>Técnico: ${escaparHTML(o.tecnico)} | Falla: ${escaparHTML(o.falla.substring(0,40))}...</small>
         </div>`).join('') : '<p>Sin órdenes abiertas</p>';
 
     // Preventivos próximos
@@ -359,8 +369,8 @@ function cargarDashboard() {
     document.getElementById('lista-preventivos-prox').innerHTML = listaPre.length ? listaPre.map(p => {
         const d = diasEntre(p.proximo);
         return `<div style="padding:0.7rem; border-bottom:1px solid #eee;">
-            <strong>${p.id}</strong> — ${p.equipo}<br>
-            <small>Próximo: ${p.proximo} (${d} días) | Técnico: ${p.tecnico}</small>
+            <strong>${escaparHTML(p.id)}</strong> — ${escaparHTML(p.equipo)}<br>
+            <small>Próximo: ${escaparHTML(p.proximo)} (${d} días) | Técnico: ${escaparHTML(p.tecnico)}</small>
         </div>`;
     }).join('') : '<p>Sin mantenimientos próximos</p>';
 
@@ -402,7 +412,7 @@ function cargarGraficaEstados() {
     contenedor.innerHTML = estados.map(estado => {
         const porcentaje = Math.round((estado.total / total) * 100);
         return `<div class="chart-row">
-            <div class="chart-label"><span>${estado.nombre}</span><strong>${estado.total}</strong></div>
+            <div class="chart-label"><span>${escaparHTML(estado.nombre)}</span><strong>${estado.total}</strong></div>
             <div class="chart-track" role="presentation"><span class="chart-bar ${estado.clase}" style="width:${porcentaje}%"></span></div>
             <small>${porcentaje}% del inventario</small>
         </div>`;
@@ -535,17 +545,17 @@ function cargarInventario(filtro='') {
     }
     document.getElementById('tabla-inventario').innerHTML = datos.map(e => `
         <tr>
-            <td><strong>${e.id}</strong></td>
-            <td>${e.marca}</td>
-            <td>${e.modelo}</td>
-            <td>${e.serial}</td>
-            <td>${e.ubicacion}</td>
-            <td>${e.dependencia}</td>
-            <td>${e.responsable}</td>
+            <td><strong>${escaparHTML(e.id)}</strong></td>
+            <td>${escaparHTML(e.marca)}</td>
+            <td>${escaparHTML(e.modelo)}</td>
+            <td>${escaparHTML(e.serial)}</td>
+            <td>${escaparHTML(e.ubicacion)}</td>
+            <td>${escaparHTML(e.dependencia)}</td>
+            <td>${escaparHTML(e.responsable)}</td>
             <td>${etiquetaEstado(e.estado)}</td>
             <td>
-                <button class="btn-icon" onclick="verEquipo('${e.id}')" title="Ver Hoja de vida">👁️</button>
-                <button class="btn-icon" onclick="nuevaOrdenDesdeEquipo('${e.id}')" title="Crear Orden">📝</button>
+                <button class="btn-icon" onclick="verEquipo(${argumentoSeguroHTML(e.id)})" title="Ver Hoja de vida">👁️</button>
+                <button class="btn-icon" onclick="nuevaOrdenDesdeEquipo(${argumentoSeguroHTML(e.id)})" title="Crear Orden">📝</button>
             </td>
         </tr>`).join('');
 }
@@ -623,7 +633,7 @@ function abrirFormEquipo() {
         <label>Serial</label><input name="serial" required>
         <label>Número Interno</label><input name="interno" placeholder="INV-AAAA-NNN">
         <label>Dependencia</label><select name="dependencia" required>
-            ${DB.dependencias.map(d=>`<option>${d.nombre}</option>`).join('')}
+            ${DB.dependencias.map(d=>`<option>${escaparHTML(d.nombre)}</option>`).join('')}
         </select>
         <label>Responsable</label><input name="responsable" required>
         <label>Ubicación</label><input name="ubicacion" required>
@@ -706,28 +716,28 @@ async function verEquipo(id) {
         console.warn('No se pudieron cargar los documentos del equipo.', error);
     }
     document.getElementById('modal-cuerpo').innerHTML = `
-        <h2>Hoja de Vida — ${e.id}</h2>
+        <h2>Hoja de Vida — ${escaparHTML(e.id)}</h2>
         <div style="columns:2; gap:2rem;">
-        <div><p><strong>Marca/Modelo:</strong> ${e.marca} ${e.modelo}</p>
-        <p><strong>Serial:</strong> ${e.serial}</p>
-        <p><strong>Dependencia:</strong> ${e.dependencia}</p>
-        <p><strong>Responsable:</strong> ${e.responsable}</p>
-        <p><strong>Ubicación:</strong> ${e.ubicacion}</p>
+        <div><p><strong>Marca/Modelo:</strong> ${escaparHTML(e.marca)} ${escaparHTML(e.modelo)}</p>
+        <p><strong>Serial:</strong> ${escaparHTML(e.serial)}</p>
+        <p><strong>Dependencia:</strong> ${escaparHTML(e.dependencia)}</p>
+        <p><strong>Responsable:</strong> ${escaparHTML(e.responsable)}</p>
+        <p><strong>Ubicación:</strong> ${escaparHTML(e.ubicacion)}</p>
         <p><strong>Estado:</strong> ${etiquetaEstado(e.estado)}</p></div>
-        <div><p><strong>Procesador:</strong> ${e.procesador||'—'}</p>
-        <p><strong>RAM:</strong> ${e.ram||'—'}</p>
-        <p><strong>Disco:</strong> ${e.disco||'—'}</p>
-        <p><strong>Sistema Operativo:</strong> ${e.so || e.sistema_operativo || '—'}</p>
-        <p><strong>Office:</strong> ${e.office || '—'}</p>
-        <p><strong>Programas instalados:</strong> ${e.programas || '—'}</p></div></div>
+        <div><p><strong>Procesador:</strong> ${escaparHTML(e.procesador||'—')}</p>
+        <p><strong>RAM:</strong> ${escaparHTML(e.ram||'—')}</p>
+        <p><strong>Disco:</strong> ${escaparHTML(e.disco||'—')}</p>
+        <p><strong>Sistema Operativo:</strong> ${escaparHTML(e.so || e.sistema_operativo || '—')}</p>
+        <p><strong>Office:</strong> ${escaparHTML(e.office || '—')}</p>
+        <p><strong>Programas instalados:</strong> ${escaparHTML(e.programas || '—')}</p></div></div>
         <h3 style="margin-top:1.5rem;">Historial de Órdenes (${ordenes.length})</h3>
         ${ordenes.length ? `<table><thead><tr><th>N°</th><th>Fecha</th><th>Tipo</th><th>Estado</th></tr></thead>
-        ${ordenes.map(o=>`<tr><td>${o.id}</td><td>${o.solicitud}</td><td>${o.tipo}</td><td>${etiquetaEstado(o.estado)}</td></tr>`).join('')}</table>` : '<p>Sin órdenes registradas</p>'}
+        ${ordenes.map(o=>`<tr><td>${escaparHTML(o.id)}</td><td>${escaparHTML(o.solicitud)}</td><td>${escaparHTML(o.tipo)}</td><td>${etiquetaEstado(o.estado)}</td></tr>`).join('')}</table>` : '<p>Sin órdenes registradas</p>'}
         <h3 style="margin-top:1.5rem;">Trazabilidad del equipo</h3>
-        ${historial.length ? `<div class="timeline-list">${historial.map(item => `<div class="timeline-item"><strong>${item.accion}</strong><span>${item.descripcion}</span><small>${item.created_at} · ${item.usuario}</small></div>`).join('')}</div>` : '<p>Sin movimientos registrados</p>'}
+        ${historial.length ? `<div class="timeline-list">${historial.map(item => `<div class="timeline-item"><strong>${escaparHTML(item.accion)}</strong><span>${escaparHTML(item.descripcion)}</span><small>${escaparHTML(item.created_at)} · ${escaparHTML(item.usuario)}</small></div>`).join('')}</div>` : '<p>Sin movimientos registrados</p>'}
         <h3 style="margin-top:1.5rem;">Documentos y evidencias</h3>
-        <form class="document-upload" onsubmit="subirDocumento(event, '${e.id}')"><input type="file" name="archivo" accept=".pdf,.jpg,.jpeg,.png,.xlsx" required><button class="btn-secundario" type="submit">Adjuntar documento</button></form>
-        ${documentos.length ? `<div class="document-list">${documentos.map(doc => `<div><strong>${doc.nombre_archivo}</strong><small>${doc.tipo} · ${Math.ceil(doc.tamano / 1024)} KB · ${doc.created_at}</small></div>`).join('')}</div>` : '<p>Sin documentos adjuntos</p>'}
+        <form class="document-upload" onsubmit="subirDocumento(event, ${argumentoSeguroHTML(e.id)})"><input type="file" name="archivo" accept=".pdf,.jpg,.jpeg,.png,.xlsx" required><button class="btn-secundario" type="submit">Adjuntar documento</button></form>
+        ${documentos.length ? `<div class="document-list">${documentos.map(doc => `<div><strong>${escaparHTML(doc.nombre_archivo)}</strong><small>${escaparHTML(doc.tipo)} · ${Math.ceil(doc.tamano / 1024)} KB · ${escaparHTML(doc.created_at)}</small></div>`).join('')}</div>` : '<p>Sin documentos adjuntos</p>'}
         <button class="btn-primario" onclick="cerrarModal()" style="margin-top:1rem;">Cerrar</button>`;
     document.getElementById('modal').classList.add('active');
 }
@@ -789,15 +799,15 @@ function cargarOrdenes() {
         const planesTecnico = DB.preventivos.filter(plan => normalizarNombreTecnico(plan.tecnico) === tecnicoNormalizado);
         document.getElementById('tabla-ordenes-tecnico').innerHTML = datos.map(o => `
             <tr>
-                <td><strong>${o.id}</strong><br><small>${o.solicitud}</small></td>
-                <td>${o.equipo}</td>
-                <td>${o.tipo}</td>
-                <td><span class="etiqueta ${o.prioridad==='Alta'?'vencido':o.prioridad==='Media'?'programado':'cerrado'}">${o.prioridad}</span></td>
-                <td>${o.falla.substring(0, 45)}${o.falla.length > 45 ? '...' : ''}</td>
+                <td><strong>${escaparHTML(o.id)}</strong><br><small>${escaparHTML(o.solicitud)}</small></td>
+                <td>${escaparHTML(o.equipo)}</td>
+                <td>${escaparHTML(o.tipo)}</td>
+                <td><span class="etiqueta ${o.prioridad==='Alta'?'vencido':o.prioridad==='Media'?'programado':'cerrado'}">${escaparHTML(o.prioridad)}</span></td>
+                <td>${escaparHTML(o.falla.substring(0, 45))}${o.falla.length > 45 ? '...' : ''}</td>
                 <td>${etiquetaEstado(o.estado)}</td>
                 <td>
-                    ${o.estado === 'Programado' ? `<button class="btn-icon" onclick="iniciarOrden('${o.id}')" title="Iniciar Orden">🔄</button>` : ''}
-                    ${o.estado !== 'Cerrado' ? `<button class="btn-icon" onclick="cerrarOrden('${o.id}')" title="Cerrar Orden">✅</button>` : ''}
+                    ${o.estado === 'Programado' ? `<button class="btn-icon" onclick="iniciarOrden(${argumentoSeguroHTML(o.id)})" title="Iniciar Orden">🔄</button>` : ''}
+                    ${o.estado !== 'Cerrado' ? `<button class="btn-icon" onclick="cerrarOrden(${argumentoSeguroHTML(o.id)})" title="Cerrar Orden">✅</button>` : ''}
                 </td>
             </tr>`).join('');
         document.getElementById('totales-tecnico').textContent = String(DB.ordenes.filter(o => normalizarNombreTecnico(o.tecnico) === tecnicoNormalizado).length);
@@ -806,11 +816,11 @@ function cargarOrdenes() {
         document.getElementById('tabla-preventivos-tecnico').innerHTML = planesTecnico.length ? planesTecnico.map(plan => {
             const equipo = getEquipo(plan.equipo);
             return `<tr>
-                <td><strong>${plan.id}</strong></td>
-                <td>${plan.equipo}</td>
-                <td>${equipo ? `${equipo.tipo} ${equipo.marca} ${equipo.modelo}`.trim() : '-'}</td>
-                <td>${plan.frecuencia}</td>
-                <td>${plan.proximo || '-'}</td>
+                <td><strong>${escaparHTML(plan.id)}</strong></td>
+                <td>${escaparHTML(plan.equipo)}</td>
+                <td>${equipo ? escaparHTML(`${equipo.tipo} ${equipo.marca} ${equipo.modelo}`.trim()) : '-'}</td>
+                <td>${escaparHTML(plan.frecuencia)}</td>
+                <td>${escaparHTML(plan.proximo || '-')}</td>
                 <td>${etiquetaEstado(plan.estado)}</td>
             </tr>`;
         }).join('') : '<tr><td colspan="6">No hay planes preventivos asignados a este tecnico.</td></tr>';
@@ -819,15 +829,15 @@ function cargarOrdenes() {
 
     document.getElementById('tabla-ordenes').innerHTML = datos.map(o => `
         <tr>
-            <td><strong>${o.id}</strong><br><small>${o.solicitud}</small></td>
-            <td>${o.equipo}</td>
-            <td>${o.tipo}</td>
-            <td><span class="etiqueta ${o.prioridad==='Alta'?'vencido':o.prioridad==='Media'?'programado':'cerrado'}">${o.prioridad}</span></td>
-            <td>${o.tecnico}</td>
+            <td><strong>${escaparHTML(o.id)}</strong><br><small>${escaparHTML(o.solicitud)}</small></td>
+            <td>${escaparHTML(o.equipo)}</td>
+            <td>${escaparHTML(o.tipo)}</td>
+            <td><span class="etiqueta ${o.prioridad==='Alta'?'vencido':o.prioridad==='Media'?'programado':'cerrado'}">${escaparHTML(o.prioridad)}</span></td>
+            <td>${escaparHTML(o.tecnico)}</td>
             <td>${etiquetaEstado(o.estado)}</td>
             <td>
-                ${o.estado!=='Cerrado'?`<button class="btn-icon" onclick="cerrarOrden('${o.id}')" title="Cerrar Orden">✅</button>`:''}
-                <button class="btn-icon" onclick="eliminarOrden('${o.id}')" title="Eliminar Orden" aria-label="Eliminar orden ${o.id}">Eliminar</button>
+                ${o.estado!=='Cerrado'?`<button class="btn-icon" onclick="cerrarOrden(${argumentoSeguroHTML(o.id)})" title="Cerrar Orden">✅</button>`:''}
+                <button class="btn-icon" onclick="eliminarOrden(${argumentoSeguroHTML(o.id)})" title="Eliminar Orden" aria-label="Eliminar orden ${escaparHTML(o.id)}">Eliminar</button>
             </td>
         </tr>`).join('');
 }
@@ -915,7 +925,7 @@ async function abrirFormOrden(equipoPreseleccionado='') {
         <h2>Nueva Orden de Trabajo</h2><form onsubmit="guardarOrden(event)">
         <label>Dependencia</label><select id="orden-dependencia-seleccionada" required onchange="filtrarEquiposPorDependencia(this.value)">
             <option value="">Seleccione una dependencia...</option>
-            ${dependencias.map(dependencia=>`<option value="${dependencia}" ${dependencia===dependenciaPreseleccionada?'selected':''}>${dependencia}</option>`).join('')}
+            ${dependencias.map(dependencia=>`<option value="${escaparHTML(dependencia)}" ${dependencia===dependenciaPreseleccionada?'selected':''}>${escaparHTML(dependencia)}</option>`).join('')}
         </select>
         <label>Equipo</label><select id="orden-equipo-seleccionado" name="equipo" required>
             <option value="">Seleccione primero una dependencia...</option>
@@ -928,7 +938,7 @@ async function abrirFormOrden(equipoPreseleccionado='') {
         </select>
         <label>Fecha Programada</label><input type="date" name="programada" required value="${hoy()}">
         <label>Técnico Asignado</label><select name="tecnico" required>
-            ${tecnicosActivos.map(t=>`<option>${t.nombre}</option>`).join('')}
+            ${tecnicosActivos.map(t=>`<option>${escaparHTML(t.nombre)}</option>`).join('')}
         </select>
         <label>Falla / Motivo</label><textarea name="falla" required rows="3"></textarea>
         <label>Diagnóstico Inicial</label><textarea name="diagnostico" rows="2"></textarea>
@@ -986,8 +996,8 @@ function cerrarOrden(id) {
     const o = DB.ordenes.find(x => x.id === id);
     if(!o) return;
     document.getElementById('modal-cuerpo').innerHTML = `
-        <h2>Cerrar Orden ${id}</h2><form onsubmit="confirmarCierre(event, '${id}')">
-        <label>Actividades Realizadas</label><textarea name="actividades" required rows="3">${o.actividades}</textarea>
+        <h2>Cerrar Orden ${escaparHTML(id)}</h2><form onsubmit="confirmarCierre(event, ${argumentoSeguroHTML(id)})">
+        <label>Actividades Realizadas</label><textarea name="actividades" required rows="3">${escaparHTML(o.actividades)}</textarea>
         <label>Repuestos / Materiales</label><textarea name="repuestos" rows="2"></textarea>
         <label>Tiempo Total (horas)</label><input type="number" step="0.5" name="horas" min="0">
         <label>Diagnóstico Final</label><textarea name="diagnosticoFinal" required rows="2"></textarea>
@@ -1037,28 +1047,28 @@ function cargarPreventivos() {
         else if(d < 0) claseDias = 'vencido';
         else if(d <= 7) claseDias = 'advertencia';
         return `<tr>
-            <td><strong>${p.id}</strong></td>
-            <td><input type="checkbox" ${preventivosSeleccionados.has(p.id)?'checked':''} onchange="cambiarSeleccionPreventivo('${p.id}', this.checked)" aria-label="Seleccionar plan ${p.id}"></td>
-            <td>${p.equipo}</td>
-            <td>${equipo ? `${equipo.tipo} ${equipo.marca} ${equipo.modelo}`.trim() : '—'}</td>
-            <td>${equipo?.dependencia || p.dependencia || '—'}</td>
-            <td>${p.tecnico || 'Sin asignar'}</td>
-            <td>${p.frecuencia}</td>
-            <td>${p.ultimo||'—'}</td>
-            <td>${p.proximo}</td>
+            <td><strong>${escaparHTML(p.id)}</strong></td>
+            <td><input type="checkbox" ${preventivosSeleccionados.has(p.id)?'checked':''} onchange="cambiarSeleccionPreventivo(${argumentoSeguroHTML(p.id)}, this.checked)" aria-label="Seleccionar plan ${escaparHTML(p.id)}"></td>
+            <td>${escaparHTML(p.equipo)}</td>
+            <td>${equipo ? escaparHTML(`${equipo.tipo} ${equipo.marca} ${equipo.modelo}`.trim()) : '—'}</td>
+            <td>${escaparHTML(equipo?.dependencia || p.dependencia || '—')}</td>
+            <td>${escaparHTML(p.tecnico || 'Sin asignar')}</td>
+            <td>${escaparHTML(p.frecuencia)}</td>
+            <td>${escaparHTML(p.ultimo||'—')}</td>
+            <td>${escaparHTML(p.proximo)}</td>
             <td class="${claseDias}">${d===null||isNaN(d)?'—':d<0?`${d} días`:`${d} días`}</td>
             <td>${etiquetaEstado(d<0 && p.estado==='Programado'?'Vencido':p.estado)}</td>
             <td>
-                <select aria-label="Firma del plan ${p.id}" data-firma="${p.firma || 'No'}" onchange="guardarFirmaPreventivo('${p.id}', this.value, this)">
+                <select aria-label="Firma del plan ${escaparHTML(p.id)}" data-firma="${escaparHTML(p.firma || 'No')}" onchange="guardarFirmaPreventivo(${argumentoSeguroHTML(p.id)}, this.value, this)">
                     <option value="Sí" ${(p.firma || 'No') === 'Sí' ? 'selected' : ''}>Sí firmó</option>
                     <option value="No" ${(p.firma || 'No') === 'No' ? 'selected' : ''}>No firmó</option>
                 </select>
             </td>
             <td>
-                <label class="checkbox-inline"><input type="checkbox" ${p.estado==='Realizado'?'checked':''} onchange="cambiarEstadoPreventivo('${p.id}', this.checked, this)" aria-label="Marcar plan ${p.id} como realizado"> Realizado</label>
-                <button class="btn-text" onclick="editarPreventivo('${p.id}')" title="Editar plan">Editar</button>
-                ${primerPlanDelGrupo?`<button class="btn-text btn-danger" onclick="eliminarPreventivo('${p.id}')" title="Eliminar todo el grupo de planes">Eliminar todo el plan</button>`:''}
-                ${!p.grupo?`<button class="btn-text btn-danger" onclick="eliminarPreventivo('${p.id}')" title="Eliminar plan">Eliminar plan</button>`:''}
+                <label class="checkbox-inline"><input type="checkbox" ${p.estado==='Realizado'?'checked':''} onchange="cambiarEstadoPreventivo(${argumentoSeguroHTML(p.id)}, this.checked, this)" aria-label="Marcar plan ${escaparHTML(p.id)} como realizado"> Realizado</label>
+                <button class="btn-text" onclick="editarPreventivo(${argumentoSeguroHTML(p.id)})" title="Editar plan">Editar</button>
+                ${primerPlanDelGrupo?`<button class="btn-text btn-danger" onclick="eliminarPreventivo(${argumentoSeguroHTML(p.id)})" title="Eliminar todo el grupo de planes">Eliminar todo el plan</button>`:''}
+                ${!p.grupo?`<button class="btn-text btn-danger" onclick="eliminarPreventivo(${argumentoSeguroHTML(p.id)})" title="Eliminar plan">Eliminar plan</button>`:''}
             </td>
         </tr>`;
     }).join('');
@@ -1122,10 +1132,10 @@ async function abrirFormPreventivo() {
         <h2>Nuevo Plan de Mantenimiento Preventivo</h2><form onsubmit="guardarPreventivo(event)">
         <label>Equipo o impresora</label><select id="preventivo-equipo-seleccionado" name="equipo" required onchange="actualizarDependenciaEquipoSeleccionado(this.value, 'preventivo-dependencia-equipo')">
             <option value="__TODOS__">Todos los equipos e impresoras</option>
-            ${DB.inventario.map(e=>`<option value="${e.id}">${e.id} — ${e.tipo} — ${e.marca} ${e.modelo}</option>`).join('')}
+            ${DB.inventario.map(e=>`<option value="${escaparHTML(e.id)}">${escaparHTML(e.id)} — ${escaparHTML(e.tipo)} — ${escaparHTML(e.marca)} ${escaparHTML(e.modelo)}</option>`).join('')}
         </select>
         <p id="preventivo-alcance-ayuda">Seleccione un equipo o todos los equipos.</p>
-        <p>Dependencia: <strong id="preventivo-dependencia-equipo">${DB.inventario[0]?.dependencia || 'Seleccione un equipo'}</strong></p>
+        <p>Dependencia: <strong id="preventivo-dependencia-equipo">${escaparHTML(DB.inventario[0]?.dependencia || 'Seleccione un equipo')}</strong></p>
         <label>Frecuencia</label><select id="preventivo-frecuencia" name="frecuencia" required onchange="actualizarProximaFechaPreventivo()">
             <option>Mensual</option><option selected>Trimestral</option><option>Semestral</option><option>Anual</option>
         </select>
@@ -1224,16 +1234,16 @@ async function editarPreventivo(id) {
     catch (error) { return alert(error.message || 'No se pudieron cargar los técnicos habilitados.'); }
     if (!tecnicosActivos?.length) return alert('No hay técnicos habilitados para asignar.');
     document.getElementById('modal-cuerpo').innerHTML = `
-        <h2>Editar Plan ${plan.id}</h2><form onsubmit="guardarEdicionPreventivo(event, '${plan.id}')">
+        <h2>Editar Plan ${escaparHTML(plan.id)}</h2><form onsubmit="guardarEdicionPreventivo(event, ${argumentoSeguroHTML(plan.id)})">
         <label>Equipo o impresora</label><select id="preventivo-equipo-seleccionado" name="equipo" required onchange="actualizarDependenciaEquipoSeleccionado(this.value, 'preventivo-dependencia-equipo')">
-            ${DB.inventario.map(e=>`<option value="${e.id}" ${e.id===plan.equipo?'selected':''}>${e.id} — ${e.tipo} — ${e.marca} ${e.modelo}</option>`).join('')}
+            ${DB.inventario.map(e=>`<option value="${escaparHTML(e.id)}" ${e.id===plan.equipo?'selected':''}>${escaparHTML(e.id)} — ${escaparHTML(e.tipo)} — ${escaparHTML(e.marca)} ${escaparHTML(e.modelo)}</option>`).join('')}
         </select>
-        <p>Dependencia: <strong id="preventivo-dependencia-equipo">${plan.dependencia || ''}</strong></p>
+        <p>Dependencia: <strong id="preventivo-dependencia-equipo">${escaparHTML(plan.dependencia || '')}</strong></p>
         <label>Frecuencia</label><select name="frecuencia" required>${['Mensual','Trimestral','Semestral','Anual'].map(f=>`<option ${plan.frecuencia===f?'selected':''}>${f}</option>`).join('')}</select>
-        <label>Fecha último mantenimiento</label><input type="date" name="ultimo" value="${plan.ultimo || ''}">
-        <label>Próximo mantenimiento</label><input type="date" name="proximo" value="${plan.proximo}" required>
-        <label>Técnico responsable</label><select name="tecnico" required>${tecnicosActivos.map(t=>`<option ${t.nombre===plan.tecnico?'selected':''}>${t.nombre}</option>`).join('')}</select>
-        <label>Actividades estándar</label><textarea name="actividades" required rows="3">${plan.actividades || ''}</textarea>
+        <label>Fecha último mantenimiento</label><input type="date" name="ultimo" value="${escaparHTML(plan.ultimo || '')}">
+        <label>Próximo mantenimiento</label><input type="date" name="proximo" value="${escaparHTML(plan.proximo)}" required>
+        <label>Técnico responsable</label><select name="tecnico" required>${tecnicosActivos.map(t=>`<option ${t.nombre===plan.tecnico?'selected':''}>${escaparHTML(t.nombre)}</option>`).join('')}</select>
+        <label>Actividades estándar</label><textarea name="actividades" required rows="3">${escaparHTML(plan.actividades || '')}</textarea>
         <button type="submit" class="btn-primario">Guardar cambios</button></form>`;
     document.getElementById('modal').classList.add('active');
 }
@@ -1357,15 +1367,15 @@ async function cargarCatalogos() {
         alert(error.message || 'No se pudo actualizar el catálogo de técnicos.');
     }
     document.getElementById('tabla-dependencias').innerHTML = DB.dependencias.map(d => `
-        <tr><td>${d.nombre}</td><td>${d.responsable}</td><td>${d.correo}</td><td>${d.telefono}</td><td>—</td></tr>`).join('');
+        <tr><td>${escaparHTML(d.nombre)}</td><td>${escaparHTML(d.responsable)}</td><td>${escaparHTML(d.correo)}</td><td>${escaparHTML(d.telefono)}</td><td>—</td></tr>`).join('');
     document.getElementById('tabla-tecnicos').innerHTML = DB.tecnicos.map(t => `
-        <tr><td>${t.nombre}</td><td>${t.cargo}</td><td>${t.correo}</td><td>${Number(t.activo) === 1?'✅':'❌'}</td>
+        <tr><td>${escaparHTML(t.nombre)}</td><td>${escaparHTML(t.cargo)}</td><td>${escaparHTML(t.correo)}</td><td>${Number(t.activo) === 1?'✅':'❌'}</td>
         <td>
             <button class="btn-icon" type="button" onclick="cambiarEstadoTecnico(${Number(t.id)}, ${Number(t.activo) !== 1})" title="${Number(t.activo) === 1?'Deshabilitar':'Habilitar'} técnico">${Number(t.activo) === 1?'⛔':'✅'}</button>
             <button class="btn-icon" type="button" onclick="eliminarTecnico(${Number(t.id)})" title="Eliminar técnico">🗑️</button>
         </td></tr>`).join('');
     document.getElementById('tabla-repuestos').innerHTML = DB.repuestos.map(r => `
-        <tr><td>${r.nombre}</td><td>${r.unidad}</td><td>$${r.costo.toLocaleString()}</td><td>${r.existencia}</td><td>—</td></tr>`).join('');
+        <tr><td>${escaparHTML(r.nombre)}</td><td>${escaparHTML(r.unidad)}</td><td>$${Number(r.costo).toLocaleString()}</td><td>${Number(r.existencia)}</td><td>—</td></tr>`).join('');
 }
 
 async function cambiarEstadoTecnico(id, activo) {

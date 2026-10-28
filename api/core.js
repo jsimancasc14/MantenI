@@ -7,6 +7,9 @@ const { Pool } = pg;
 const SESSION_COOKIE = 'mantti_session';
 const SESSION_TTL_SECONDS = 8 * 60 * 60;
 const WRITE_METHODS = new Set(['POST', 'PUT', 'DELETE']);
+const LOGIN_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_LIMIT_MAX_ATTEMPTS = 5;
+const loginAttempts = new Map();
 let pool;
 
 function sendJson(res, statusCode, payload) {
@@ -26,6 +29,45 @@ function getPool() {
     });
   }
   return pool;
+}
+
+function loginRateLimitKeys(req, username) {
+  const forwardedFor = req.headers['x-forwarded-for'];
+  const ip = typeof forwardedFor === 'string' ? forwardedFor.split(',')[0].trim() : 'unknown';
+  return [`ip:${ip}`, `account:${username}`];
+}
+
+function checkLoginRateLimit(key, now = Date.now()) {
+  const record = loginAttempts.get(key);
+  if (!record || now - record.startedAt >= LOGIN_LIMIT_WINDOW_MS) {
+    loginAttempts.set(key, { startedAt: now, count: 0 });
+    return { allowed: true, retryAfter: 0 };
+  }
+  if (record.count >= LOGIN_LIMIT_MAX_ATTEMPTS) {
+    return {
+      allowed: false,
+      retryAfter: Math.max(1, Math.ceil((record.startedAt + LOGIN_LIMIT_WINDOW_MS - now) / 1000))
+    };
+  }
+  return { allowed: true, retryAfter: 0 };
+}
+
+function recordFailedLogin(key, now = Date.now()) {
+  const record = loginAttempts.get(key);
+  if (!record || now - record.startedAt >= LOGIN_LIMIT_WINDOW_MS) {
+    loginAttempts.set(key, { startedAt: now, count: 1 });
+  } else {
+    record.count += 1;
+  }
+  if (loginAttempts.size > 5000) {
+    for (const [attemptKey, attempt] of loginAttempts) {
+      if (now - attempt.startedAt >= LOGIN_LIMIT_WINDOW_MS) loginAttempts.delete(attemptKey);
+    }
+  }
+}
+
+function clearFailedLogins(key) {
+  loginAttempts.delete(key);
 }
 
 function getSecret() {
@@ -154,13 +196,25 @@ export async function handleLogin(req, res) {
     const password = String(input.password || '');
     if (!username || !password) return sendJson(res, 400, { ok: false, error: 'Usuario y contraseña requeridos' });
 
+    const rateLimitKeys = loginRateLimitKeys(req, username);
+    const rateLimits = rateLimitKeys.map(key => checkLoginRateLimit(key));
+    const blocked = rateLimits.find(rateLimit => !rateLimit.allowed);
+    if (blocked) {
+      res.setHeader('Retry-After', String(blocked.retryAfter));
+      return sendJson(res, 429, { ok: false, error: 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.' });
+    }
+
     const { rows } = await getPool().query(
       'SELECT id, username, nombre_completo, rol, password_hash FROM usuarios WHERE username = $1 AND activo = 1 LIMIT 1',
       [username]
     );
     const user = rows[0];
     const valid = user ? await bcrypt.compare(password, user.password_hash) : false;
-    if (!valid) return sendJson(res, 401, { ok: false, error: 'Credenciales inválidas' });
+    if (!valid) {
+      rateLimitKeys.forEach(key => recordFailedLogin(key));
+      return sendJson(res, 401, { ok: false, error: 'Credenciales inválidas' });
+    }
+    rateLimitKeys.forEach(clearFailedLogins);
 
     const sessionUser = {
       id: Number(user.id),

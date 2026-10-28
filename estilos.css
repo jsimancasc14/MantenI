@@ -172,6 +172,20 @@ body::before {
     font-weight: 700;
 }
 
+.login-presentation-link {
+    display: block;
+    margin-top: 1rem;
+    color: #174b91;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+}
+
+.login-presentation-link:hover {
+    text-decoration: underline;
+}
+
 .layout-shell {
     display: flex;
     min-height: 100vh;

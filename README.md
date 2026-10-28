@@ -10,12 +10,14 @@ Necesitas Node.js LTS (incluye `npm`) y PostgreSQL instalados y en ejecución.
 2. Copia `.env.example` a `.env.local` y edita este último. Configura `DATABASE_URL` con el usuario, la contraseña, el puerto y el nombre de tu base local. Por ejemplo: `postgresql://postgres:TU_CLAVE@localhost:5432/mantti_arjona`. Si la contraseña contiene caracteres especiales, codifícala para URL.
 3. Genera un secreto de sesión local con `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"` y pega el resultado como valor de `AUTH_SECRET` en `.env.local`.
 4. En una terminal, desde esta carpeta, ejecuta `npm run dev`.
-5. Abre `http://localhost:3000` en el navegador e inicia sesión con un usuario activo existente en la tabla `usuarios`.
+5. Abre `http://localhost:3000` para ver la página pública de presentación. Entra a `http://localhost:3000/sistema.html` para iniciar sesión con un usuario activo existente en la tabla `usuarios`.
 
-`.env.local` contiene credenciales y no se debe compartir ni subir al repositorio. El servidor local incluido inicia tanto la web como la API; abrir `index.html` directamente o servirlo solo desde Apache/XAMPP no ejecuta las rutas de PostgreSQL.
+`.env.local` contiene credenciales y no se debe compartir ni subir al repositorio. El servidor local incluido inicia tanto la web como la API; abrir las páginas HTML directamente o servirlas solo desde Apache/XAMPP no ejecuta las rutas de PostgreSQL.
 
 La pantalla carga inventario, órdenes, mantenimientos preventivos y catálogos desde PostgreSQL. Si la conexión o las consultas fallan, no se muestran los registros de demostración como si fueran datos reales.
 Los técnicos nuevos y su estado activo se guardan en PostgreSQL desde el catálogo; el navegador no habilita por sí solo a una persona para asignarla a una orden.
+
+`/` es la página pública de presentación. Su panel de muestra contiene únicamente datos ficticios y no llama a la API. `/sistema.html` contiene la aplicación autenticada. El límite de intentos de inicio de sesión actual vive en memoria de cada instancia; para despliegues con múltiples instancias debe reemplazarse por un limitador compartido (por ejemplo, Redis o una tabla PostgreSQL) antes de usarlo como control de seguridad distribuido.
 
 ## Requisitos para desplegar
 

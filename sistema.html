@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ManténTI Arjona | Sistema de gestión</title>
+    <meta name="description" content="Plataforma de gestión de inventario tecnológico y mantenimiento institucional.">
+    <meta name="theme-color" content="#092d62">
+    <link rel="icon" type="image/svg+xml" href="logo-mantenti.svg">
+    <link rel="stylesheet" href="estilos.css?v=10">
+</head>
+<body>
+    <div id="login-screen" class="login-screen active">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="brand-mark login-brand">
+                    <video autoplay muted playsinline loop preload="none" aria-label="Logo animado Alcaldía de Arjona">
+                        <source src="logo-alcaldia-arjona.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <div>
+                    <h2>Iniciar sesión</h2>
+                </div>
+            </div>
+
+            <form id="login-form">
+                <label for="usuario">Usuario</label>
+                <input id="usuario" name="usuario" type="text" placeholder="admin o tecnico" autocomplete="username" spellcheck="false" required>
+
+                <label for="password">Contraseña</label>
+                <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required>
+
+                <button type="submit" class="btn-primario login-btn">Entrar al sistema</button>
+            </form>
+            <a class="login-presentation-link" href="index.html">Conocer la plataforma y ver la demo</a>
+        </div>
+    </div>
+
+    <div class="layout-shell app-shell hidden" id="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-mark">
+                    <video autoplay muted playsinline loop preload="none" aria-label="Logo animado Alcaldía de Arjona">
+                        <source src="logo-alcaldia-arjona.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <div>
+                    <span class="eyebrow">Gestión</span>
+                    <h2>ManténTI</h2>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav" aria-label="Navegación principal">
+                <button class="tab-btn active" data-tab="inicio">Inicio</button>
+                <button class="tab-btn" data-tab="inventario">Inventario</button>
+                <button class="tab-btn" data-tab="ordenes">Órdenes</button>
+                <button class="tab-btn" data-tab="preventivos">Preventivos</button>
+                <button class="tab-btn" data-tab="catalogos">Catálogos</button>
+                <button class="tab-btn" data-tab="reportes">Reportes</button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-card">
+                    <span class="user-label">Usuario</span>
+                    <strong>Admin TIC</strong>
+                </div>
+                <div class="sidebar-actions">
+                    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Cambiar tema">🌙</button>
+                    <button id="backup-btn" class="switch-user-btn" type="button">Respaldar</button>
+                    <button id="switch-user-btn" class="switch-user-btn" type="button" aria-label="Cambiar usuario">Cambiar usuario</button>
+                    <button id="logout-btn" class="logout-btn" type="button" aria-label="Cerrar sesión">⎋ Salir</button>
+                </div>
+            </div>
+        </aside>
+
+        <div class="page-shell">
+            <header class="topbar">
+                <div class="header-content">
+                    <div>
+                        <span class="eyebrow">Sistema institucional</span>
+                        <h1>ManténTI Arjona</h1>
+                    </div>
+                    <p>Sistema de control de inventario y mantenimiento de equipos — Alcaldía de Arjona</p>
+                </div>
+            </header>
+
+            <main class="app-main">
+        <!-- PANEL INICIO / DASHBOARD -->
+        <section id="inicio" class="tab-content active">
+            <div class="dashboard-overview">
+                <div class="hero-panel">
+                    <div class="hero-copy">
+                        <span class="tag">Panel general</span>
+                        <h2>Disponibilidad institucional y atención técnica</h2>
+                        <p>Monitoreo operativo del inventario, mantenimientos y niveles de servicio del área de TI.</p>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="mini-stat">
+                            <span>Disponibilidad</span>
+                            <strong id="hero-disponibilidad">0%</strong>
+                        </div>
+                        <div class="mini-stat">
+                            <span>Órdenes abiertas</span>
+                            <strong id="hero-ordenes-abiertas">0</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard">
+                <div class="card">
+                    <h3>Equipos Totales</h3>
+                    <p class="numero" id="total-equipos">0</p>
+                </div>
+                <div class="card advertencia">
+                    <h3>Órdenes Abiertas</h3>
+                    <p class="numero" id="ordenes-abiertas">0</p>
+                </div>
+                <div class="card alerta">
+                    <h3>Preventivos Próximos</h3>
+                    <p class="numero" id="preventivos-prox">0</p>
+                </div>
+                <div class="card peligro">
+                    <h3>Equipos No Operativos</h3>
+                    <p class="numero" id="no-operativos">0</p>
+                </div>
+            </div>
+
+            <div class="activity-grid">
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h2>Órdenes Activas</h2>
+                        <span class="cool-badge">Live</span>
+                    </div>
+                    <div id="lista-ordenes-activas"></div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h2>Preventivos Próximos a Vencer</h2>
+                        <span class="cool-badge neutral">Agenda</span>
+                    </div>
+                    <div id="lista-preventivos-prox"></div>
+                </div>
+            </div>
+
+            <div class="dashboard-chart-grid">
+                <div class="panel-card chart-panel">
+                    <div class="panel-header">
+                        <div>
+                            <span class="eyebrow">Lectura rápida</span>
+                            <h2>Estado del inventario</h2>
+                        </div>
+                        <span class="cool-badge neutral">Actualizado</span>
+                    </div>
+                    <div class="inventory-balance" aria-label="Balance de equipos e impresoras">
+                        <div class="inventory-balance-item">
+                            <span>Equipos</span>
+                            <strong id="balance-equipos">0</strong>
+                        </div>
+                        <div class="inventory-balance-item">
+                            <span>Impresoras</span>
+                            <strong id="balance-impresoras">0</strong>
+                        </div>
+                        <div class="inventory-balance-item total">
+                            <span>Total de activos</span>
+                            <strong id="balance-total">0</strong>
+                        </div>
+                    </div>
+                    <div class="chart-layout">
+                        <div id="grafica-dona" class="donut-chart" aria-label="Distribución del estado del inventario">
+                            <div class="donut-center"><strong id="grafica-total">0</strong><span>equipos</span></div>
+                        </div>
+                        <div id="grafica-estados" class="chart-list" aria-label="Detalle del estado del inventario"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- INVENTARIO -->
+        <section id="inventario" class="tab-content">
+            <div class="barra-acciones">
+                <h2>Inventario de Equipos</h2>
+                <div class="toolbar-actions inventory-actions">
+                    <button class="btn-secundario" type="button" onclick="exportarInventarioExcel()" title="Descargar ficha técnica completa">⇩ Exportar Excel</button>
+                    <button class="btn-primario" onclick="abrirFormEquipo()">+ Nuevo Equipo</button>
+                </div>
+                <input type="text" id="buscar-equipo" placeholder="Buscar equipo..." oninput="filtrarInventario()">
+            </div>
+            <div class="tabla-contenedor">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Código</th><th>Marca</th><th>Modelo</th><th>Serial</th><th>Ubicación</th><th>Dependencia</th><th>Responsable</th><th>Estado</th><th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-inventario"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ÓRDENES -->
+        <section id="ordenes" class="tab-content">
+            <div class="barra-acciones orders-toolbar">
+                <h2>Órdenes de Trabajo</h2>
+                <div class="role-switch" aria-label="Módulos de órdenes">
+                    <button class="module-btn active" data-role="administrador" type="button">Administrador</button>
+                    <button class="module-btn" data-role="tecnico" type="button">Técnico</button>
+                </div>
+                <div class="toolbar-actions">
+                    <button class="btn-primario" onclick="abrirFormOrden()">+ Nueva Orden</button>
+                    <label class="checkbox-inline"><input type="checkbox" id="filtro-cerradas" onchange="cargarOrdenes()"> Ocultar Cerradas</label>
+                </div>
+            </div>
+
+            <div id="panel-ordenes-administrador" class="orders-panel active">
+                <div class="tabla-contenedor">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>N° Orden</th><th>Equipo</th><th>Tipo</th><th>Prioridad</th><th>Técnico</th><th>Estado</th><th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-ordenes"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="panel-ordenes-tecnico" class="orders-panel">
+                <div class="tecnico-summary">
+                    <div class="summary-box">
+                        <label for="tecnico-asignado">Técnico asignado</label>
+                        <select id="tecnico-asignado"></select>
+                    </div>
+                    <div class="summary-box">
+                        <span>Asignadas</span>
+                        <strong id="totales-tecnico">0</strong>
+                    </div>
+                    <div class="summary-box">
+                        <span>Pendientes</span>
+                        <strong id="pendientes-tecnico">0</strong>
+                    </div>
+                    <div class="summary-box">
+                        <span>Planes preventivos</span>
+                        <strong id="planes-preventivos-tecnico">0</strong>
+                    </div>
+                </div>
+                <div class="tabla-contenedor">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>N° Orden</th><th>Equipo</th><th>Tipo</th><th>Prioridad</th><th>Falla</th><th>Estado</th><th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-ordenes-tecnico"></tbody>
+                    </table>
+                </div>
+                <h3 class="section-title">Planes preventivos asignados</h3>
+                <div class="tabla-contenedor">
+                    <table>
+                        <thead><tr><th>ID Plan</th><th>Equipo</th><th>Nombre del equipo</th><th>Frecuencia</th><th>Proximo mantenimiento</th><th>Estado</th></tr></thead>
+                        <tbody id="tabla-preventivos-tecnico"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- PREVENTIVOS -->
+        <section id="preventivos" class="tab-content">
+            <div class="barra-acciones">
+                <h2>Plan de Mantenimientos Preventivos</h2>
+                <div class="toolbar-actions">
+                    <button class="btn-secundario" type="button" onclick="seleccionarTodosPreventivos()">Seleccionar todos</button>
+                    <button class="btn-text" type="button" onclick="limpiarSeleccionPreventivos()">Limpiar seleccion</button>
+                    <button id="btn-eliminar-preventivos-seleccionados" class="btn-text btn-danger" type="button" onclick="eliminarPreventivosSeleccionados()" disabled>Eliminar seleccionados (0)</button>
+                    <button class="btn-primario" onclick="abrirFormPreventivo()">+ Nuevo Plan</button>
+                </div>
+            </div>
+            <div class="tabla-contenedor">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID Plan</th><th>Seleccionar</th><th>Equipo</th><th>Nombre del equipo</th><th>Dependencia</th><th>Tecnico responsable</th><th>Frecuencia</th><th>Último</th><th>Próximo</th><th>Días Restantes</th><th>Estado</th><th>Firma</th><th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-preventivos"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- CATÁLOGOS -->
+        <section id="catalogos" class="tab-content">
+            <h2>Catálogos</h2>
+            <div class="pestanas-int">
+                <button class="pestana-int active" data-cat="dependencias">Dependencias</button>
+                <button class="pestana-int" data-cat="tecnicos">Técnicos</button>
+                <button class="pestana-int" data-cat="repuestos">Repuestos</button>
+            </div>
+            <div id="cat-dependencias" class="cat-contenido active">
+                <button class="btn-primario" onclick="abrirFormDependencia()">+ Agregar</button>
+                <table><thead><tr><th>Dependencia</th><th>Responsable</th><th>Correo</th><th>Teléfono</th><th>Acciones</th></tr></thead><tbody id="tabla-dependencias"></tbody></table>
+            </div>
+            <div id="cat-tecnicos" class="cat-contenido">
+                <button class="btn-primario" onclick="abrirFormTecnico()">+ Agregar</button>
+                <table><thead><tr><th>Técnico</th><th>Cargo</th><th>Correo</th><th>Activo</th><th>Acciones</th></tr></thead><tbody id="tabla-tecnicos"></tbody></table>
+            </div>
+            <div id="cat-repuestos" class="cat-contenido">
+                <button class="btn-primario" onclick="abrirFormRepuesto()">+ Agregar</button>
+                <table><thead><tr><th>Repuesto</th><th>Unidad</th><th>Costo Unitario</th><th>Existencia</th><th>Acciones</th></tr></thead><tbody id="tabla-repuestos"></tbody></table>
+            </div>
+        </section>
+
+        <!-- REPORTES -->
+        <section id="reportes" class="tab-content">
+            <div class="barra-acciones">
+                <h2>Reportes y métricas</h2>
+                <button class="btn-secundario" type="button" onclick="imprimirReporte()">Imprimir reporte</button>
+            </div>
+
+            <div class="reports-grid">
+                <div class="report-card">
+                    <span>Disponibilidad</span>
+                    <strong id="report-disponibilidad">0%</strong>
+                </div>
+                <div class="report-card warning">
+                    <span>Órdenes por vencer</span>
+                    <strong id="report-vencer">0</strong>
+                </div>
+                <div class="report-card success">
+                    <span>Equipos operativos</span>
+                    <strong id="report-operativos">0</strong>
+                </div>
+                <div class="report-card danger">
+                    <span>Equipos no operativos</span>
+                    <strong id="report-no-operativos">0</strong>
+                </div>
+            </div>
+
+            <div class="report-panel">
+                <h3>Resumen ejecutivo</h3>
+                <div id="report-list"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL FORMULARIO -->
+    <div id="modal" class="modal">
+        <div class="modal-contenido">
+            <span class="cerrar" onclick="cerrarModal()">&times;</span>
+            <div id="modal-cuerpo"></div>
+        </div>
+    </div>
+
+            <footer class="footer-app">
+                <p>ManténTI Arjona v1.0 — Sistema de Gestión de Mantenimiento TI</p>
+            </footer>
+        </main>
+    </div>
+
+    <script src="app.js?v=9"></script>
+</body>
+</html>
