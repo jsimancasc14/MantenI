@@ -1,132 +1,42 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Conozca ManténTI Arjona: inventario tecnológico, órdenes de trabajo y mantenimiento preventivo en una sola plataforma.">
-    <meta name="theme-color" content="#092d62">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="ManténTI Arjona | Gestión de mantenimiento TI">
-    <meta property="og:description" content="Inventario tecnológico, órdenes de trabajo y mantenimiento preventivo en una sola plataforma.">
-    <meta property="og:url" content="https://mantenin.vercel.app/">
-    <title>ManténTI Arjona | Gestión de mantenimiento TI</title>
-    <link rel="icon" type="image/svg+xml" href="logo-mantenti.svg">
-    <style>
-        :root { color-scheme: light; --navy:#092d62; --blue:#1557a8; --green:#16805b; --ink:#17283c; --muted:#607184; --line:#e1e8f0; --paper:#f4f7fb; }
-        * { box-sizing:border-box; }
-        body { margin:0; color:var(--ink); font:16px/1.55 "Segoe UI",Arial,sans-serif; background:var(--paper); }
-        a { color:inherit; }
-        .wrap { width:min(1160px,calc(100% - 40px)); margin:auto; }
-        .top { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:22px 0; }
-        .brand { display:flex; align-items:center; gap:12px; color:var(--navy); font-weight:800; text-decoration:none; }
-        .brand img { width:44px; height:44px; }
-        .top nav { display:flex; align-items:center; gap:24px; color:var(--muted); font-size:.92rem; }
-        .top nav a { text-decoration:none; }
-        .button { display:inline-flex; align-items:center; justify-content:center; min-height:46px; padding:0 20px; border-radius:10px; background:var(--blue); color:#fff; font-weight:700; text-decoration:none; box-shadow:0 8px 20px #1557a82b; }
-        .button:hover { background:var(--navy); }
-        .hero { display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:54px; padding:68px 0 78px; }
-        .eyebrow { color:var(--green); font-size:.76rem; font-weight:800; letter-spacing:.13em; text-transform:uppercase; }
-        h1 { max-width:640px; margin:12px 0 18px; color:var(--navy); font-size:clamp(2.35rem,5vw,4.15rem); line-height:1.06; letter-spacing:-.045em; }
-        .lead { max-width:570px; margin:0 0 26px; color:var(--muted); font-size:1.1rem; }
-        .hero-note { display:block; margin-top:14px; color:var(--muted); font-size:.8rem; }
-        .preview { padding:22px; border:1px solid var(--line); border-radius:22px; background:#fff; box-shadow:0 24px 60px #132e5016; transform:rotate(1deg); }
-        .preview-top { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
-        .preview-top strong { color:var(--navy); }
-        .demo-tag { padding:5px 9px; border-radius:999px; background:#fff4d6; color:#805c00; font-size:.68rem; font-weight:800; letter-spacing:.06em; }
-        .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-        .stat { padding:13px; border:1px solid var(--line); border-radius:12px; background:#f8fafc; }
-        .stat span { display:block; color:var(--muted); font-size:.68rem; }
-        .stat b { display:block; margin-top:4px; color:var(--navy); font-size:1.45rem; }
-        .preview h2 { margin:22px 0 10px; font-size:1rem; }
-        .sample-table { width:100%; border-collapse:collapse; font-size:.78rem; }
-        .sample-table th,.sample-table td { padding:10px 8px; border-bottom:1px solid var(--line); text-align:left; }
-        .sample-table th { color:var(--muted); font-size:.66rem; text-transform:uppercase; }
-        .pill { padding:4px 8px; border-radius:999px; background:#e1f5ed; color:#116645; font-size:.68rem; font-weight:700; }
-        .section { padding:72px 0; background:#fff; }
-        .section-head { max-width:660px; margin-bottom:30px; }
-        .section h2 { margin:8px 0; color:var(--navy); font-size:clamp(1.8rem,3vw,2.5rem); line-height:1.15; }
-        .section-head p { color:var(--muted); }
-        .features { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
-        .feature { padding:22px; border:1px solid var(--line); border-radius:16px; background:#fff; }
-        .feature .num { color:var(--green); font-size:.75rem; font-weight:800; letter-spacing:.08em; }
-        .feature h3 { margin:8px 0 6px; color:var(--navy); font-size:1.05rem; }
-        .feature p { margin:0; color:var(--muted); font-size:.92rem; }
-        .trust { display:grid; grid-template-columns:1.2fr 1fr; gap:30px; align-items:start; padding:54px 0; }
-        .trust h2 { margin:0 0 10px; color:var(--navy); font-size:1.7rem; }
-        .trust p,.trust li { color:var(--muted); }
-        .trust ul { margin:0; padding-left:20px; }
-        .cta { display:flex; align-items:center; justify-content:space-between; gap:24px; margin:10px 0 56px; padding:30px; border-radius:18px; background:var(--navy); color:#fff; }
-        .cta h2 { margin:0 0 6px; font-size:1.5rem; }
-        .cta p { margin:0; color:#d5e2f3; }
-        .cta .button { flex:none; background:#fff; color:var(--navy); }
-        footer { padding:22px 0; border-top:1px solid var(--line); color:var(--muted); font-size:.82rem; }
-        :focus-visible { outline:3px solid #e3a323; outline-offset:3px; }
-        @media(max-width:800px) { .hero { grid-template-columns:1fr; gap:35px; padding:44px 0 56px; } .preview { transform:none; } .features { grid-template-columns:repeat(2,1fr); } .trust { grid-template-columns:1fr; } }
-        @media(max-width:560px) { .wrap { width:min(100% - 28px,1160px); } .top nav a:not(.button) { display:none; } .top nav { gap:0; } .brand { font-size:.92rem; } .hero { padding-top:30px; } .preview { padding:14px; } .stats { gap:6px; } .stat { padding:9px; } .stat b { font-size:1.2rem; } .sample-table th,.sample-table td { padding:8px 4px; } .features { grid-template-columns:1fr; } .section { padding:52px 0; } .cta { align-items:flex-start; flex-direction:column; padding:24px; } }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ManténTI Arjona: inventario tecnológico, órdenes de trabajo y mantenimiento preventivo con acceso seguro.">
+  <meta name="theme-color" content="#081b35">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ManténTI Arjona | Gestión TI">
+  <meta property="og:description" content="Una plataforma para gestionar activos tecnológicos y mantenimiento institucional.">
+  <meta property="og:url" content="https://mantenin.vercel.app/">
+  <title>ManténTI Arjona | Gestión institucional de TI</title>
+  <link rel="icon" type="image/svg+xml" href="logo-mantenti.svg">
+  <style>
+    :root{color-scheme:dark;--bg:#081b35;--ink:#f5f8ff;--muted:#afc0d5;--blue:#5da5ff;--mint:#58e0bd;--line:#ffffff20}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Segoe UI",Arial,sans-serif}a{color:inherit}.wrap{width:min(1160px,calc(100% - 40px));margin:auto}
+    .top{height:82px;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{display:flex;align-items:center;gap:12px;text-decoration:none;font-weight:800}.brand img{width:42px;height:42px}.top nav{display:flex;align-items:center;gap:26px;color:var(--muted);font-size:.92rem}.top nav a{text-decoration:none}.btn{display:inline-flex;min-height:48px;align-items:center;justify-content:center;gap:9px;padding:0 20px;border:1px solid transparent;border-radius:12px;background:linear-gradient(110deg,#377ff0,#37bcb0);color:#061a32;text-decoration:none;font-weight:800;box-shadow:0 10px 30px #388de440;transition:transform .2s,filter .2s}.btn:hover{transform:translateY(-2px);filter:brightness(1.1)}.btn.secondary{background:#ffffff0c;border-color:var(--line);color:var(--ink);box-shadow:none}
+    .hero{min-height:600px;display:grid;grid-template-columns:1.02fr .98fr;align-items:center;gap:50px;padding:45px 0 78px}.eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--mint);font-size:.76rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase}.pulse{width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 0 5px #58e0bd20;animation:pulse 2s infinite}h1{max-width:630px;margin:16px 0;color:#fff;font-size:clamp(2.7rem,5.4vw,5rem);line-height:1.02;letter-spacing:-.055em}.lead{max-width:580px;color:var(--muted);font-size:1.12rem}.actions{display:flex;flex-wrap:wrap;gap:12px;margin:28px 0 14px}.note{color:#91a7c2;font-size:.82rem}
+    .visual{position:relative;min-height:425px;display:grid;place-items:center;isolation:isolate}.orb{position:absolute;z-index:-1;width:345px;height:345px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#2e84ed91,#14cdb144 48%,transparent 72%);filter:blur(8px);animation:float 7s ease-in-out infinite}.orbit{position:absolute;width:365px;height:365px;border:1px solid #7cc7ff38;border-radius:50%;animation:rotate 30s linear infinite}.orbit:after{content:"";position:absolute;top:12%;left:14%;width:12px;height:12px;border-radius:50%;background:var(--mint);box-shadow:0 0 24px var(--mint)}.motion-card{width:min(100%,470px);padding:20px;border:1px solid #b7d6ff34;border-radius:24px;background:linear-gradient(145deg,#18385bcf,#0b203bd9);box-shadow:0 35px 100px #0008;backdrop-filter:blur(14px);animation:card-in .8s both,card-float 6s 1s ease-in-out infinite}.motion-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:17px;border-bottom:1px solid var(--line)}.brand-mini{display:flex;align-items:center;gap:10px;font-weight:800}.brand-mini img{width:34px;height:34px}.live{color:var(--mint);font-size:.76rem}.video-wrap{height:148px;display:grid;place-items:center;overflow:hidden;margin:18px 0;border-radius:16px;background:radial-gradient(ellipse,#224b70,#0a1b30 72%)}.video-wrap video{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 8px 22px #17d3ae30)}.module-list{display:grid;gap:9px}.module{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #ffffff13;border-radius:12px;background:#ffffff08;color:#e6effb;font-size:.9rem}.module i{width:29px;height:29px;display:grid;place-items:center;border-radius:9px;background:#4b9bff24;color:#82c3ff;font-style:normal}.arrow{margin-left:auto;color:#88a3c0}
+    .section{padding:78px 0;background:#f5f8fc;color:#15283e}.section-head{max-width:690px;margin-bottom:28px}.section .eyebrow{color:#078d75}.section h2{margin:10px 0;color:#0b2d55;font-size:clamp(2rem,3.6vw,3rem);line-height:1.12;letter-spacing:-.035em}.section-head p{color:#61748a}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{padding:24px;border:1px solid #dce5ef;border-radius:18px;background:white;box-shadow:0 12px 34px #1734550b;transition:transform .22s,box-shadow .22s}.card:hover{transform:translateY(-5px);box-shadow:0 20px 42px #17345514}.card .num{color:#148972;font-weight:800;font-size:.75rem;letter-spacing:.09em}.card h3{margin:10px 0 5px;color:#123761}.card p{margin:0;color:#65778c;font-size:.93rem}.access{display:grid;grid-template-columns:1.2fr .8fr;align-items:center;gap:30px;margin:58px auto;padding:30px;border:1px solid #ffffff20;border-radius:20px;background:linear-gradient(120deg,#102f54,#112848)}.access h2{margin:0 0 8px;font-size:1.6rem}.access p{margin:0;color:var(--muted)}.access .btn{justify-self:end}footer{padding:22px 0;border-top:1px solid var(--line);color:#92a6bf;font-size:.84rem}:focus-visible{outline:3px solid #f5bd4e;outline-offset:4px}
+    @keyframes pulse{50%{box-shadow:0 0 0 9px #58e0bd08}}@keyframes float{50%{transform:translate(9px,-14px) scale(1.05)}}@keyframes rotate{to{transform:rotate(360deg)}}@keyframes card-in{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}@keyframes card-float{50%{translate:0 -7px}}
+    @media(max-width:800px){.hero{grid-template-columns:1fr;gap:16px;padding:44px 0 58px}.visual{min-height:390px}.cards{grid-template-columns:repeat(2,1fr)}.access{grid-template-columns:1fr}.access .btn{justify-self:start}}
+    @media(max-width:560px){.wrap{width:calc(100% - 28px)}.top{height:70px}.top nav{gap:0}.top nav a:not(.btn){display:none}.top nav .btn{min-height:42px;padding:0 12px;font-size:.82rem}.brand{font-size:.88rem}.hero{padding-top:35px}h1{font-size:2.8rem}.visual{min-height:340px}.orbit{width:290px;height:290px}.motion-card{padding:14px}.video-wrap{height:118px}.cards{grid-template-columns:1fr}.section{padding:58px 0}.access{margin:38px auto;padding:23px}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+  </style>
 </head>
 <body>
-    <header class="wrap top">
-        <a class="brand" href="presentacion.html"><img src="logo-mantenti.svg" alt=""><span>ManténTI Arjona</span></a>
-        <nav aria-label="Navegación principal">
-            <a href="#modulos">Módulos</a>
-            <a href="#seguridad">Seguridad</a>
-            <a class="button" href="sistema.html">Acceso al sistema</a>
-        </nav>
-    </header>
-
-    <main>
-        <section class="wrap hero">
-            <div>
-                <span class="eyebrow">Gestión institucional de TI</span>
-                <h1>Control claro para cada activo tecnológico.</h1>
-                <p class="lead">ManténTI reúne inventario, órdenes de trabajo y mantenimientos preventivos en una plataforma para equipos de soporte y administración.</p>
-                <a class="button" href="#modulos">Explorar la plataforma</a>
-                <small class="hero-note">La vista de ejemplo usa datos ficticios y no consulta la base institucional.</small>
-            </div>
-            <section class="preview" aria-label="Vista de demostración con datos ficticios">
-                <div class="preview-top"><strong>Resumen operativo</strong><span class="demo-tag">DEMO · DATOS FICTICIOS</span></div>
-                <div class="stats">
-                    <div class="stat"><span>Activos registrados</span><b>248</b></div>
-                    <div class="stat"><span>Órdenes abiertas</span><b>12</b></div>
-                    <div class="stat"><span>Disponibilidad</span><b>94%</b></div>
-                </div>
-                <h2>Actividad reciente · ejemplo</h2>
-                <table class="sample-table">
-                    <thead><tr><th>Activo</th><th>Área</th><th>Estado</th></tr></thead>
-                    <tbody>
-                        <tr><td>DEMO-PC-014</td><td>Atención ciudadana</td><td><span class="pill">Operativo</span></td></tr>
-                        <tr><td>DEMO-PR-008</td><td>Gestión documental</td><td><span class="pill">Operativo</span></td></tr>
-                        <tr><td>DEMO-LT-021</td><td>Planeación</td><td><span class="pill">Operativo</span></td></tr>
-                    </tbody>
-                </table>
-            </section>
-        </section>
-
-        <section class="section" id="modulos">
-            <div class="wrap">
-                <div class="section-head"><span class="eyebrow">Una operación conectada</span><h2>Del inventario a la trazabilidad.</h2><p>Consulta y organiza el trabajo técnico con información centralizada y tareas definidas por rol.</p></div>
-                <div class="features">
-                    <article class="feature"><span class="num">01 / ACTIVOS</span><h3>Inventario tecnológico</h3><p>Registra características, ubicación, responsables y estado operativo de cada equipo.</p></article>
-                    <article class="feature"><span class="num">02 / SOPORTE</span><h3>Órdenes de trabajo</h3><p>Asigna solicitudes, prioridades y técnicos, y conserva el avance de cada atención.</p></article>
-                    <article class="feature"><span class="num">03 / PREVENCIÓN</span><h3>Planes preventivos</h3><p>Programa tareas periódicas y revisa fechas próximas y vencidas.</p></article>
-                    <article class="feature"><span class="num">04 / CONTROL</span><h3>Catálogos y repuestos</h3><p>Administra dependencias, personal técnico e insumos desde módulos dedicados.</p></article>
-                    <article class="feature"><span class="num">05 / SEGUIMIENTO</span><h3>Historial por equipo</h3><p>Consulta órdenes, intervenciones y evidencias relacionadas con cada activo.</p></article>
-                    <article class="feature"><span class="num">06 / GESTIÓN</span><h3>Indicadores y reportes</h3><p>Revisa disponibilidad, carga de trabajo y estado general del inventario.</p></article>
-                </div>
-            </div>
-        </section>
-
-        <section class="wrap trust" id="seguridad">
-            <div><span class="eyebrow">Acceso y responsabilidad</span><h2>Diseñada para operación por roles.</h2><p>La API verifica sesiones y permisos en el servidor. La demostración de esta página es solo visual: no incluye registros reales ni habilita acceso a la base de datos.</p></div>
-            <ul><li>Roles diferenciados para administración y soporte.</li><li>Sesiones firmadas, protección CSRF y contraseñas con hash.</li><li>Base de datos PostgreSQL para la operación.</li><li>Indicadores de ejemplo identificados como ficticios.</li></ul>
-        </section>
-
-        <section class="wrap cta">
-            <div><h2>¿Quieres recorrer la aplicación?</h2><p>Accede al sistema con una cuenta autorizada.</p></div>
-            <a class="button" href="sistema.html">Ir al inicio de sesión</a>
-        </section>
-    </main>
-    <footer><div class="wrap">ManténTI Arjona · Plataforma de gestión de mantenimiento TI</div></footer>
+  <header class="wrap top">
+    <a class="brand" href="index.html"><img src="logo-mantenti.svg" alt=""><span>ManténTI Arjona</span></a>
+    <nav aria-label="Navegación principal"><a href="#modulos">Módulos</a><a href="#demo">Demo segura</a><a class="btn" href="sistema.html">Entrar al sistema <span aria-hidden="true">→</span></a></nav>
+  </header>
+  <main>
+    <section class="wrap hero">
+      <div><span class="eyebrow"><span class="pulse"></span> Gestión institucional de TI</span><h1>Todo el soporte TI, bajo control.</h1><p class="lead">Inventario, órdenes de trabajo y mantenimiento preventivo conectados en una sola plataforma para el equipo de TI de Arjona.</p><div class="actions"><a class="btn" href="sistema.html">Ver la demo con datos reales <span aria-hidden="true">→</span></a><a class="btn secondary" href="#modulos">Conocer los módulos</a></div><small class="note">Los datos reales solo aparecen después de iniciar sesión con una cuenta autorizada.</small></div>
+      <div class="visual" aria-label="Identidad animada de ManténTI"><div class="orb"></div><div class="orbit"></div><div class="motion-card"><div class="motion-head"><div class="brand-mini"><img src="logo-mantenti.svg" alt=""><span>Un centro de control para TI</span></div><span class="live">● Plataforma</span></div><div class="video-wrap"><video autoplay muted playsinline loop preload="metadata" aria-label="Animación del logotipo institucional"><source src="logo-animado-profesional.webm" type="video/webm"><source src="logo-animado.mp4" type="video/mp4"></video></div><div class="module-list"><div class="module"><i aria-hidden="true">▦</i>Inventario tecnológico<span class="arrow">↗</span></div><div class="module"><i aria-hidden="true">✓</i>Órdenes y soporte<span class="arrow">↗</span></div><div class="module"><i aria-hidden="true">◷</i>Mantenimiento preventivo<span class="arrow">↗</span></div></div></div></div>
+    </section>
+    <section class="section" id="modulos"><div class="wrap"><div class="section-head"><span class="eyebrow">Una operación conectada</span><h2>Del registro a la atención.</h2><p>Recorre los módulos y usa el acceso autorizado para ver la información actual de la aplicación.</p></div><div class="cards"><article class="card"><span class="num">01 / ACTIVOS</span><h3>Inventario tecnológico</h3><p>Consulta equipos, impresoras, características técnicas y estado operativo.</p></article><article class="card"><span class="num">02 / SOPORTE</span><h3>Órdenes de trabajo</h3><p>Registra solicitudes, asigna prioridades y da seguimiento al trabajo técnico.</p></article><article class="card"><span class="num">03 / PREVENCIÓN</span><h3>Planes preventivos</h3><p>Organiza mantenimientos y revisa las tareas programadas desde la aplicación.</p></article></div></div></section>
+    <section class="wrap access" id="demo"><div><h2>Demo conectada a la aplicación</h2><p>Ingresa con tu cuenta autorizada para consultar datos actuales. La página pública no muestra inventario ni registros institucionales.</p></div><a class="btn" href="sistema.html">Iniciar sesión <span aria-hidden="true">→</span></a></section>
+  </main>
+  <footer><div class="wrap">ManténTI Arjona · Gestión institucional de mantenimiento TI</div></footer>
 </body>
 </html>

@@ -194,6 +194,48 @@ if (loginForm) {
     loginForm.addEventListener('submit', iniciarSesion);
 }
 
+const assistantForm = document.getElementById('assistant-form');
+const assistantQuestion = document.getElementById('assistant-question');
+const assistantAnswer = document.getElementById('assistant-answer');
+const assistantSubmit = document.getElementById('assistant-submit');
+
+async function consultarAsistente(question) {
+    if (!assistantQuestion || !assistantAnswer || !assistantSubmit) return;
+    const prompt = String(question || '').trim().slice(0, 500);
+    if (!prompt) return;
+    assistantQuestion.value = prompt;
+    assistantAnswer.dataset.state = 'loading';
+    assistantAnswer.textContent = 'Consultando los totales actuales…';
+    assistantSubmit.disabled = true;
+    try {
+        const response = await fetch('backend/api.php?action=assistant', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            body: JSON.stringify({ question: prompt })
+        });
+        const result = await response.json();
+        if (manejarSesionNoAutenticada(response)) return;
+        if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo obtener una respuesta.');
+        assistantAnswer.dataset.state = 'success';
+        assistantAnswer.textContent = result.answer;
+    } catch (error) {
+        assistantAnswer.dataset.state = 'error';
+        assistantAnswer.textContent = error.message || 'No se pudo conectar con el asistente.';
+    } finally {
+        assistantSubmit.disabled = false;
+    }
+}
+
+assistantForm?.addEventListener('submit', event => {
+    event.preventDefault();
+    consultarAsistente(assistantQuestion.value);
+});
+
+document.querySelectorAll('[data-ai-question]').forEach(button => {
+    button.addEventListener('click', () => consultarAsistente(button.dataset.aiQuestion));
+});
+
 // ======================================================
 // TEMA OSCURO / CLARO
 // ======================================================

@@ -17,12 +17,13 @@ Necesitas Node.js LTS (incluye `npm`) y PostgreSQL instalados y en ejecución.
 La pantalla carga inventario, órdenes, mantenimientos preventivos y catálogos desde PostgreSQL. Si la conexión o las consultas fallan, no se muestran los registros de demostración como si fueran datos reales.
 Los técnicos nuevos y su estado activo se guardan en PostgreSQL desde el catálogo; el navegador no habilita por sí solo a una persona para asignarla a una orden.
 
-`/` es la página pública de presentación. Su panel de muestra contiene únicamente datos ficticios y no llama a la API. `/sistema.html` contiene la aplicación autenticada. El límite de intentos de inicio de sesión actual vive en memoria de cada instancia; para despliegues con múltiples instancias debe reemplazarse por un limitador compartido (por ejemplo, Redis o una tabla PostgreSQL) antes de usarlo como control de seguridad distribuido.
+`/` es la página pública de presentación; no muestra registros institucionales. `/sistema.html` contiene la aplicación autenticada y carga datos actuales de PostgreSQL tras validar la sesión. El límite de intentos de inicio de sesión actual vive en memoria de cada instancia; para despliegues con múltiples instancias debe reemplazarse por un limitador compartido (por ejemplo, Redis o una tabla PostgreSQL) antes de usarlo como control de seguridad distribuido.
 
 ## Requisitos para desplegar
 
 - Una instancia PostgreSQL accesible desde Internet con la base migrada.
 - Configurar en Vercel `DATABASE_URL` y `AUTH_SECRET`. `DB_SSL_CA` solo se usa si el proveedor requiere una CA personalizada.
+- Para activar el asistente de IA, configurar `OPENAI_API_KEY` como variable secreta en Vercel. Opcionalmente, `OPENAI_MODEL` permite seleccionar otro modelo compatible con la API de Responses. La clave solo se usa en el servidor. El asistente envía a OpenAI los conteos agregados de inventario, impresoras, órdenes abiertas y preventivos, junto con la pregunta del usuario; no envía detalles de activos ni datos personales. El uso de la API de OpenAI puede generar cargos en la cuenta asociada.
 - `AUTH_SECRET` debe ser una cadena aleatoria de al menos 32 bytes; no reutilices contraseñas de la base.
 
 Vercel no ejecuta PHP ni aloja la base de datos; se necesita PostgreSQL remoto. `DATABASE_URL` debe copiarse del proveedor y cargarse como secreto en Vercel, nunca publicarse. Para una CA personalizada, configurar `DB_SSL_CA` con el certificado PEM.

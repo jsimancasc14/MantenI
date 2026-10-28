@@ -10,6 +10,7 @@ const WRITE_METHODS = new Set(['POST', 'PUT', 'DELETE']);
 const LOGIN_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_LIMIT_MAX_ATTEMPTS = 5;
 const loginAttempts = new Map();
+const assistantRequests = new Map();
 let pool;
 
 function sendJson(res, statusCode, payload) {
@@ -294,6 +295,58 @@ export default async function handler(req, res) {
         ordenes_abiertas: Number(orders.total),
         preventivos_programados: Number(preventives.total)
       } });
+    }
+
+    if (action === 'assistant') {
+      if (!requireMethod(req, res, ['POST'])) return;
+      const now = Date.now();
+      const recentRequests = (assistantRequests.get(user.id) || []).filter(time => now - time < 60_000);
+      if (recentRequests.length >= 8) {
+        res.setHeader('Retry-After', '60');
+        return sendJson(res, 429, { ok: false, error: 'Límite temporal del asistente alcanzado. Vuelve a intentarlo en un minuto.' });
+      }
+      recentRequests.push(now);
+      assistantRequests.set(user.id, recentRequests);
+      const input = await readBody(req);
+      const question = String(input.question || '').trim();
+      if (!question || question.length > 500) {
+        return sendJson(res, 422, { ok: false, error: 'Escribe una pregunta de hasta 500 caracteres.' });
+      }
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) return sendJson(res, 503, { ok: false, error: 'El asistente aún no está configurado. Falta OPENAI_API_KEY en las variables del servidor.' });
+
+      const [{ rows: equipment }, { rows: printers }, { rows: openOrders }, { rows: planned }] = await Promise.all([
+        db.query('SELECT COUNT(*) AS total FROM equipos'),
+        db.query('SELECT COUNT(*) AS total FROM impresoras'),
+        db.query("SELECT COUNT(*) AS total FROM ordenes_trabajo WHERE estado != 'Cerrado'"),
+        db.query("SELECT COUNT(*) AS total FROM preventivos WHERE estado = 'Programado'")
+      ]);
+      const summary = {
+        equipos_registrados: Number(equipment[0].total),
+        impresoras_registradas: Number(printers[0].total),
+        ordenes_abiertas: Number(openOrders[0].total),
+        preventivos_programados: Number(planned[0].total)
+      };
+      const aiResponse = await fetch('https://api.openai.com/v1/responses', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
+          instructions: 'Eres el asistente de ManténTI para orientar al personal de soporte TI. Responde en español, con claridad y en máximo 120 palabras. Usa solo las cifras agregadas proporcionadas; no inventes detalles de equipos, personas, ubicaciones ni causas. Si faltan datos para una conclusión, dilo y sugiere qué consultar en los módulos. No afirmes haber ejecutado acciones.',
+          input: `Resumen actual (solo totales, sin datos personales): ${JSON.stringify(summary)}\nPregunta: ${question}`,
+          max_output_tokens: 220,
+          store: false
+        })
+      });
+      const payload = await aiResponse.json().catch(() => ({}));
+      if (!aiResponse.ok) {
+        console.error('OpenAI assistant error:', payload.error?.type || aiResponse.status);
+        return sendJson(res, 502, { ok: false, error: 'El asistente no pudo responder ahora. Inténtalo de nuevo más tarde.' });
+      }
+      const answer = (payload.output || []).flatMap(item => item.content || [])
+        .filter(item => item.type === 'output_text').map(item => item.text).join('\n').trim();
+      if (!answer) return sendJson(res, 502, { ok: false, error: 'El asistente devolvió una respuesta vacía. Inténtalo de nuevo.' });
+      return sendJson(res, 200, { ok: true, answer, data_scope: 'totales agregados' });
     }
 
     if (action === 'inventario') {

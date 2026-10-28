@@ -126,6 +126,24 @@
                 </div>
             </div>
 
+            <section class="assistant-card" aria-labelledby="assistant-title">
+                <div class="assistant-copy">
+                    <span class="eyebrow">Asistente inteligente</span>
+                    <h2 id="assistant-title">Pregunta sobre la operación TI</h2>
+                    <p>La IA usa los totales actuales de equipos, impresoras, órdenes abiertas y preventivos. Solo esos conteos agregados se envían a OpenAI; no recibe nombres, seriales ni ubicaciones.</p>
+                    <div class="assistant-suggestions" aria-label="Preguntas sugeridas">
+                        <button type="button" data-ai-question="Resume el estado operativo con los totales actuales.">Resume el estado operativo</button>
+                        <button type="button" data-ai-question="¿Qué debería revisar primero según los totales actuales?">¿Qué debería revisar primero?</button>
+                    </div>
+                </div>
+                <form id="assistant-form" class="assistant-form">
+                    <label for="assistant-question">Tu pregunta</label>
+                    <textarea id="assistant-question" maxlength="500" rows="3" placeholder="Ej.: ¿Qué significa tener órdenes abiertas y preventivos programados?" required></textarea>
+                    <button id="assistant-submit" class="btn-primario" type="submit">Consultar asistente <span aria-hidden="true">→</span></button>
+                    <p id="assistant-answer" class="assistant-answer" role="status" aria-live="polite">La respuesta aparecerá aquí.</p>
+                </form>
+            </section>
+
             <div class="activity-grid">
                 <div class="panel-card">
                     <div class="panel-header">
