@@ -301,7 +301,15 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(btn.dataset.tab).classList.add('active');
-        if(btn.dataset.tab === 'inicio') cargarDashboard();
+        if (btn.dataset.tab === 'inicio') {
+            Promise.all([
+                cargarInventarioDesdeBackend(),
+                cargarOperacionesDesdeBackend(),
+                cargarResumenImpresorasDesdeBackend()
+            ]).then(cargarDashboard).catch(error => {
+                console.error('No se pudo actualizar Inicio desde el servidor.', error);
+            });
+        }
         if(btn.dataset.tab === 'inventario') cargarInventario();
         if(btn.dataset.tab === 'ordenes') cargarOrdenes();
         if(btn.dataset.tab === 'preventivos') cargarPreventivos();
