@@ -594,6 +594,7 @@ function cargarInventario(filtro='') {
             <td>${escaparHTML(e.ubicacion)}</td>
             <td>${escaparHTML(e.dependencia)}</td>
             <td>${escaparHTML(e.responsable)}</td>
+            <td>${escaparHTML(DB.ordenes.find(o => o.equipo === e.id && o.estado !== 'Cerrado' && o.tecnico)?.tecnico || DB.preventivos.find(p => p.equipo === e.id && p.tecnico)?.tecnico || 'Sin asignar')}</td>
             <td>${etiquetaEstado(e.estado)}</td>
             <td>
                 <button class="btn-text" type="button" onclick="editarEquipo(${argumentoSeguroHTML(e.id)})" title="Editar equipo">Editar</button>
@@ -1165,6 +1166,7 @@ function cargarPreventivos() {
             <td>${escaparHTML(p.equipo)}</td>
             <td>${equipo ? escaparHTML(`${equipo.tipo} ${equipo.marca} ${equipo.modelo}`.trim()) : '—'}</td>
             <td>${escaparHTML(equipo?.dependencia || p.dependencia || '—')}</td>
+            <td>${escaparHTML(equipo?.responsable || 'Sin asignar')}</td>
             <td>${escaparHTML(p.tecnico || 'Sin asignar')}</td>
             <td>${escaparHTML(p.frecuencia)}</td>
             <td>${escaparHTML(p.ultimo||'—')}</td>
