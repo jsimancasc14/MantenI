@@ -727,9 +727,6 @@ function abrirFormEquipo() {
             <option>Operativo</option><option>En reparación</option>
             <option>En espera de repuesto</option><option>Obsoleto</option><option>Baja</option>
         </select>
-        <label>Procesador</label><input name="procesador">
-        <label>Sistema operativo</label><input name="sistema_operativo" placeholder="Ej: Windows 11 Pro">
-        <label>Observaciones</label><textarea name="observaciones"></textarea>
         <button type="submit" class="btn-primario">Guardar Equipo</button>
         </form>`;
     document.getElementById('modal').classList.add('active');
@@ -754,10 +751,7 @@ async function guardarEquipo(e) {
                 dependencia: eq.dependencia,
                 responsable: eq.responsable,
                 ubicacion: eq.ubicacion,
-                estado: eq.estado,
-                procesador: eq.procesador,
-                sistema_operativo: eq.sistema_operativo,
-                observaciones: eq.observaciones
+                estado: eq.estado
             })
         });
         const result = await response.json();
