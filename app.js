@@ -639,6 +639,12 @@ async function eliminarEquipo(codigo) {
         cargarOrdenes();
         cargarPreventivos();
         cargarDashboard();
+        try {
+            await cargarResumenImpresorasDesdeBackend();
+        } catch (error) {
+            console.warn('No se pudo actualizar el conteo de impresoras tras eliminar el activo.', error);
+        }
+        cargarDashboard();
     } catch (error) {
         alert(`No se pudo conectar con el servidor para eliminar el ${tipo}.`);
     }
