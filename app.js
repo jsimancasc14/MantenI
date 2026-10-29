@@ -205,7 +205,7 @@ async function consultarAsistente(question) {
     if (!prompt) return;
     assistantQuestion.value = prompt;
     assistantAnswer.dataset.state = 'loading';
-    assistantAnswer.textContent = 'Consultando los totales actuales…';
+    assistantAnswer.textContent = 'Consultando los indicadores actuales…';
     assistantSubmit.disabled = true;
     try {
         const response = await fetch('backend/api.php?action=assistant', {

@@ -10,7 +10,6 @@ const WRITE_METHODS = new Set(['POST', 'PUT', 'DELETE']);
 const LOGIN_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_LIMIT_MAX_ATTEMPTS = 5;
 const loginAttempts = new Map();
-const assistantRequests = new Map();
 let pool;
 
 function sendJson(res, statusCode, payload) {
@@ -299,21 +298,11 @@ export default async function handler(req, res) {
 
     if (action === 'assistant') {
       if (!requireMethod(req, res, ['POST'])) return;
-      const now = Date.now();
-      const recentRequests = (assistantRequests.get(user.id) || []).filter(time => now - time < 60_000);
-      if (recentRequests.length >= 8) {
-        res.setHeader('Retry-After', '60');
-        return sendJson(res, 429, { ok: false, error: 'Límite temporal del asistente alcanzado. Vuelve a intentarlo en un minuto.' });
-      }
-      recentRequests.push(now);
-      assistantRequests.set(user.id, recentRequests);
       const input = await readBody(req);
       const question = String(input.question || '').trim();
       if (!question || question.length > 500) {
         return sendJson(res, 422, { ok: false, error: 'Escribe una pregunta de hasta 500 caracteres.' });
       }
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey) return sendJson(res, 503, { ok: false, error: 'El asistente aún no está configurado. Falta OPENAI_API_KEY en las variables del servidor.' });
 
       const [{ rows: equipment }, { rows: printers }, { rows: openOrders }, { rows: planned }] = await Promise.all([
         db.query('SELECT COUNT(*) AS total FROM equipos'),
@@ -327,50 +316,31 @@ export default async function handler(req, res) {
         ordenes_abiertas: Number(openOrders[0].total),
         preventivos_programados: Number(planned[0].total)
       };
-      const aiResponse = await fetch('https://api.openai.com/v1/responses', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
-          instructions: 'Eres el asistente de ManténTI para orientar al personal de soporte TI. Responde en español, con claridad y en máximo 120 palabras. Usa solo las cifras agregadas proporcionadas; no inventes detalles de equipos, personas, ubicaciones ni causas. Si faltan datos para una conclusión, dilo y sugiere qué consultar en los módulos. No afirmes haber ejecutado acciones.',
-          input: `Resumen actual (solo totales, sin datos personales): ${JSON.stringify(summary)}\nPregunta: ${question}`,
-          max_output_tokens: 220,
-          store: false
-        })
-      });
-      const payload = await aiResponse.json().catch(() => ({}));
-      if (!aiResponse.ok) {
-        const errorType = String(payload.error?.type || '');
-        const errorCode = String(payload.error?.code || '');
-        console.error('OpenAI assistant error:', errorCode || errorType || aiResponse.status);
-        let message = 'OpenAI no pudo responder. Revisa la configuración del asistente e inténtalo de nuevo.';
-        let retryAfterSeconds = null;
-        if (aiResponse.status === 401 || errorCode === 'invalid_api_key' || errorType === 'authentication_error') {
-          message = 'OpenAI rechazó la clave. Confirma que OPENAI_API_KEY sea una clave de API válida y vuelve a desplegar.';
-        } else if (aiResponse.status === 429 && ['insufficient_quota', 'credit_balance_exhausted', 'organization_spend_limit_exceeded', 'project_spend_limit_exceeded'].includes(errorCode)) {
-          message = 'OpenAI rechazó la solicitud por cuota, créditos o límite de gasto. Revisa la facturación y los límites de gasto del proyecto; esperar no lo resolverá.';
-        } else if (aiResponse.status === 429 && ['rate_limit_exceeded', 'slow_down'].includes(errorCode)) {
-          const retryAfter = aiResponse.headers.get('retry-after');
-          if (retryAfter && /^\d+$/.test(retryAfter) && Number(retryAfter) > 0) {
-            retryAfterSeconds = Number(retryAfter);
-            res.setHeader('Retry-After', retryAfter);
-          }
-          message = retryAfterSeconds
-            ? `OpenAI está limitando temporalmente las solicitudes. Espera al menos ${retryAfterSeconds} segundos y vuelve a intentarlo.`
-            : 'OpenAI está limitando temporalmente las solicitudes. Espera un minuto antes de volver a intentarlo.';
-        } else if (aiResponse.status === 429) {
-          message = 'OpenAI devolvió un límite 429. Revisa los límites de solicitudes y de gasto del proyecto; si es un límite temporal, espera antes de reintentar.';
-        } else if (aiResponse.status === 403 || errorType === 'permission_error') {
-          message = 'La clave no tiene permiso para usar la API o el modelo configurado. Revisa los permisos del proyecto de OpenAI.';
-        } else if (aiResponse.status === 404 || errorCode === 'model_not_found') {
-          message = 'El modelo configurado no está disponible para esta cuenta. Revisa OPENAI_MODEL en Vercel.';
-        }
-        return sendJson(res, 502, { ok: false, error: message, retry_after: retryAfterSeconds });
+      const normalizedQuestion = question.toLocaleLowerCase('es')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const total = summary.equipos_registrados + summary.impresoras_registradas;
+      let answer;
+
+      if (/primero|prioridad|recomiend|sugerenc|que revisar|por donde empiezo/.test(normalizedQuestion)) {
+        const nextSteps = [];
+        if (summary.ordenes_abiertas) nextSteps.push(`revisar y priorizar las ${summary.ordenes_abiertas} órdenes abiertas en el módulo Órdenes`);
+        if (summary.preventivos_programados) nextSteps.push(`confirmar la agenda de los ${summary.preventivos_programados} mantenimientos preventivos programados`);
+        answer = nextSteps.length
+          ? `Con los conteos actuales, te sugiero ${nextSteps.join(' y luego ')}. Esta orientación se basa solo en cantidades; revisa el detalle en cada módulo.`
+          : 'Los conteos actuales no muestran órdenes abiertas ni preventivos programados. Confirma que el inventario esté actualizado en sus módulos.';
+      } else if (/orden|solicitud|trabajo/.test(normalizedQuestion)) {
+        answer = `Hay ${summary.ordenes_abiertas} órdenes de trabajo abiertas. El conteo considera abiertas las que no están marcadas como cerradas. Consulta el módulo Órdenes para ver prioridades y detalles.`;
+      } else if (/preventiv|mantenim|agenda/.test(normalizedQuestion)) {
+        answer = `Hay ${summary.preventivos_programados} mantenimientos preventivos programados. Revisa el módulo Preventivos para consultar equipos y fechas.`;
+      } else if (/impresor/.test(normalizedQuestion)) {
+        answer = `La aplicación registra ${summary.impresoras_registradas} impresoras. Consulta el inventario para ver su información.`;
+      } else if (/inventario|equipo|activo/.test(normalizedQuestion)) {
+        answer = `El inventario registra ${summary.equipos_registrados} equipos y ${summary.impresoras_registradas} impresoras (${total} activos en total). Revisa el módulo Inventario para ver sus detalles.`;
+      } else {
+        answer = `Resumen actual: ${summary.equipos_registrados} equipos, ${summary.impresoras_registradas} impresoras, ${summary.ordenes_abiertas} órdenes abiertas y ${summary.preventivos_programados} mantenimientos preventivos programados. Puedo resumir cada indicador o sugerir qué módulo revisar.`;
       }
-      const answer = (payload.output || []).flatMap(item => item.content || [])
-        .filter(item => item.type === 'output_text').map(item => item.text).join('\n').trim();
-      if (!answer) return sendJson(res, 502, { ok: false, error: 'El asistente devolvió una respuesta vacía. Inténtalo de nuevo.' });
-      return sendJson(res, 200, { ok: true, answer, data_scope: 'totales agregados' });
+
+      return sendJson(res, 200, { ok: true, answer, data_scope: 'conteos actuales de PostgreSQL', mode: 'local_rules' });
     }
 
     if (action === 'inventario') {

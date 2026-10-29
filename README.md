@@ -23,8 +23,9 @@ Los técnicos nuevos y su estado activo se guardan en PostgreSQL desde el catál
 
 - Una instancia PostgreSQL accesible desde Internet con la base migrada.
 - Configurar en Vercel `DATABASE_URL` y `AUTH_SECRET`. `DB_SSL_CA` solo se usa si el proveedor requiere una CA personalizada.
-- Para activar el asistente de IA, configurar `OPENAI_API_KEY` como variable secreta en Vercel. Opcionalmente, `OPENAI_MODEL` permite seleccionar otro modelo compatible con la API de Responses. La clave solo se usa en el servidor. El asistente envía a OpenAI los conteos agregados de inventario, impresoras, órdenes abiertas y preventivos, junto con la pregunta del usuario; no envía detalles de activos ni datos personales. El uso de la API de OpenAI puede generar cargos en la cuenta asociada.
 - `AUTH_SECRET` debe ser una cadena aleatoria de al menos 32 bytes; no reutilices contraseñas de la base.
+
+El asistente del panel funciona localmente con reglas determinísticas y conteos de PostgreSQL. No necesita una clave de IA, no envía consultas a servicios externos y no genera cargos por uso; sus respuestas son orientación por reglas, no texto generativo.
 
 Vercel no ejecuta PHP ni aloja la base de datos; se necesita PostgreSQL remoto. `DATABASE_URL` debe copiarse del proveedor y cargarse como secreto en Vercel, nunca publicarse. Para una CA personalizada, configurar `DB_SSL_CA` con el certificado PEM.
 
