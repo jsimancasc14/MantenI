@@ -348,7 +348,33 @@ export default async function handler(req, res) {
         const { rows } = await db.query('SELECT * FROM equipos ORDER BY id DESC');
         return sendJson(res, 200, { ok: true, data: rows });
       }
-      if (req.method !== 'POST') return requireMethod(req, res, ['GET', 'POST']);
+      if (req.method === 'DELETE') {
+        if (!requireRole(res, user, ['administrador', 'director'])) return;
+        const input = await readBody(req);
+        const codigo = String(input.codigo || '').trim();
+        if (!codigo) return sendJson(res, 422, { ok: false, error: 'Código del equipo obligatorio' });
+        const connection = await db.connect();
+        try {
+          await connection.query('BEGIN');
+          const deleted = await connection.query('DELETE FROM equipos WHERE codigo = $1 RETURNING codigo', [codigo]);
+          if (!deleted.rowCount) {
+            await connection.query('ROLLBACK');
+            return sendJson(res, 404, { ok: false, error: 'No se encontró el equipo en el inventario' });
+          }
+          await connection.query('DELETE FROM ordenes_trabajo WHERE equipo_codigo = $1', [codigo]);
+          await connection.query('DELETE FROM preventivos WHERE equipo_codigo = $1', [codigo]);
+          await connection.query('DELETE FROM historial_equipos WHERE equipo_codigo = $1', [codigo]);
+          await connection.query('DELETE FROM documentos_equipos WHERE equipo_codigo = $1', [codigo]);
+          await connection.query('COMMIT');
+          return sendJson(res, 200, { ok: true, codigo });
+        } catch (error) {
+          await connection.query('ROLLBACK');
+          throw error;
+        } finally {
+          connection.release();
+        }
+      }
+      if (req.method !== 'POST') return requireMethod(req, res, ['GET', 'POST', 'DELETE']);
       if (!requireRole(res, user, ['administrador', 'director'])) return;
       const input = await readBody(req);
       const required = ['codigo', 'tipo', 'marca', 'modelo', 'serial', 'numero_interno', 'dependencia', 'responsable', 'ubicacion'];

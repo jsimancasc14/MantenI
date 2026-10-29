@@ -596,10 +596,43 @@ function cargarInventario(filtro='') {
             <td>${escaparHTML(e.responsable)}</td>
             <td>${etiquetaEstado(e.estado)}</td>
             <td>
+                <button class="btn-text btn-eliminar" onclick="eliminarEquipo(${argumentoSeguroHTML(e.id)})" title="Eliminar ${escaparHTML(String(e.tipo || '').toLowerCase().includes('impresora') ? 'impresora' : 'equipo')}" aria-label="Eliminar ${escaparHTML(String(e.tipo || '').toLowerCase().includes('impresora') ? 'impresora' : 'equipo')} ${escaparHTML(e.id)}">Eliminar</button>
                 <button class="btn-icon" onclick="verEquipo(${argumentoSeguroHTML(e.id)})" title="Ver Hoja de vida">👁️</button>
                 <button class="btn-icon" onclick="nuevaOrdenDesdeEquipo(${argumentoSeguroHTML(e.id)})" title="Crear Orden">📝</button>
             </td>
         </tr>`).join('');
+}
+
+async function eliminarEquipo(codigo) {
+    const equipo = DB.inventario.find(item => item.id === codigo);
+    if (!equipo) return;
+    const tipo = String(equipo.tipo || '').toLowerCase().includes('impresora') ? 'impresora' : 'equipo';
+    if (!confirm(`¿Eliminar ${tipo} ${codigo}? También se eliminarán sus órdenes, mantenimientos, historial y documentos asociados. Esta acción no se puede deshacer.`)) return;
+
+    try {
+        const response = await fetch('backend/api.php?action=inventario', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            credentials: 'same-origin',
+            body: JSON.stringify({ codigo })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.ok) {
+            if (manejarSesionNoAutenticada(response)) return;
+            alert(result.error || `No se pudo eliminar el ${tipo}.`);
+            return;
+        }
+        DB.inventario = DB.inventario.filter(item => item.id !== codigo);
+        DB.ordenes = DB.ordenes.filter(item => item.equipo !== codigo);
+        DB.preventivos = DB.preventivos.filter(item => item.equipo !== codigo);
+        guardarDB();
+        cargarInventario(document.getElementById('buscar-equipo')?.value || '');
+        cargarOrdenes();
+        cargarPreventivos();
+        cargarDashboard();
+    } catch (error) {
+        alert(`No se pudo conectar con el servidor para eliminar el ${tipo}.`);
+    }
 }
 
 function escaparExcel(valor) {
