@@ -34,6 +34,7 @@ CREATE TABLE "equipos" (
   "numero_interno" varchar(80) NOT NULL,
   "dependencia" varchar(120) NOT NULL,
   "responsable" varchar(120) NOT NULL,
+  "tecnico_responsable" varchar(120) DEFAULT NULL,
   "ubicacion" varchar(200) NOT NULL,
   "estado" varchar(60) NOT NULL DEFAULT 'Operativo',
   "procesador" varchar(120) DEFAULT NULL,

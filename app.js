@@ -485,6 +485,7 @@ async function cargarInventarioDesdeBackend() {
         valor: 0,
         dependencia: equipo.dependencia,
         responsable: equipo.responsable,
+        tecnicoResponsable: equipo.tecnico_responsable || '',
         ubicacion: equipo.ubicacion,
         estado: equipo.estado,
         procesador: equipo.procesador || '',
@@ -594,7 +595,7 @@ function cargarInventario(filtro='') {
             <td>${escaparHTML(e.ubicacion)}</td>
             <td>${escaparHTML(e.dependencia)}</td>
             <td>${escaparHTML(e.responsable)}</td>
-            <td>${escaparHTML(DB.ordenes.find(o => o.equipo === e.id && o.estado !== 'Cerrado' && o.tecnico)?.tecnico || DB.preventivos.find(p => p.equipo === e.id && p.tecnico)?.tecnico || 'Sin asignar')}</td>
+            <td>${escaparHTML(e.tecnicoResponsable || DB.ordenes.find(o => o.equipo === e.id && o.estado !== 'Cerrado' && o.tecnico)?.tecnico || DB.preventivos.find(p => p.equipo === e.id && p.tecnico)?.tecnico || 'Sin asignar')}</td>
             <td>${etiquetaEstado(e.estado)}</td>
             <td>
                 <button class="btn-text" type="button" onclick="editarEquipo(${argumentoSeguroHTML(e.id)})" title="Editar equipo">Editar</button>
@@ -707,7 +708,16 @@ function obtenerDependenciasEquipo() {
         .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
 }
 
-function abrirFormEquipo() {
+async function abrirFormEquipo() {
+    let tecnicosActivos;
+    try {
+        tecnicosActivos = await cargarTecnicosDesdeBackend();
+    } catch (error) {
+        alert(error.message || 'No se pudieron cargar los técnicos habilitados.');
+        return;
+    }
+    if (!tecnicosActivos) return;
+    if (!tecnicosActivos.length) return alert('No hay técnicos habilitados para asignar.');
     const dependencias = obtenerDependenciasEquipo();
     document.getElementById('modal-cuerpo').innerHTML = `
         <h2>Registrar Nuevo Equipo</h2><form onsubmit="guardarEquipo(event)">
@@ -724,6 +734,10 @@ function abrirFormEquipo() {
             ${dependencias.map(dependencia=>`<option value="${escaparHTML(dependencia)}">${escaparHTML(dependencia)}</option>`).join('')}
         </select>
         <label>Responsable</label><input name="responsable" required>
+        <label>Técnico responsable</label><select name="tecnico_responsable" required>
+            <option value="">Seleccione un técnico...</option>
+            ${tecnicosActivos.map(tecnico=>`<option value="${escaparHTML(tecnico.nombre)}">${escaparHTML(tecnico.nombre)}</option>`).join('')}
+        </select>
         <label>Ubicación</label><input name="ubicacion" required>
         <label>Estado</label><select name="estado" required>
             <option>Operativo</option><option>En reparación</option>
@@ -733,9 +747,20 @@ function abrirFormEquipo() {
         </form>`;
     document.getElementById('modal').classList.add('active');
 }
-function editarEquipo(codigo) {
+async function editarEquipo(codigo) {
     const equipo = DB.inventario.find(item => item.id === codigo);
     if (!equipo) return alert('No se encontró el equipo seleccionado.');
+    let tecnicosActivos;
+    try {
+        tecnicosActivos = await cargarTecnicosDesdeBackend();
+    } catch (error) {
+        alert(error.message || 'No se pudieron cargar los técnicos habilitados.');
+        return;
+    }
+    if (!tecnicosActivos) return;
+    if (equipo.tecnicoResponsable && !tecnicosActivos.some(tecnico => tecnico.nombre === equipo.tecnicoResponsable)) {
+        tecnicosActivos.push({ nombre: equipo.tecnicoResponsable });
+    }
     const dependencias = obtenerDependenciasEquipo();
     const tipos = ['PC escritorio', 'Laptop', 'All-in-One', 'Impresora', 'Monitor', 'Otro'];
     if (equipo.tipo && !tipos.includes(equipo.tipo)) tipos.unshift(equipo.tipo);
@@ -757,6 +782,10 @@ function editarEquipo(codigo) {
             ${opciones(dependencias, equipo.dependencia)}
         </select>
         <label>Responsable</label><input name="responsable" required value="${escaparHTML(equipo.responsable)}">
+        <label>Técnico responsable</label><select name="tecnico_responsable" required>
+            <option value="">Seleccione un técnico...</option>
+            ${tecnicosActivos.map(tecnico=>`<option value="${escaparHTML(tecnico.nombre)}" ${tecnico.nombre === equipo.tecnicoResponsable ? 'selected' : ''}>${escaparHTML(tecnico.nombre)}</option>`).join('')}
+        </select>
         <label>Ubicación</label><input name="ubicacion" required value="${escaparHTML(equipo.ubicacion)}">
         <label>Estado</label><select name="estado" required>${opciones(estados, equipo.estado)}</select>
         <button type="submit" class="btn-primario">Guardar Cambios</button>
@@ -786,6 +815,7 @@ async function guardarEquipo(e, codigoOriginal = '') {
                 serial: eq.serial,
                 dependencia: eq.dependencia,
                 responsable: eq.responsable,
+                tecnico_responsable: eq.tecnico_responsable,
                 ubicacion: eq.ubicacion,
                 estado: eq.estado
             })
@@ -803,9 +833,9 @@ async function guardarEquipo(e, codigoOriginal = '') {
 
     if (codigoOriginal) {
         const indice = DB.inventario.findIndex(item => item.id === codigoOriginal);
-        if (indice >= 0) DB.inventario[indice] = { ...DB.inventario[indice], ...eq, id: codigoOriginal };
+        if (indice >= 0) DB.inventario[indice] = { ...DB.inventario[indice], ...eq, tecnicoResponsable: eq.tecnico_responsable, id: codigoOriginal };
     } else {
-        DB.inventario.push({ ...eq, valor: 0 });
+        DB.inventario.push({ ...eq, tecnicoResponsable: eq.tecnico_responsable, valor: 0 });
     }
     const filtroActual = document.getElementById('buscar-equipo')?.value || '';
     guardarDB(); cerrarModal(); cargarInventario(filtroActual); cargarDashboard();

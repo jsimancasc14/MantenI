@@ -345,6 +345,7 @@ export default async function handler(req, res) {
 
     if (action === 'inventario') {
       if (req.method === 'GET') {
+        await db.query('ALTER TABLE equipos ADD COLUMN IF NOT EXISTS tecnico_responsable VARCHAR(120)');
         const { rows } = await db.query('SELECT * FROM equipos ORDER BY id DESC');
         return sendJson(res, 200, { ok: true, data: rows });
       }
@@ -387,14 +388,18 @@ export default async function handler(req, res) {
         const connection = await db.connect();
         try {
           await connection.query('BEGIN');
+          if (input.tecnico_responsable && !await isActiveTechnician(db, input.tecnico_responsable)) {
+            await connection.query('ROLLBACK');
+            return sendJson(res, 422, { ok: false, error: 'El técnico responsable no está habilitado' });
+          }
           const updated = await connection.query(
             `UPDATE equipos
              SET tipo = $2, marca = $3, modelo = $4, serial = $5, dependencia = $6,
-                 responsable = $7, ubicacion = $8, estado = $9
+                 responsable = $7, tecnico_responsable = $8, ubicacion = $9, estado = $10
              WHERE codigo = $1
-             RETURNING codigo, tipo, marca, modelo, serial, dependencia, responsable, ubicacion, estado`,
+             RETURNING codigo, tipo, marca, modelo, serial, dependencia, responsable, tecnico_responsable, ubicacion, estado`,
             [codigo, input.tipo, input.marca, input.modelo, input.serial, input.dependencia,
-              input.responsable, input.ubicacion, input.estado]
+              input.responsable, input.tecnico_responsable || null, input.ubicacion, input.estado]
           );
           if (!updated.rowCount) {
             await connection.query('ROLLBACK');
@@ -420,6 +425,9 @@ export default async function handler(req, res) {
       for (const field of required) {
         if (!String(input[field] || '').trim()) return sendJson(res, 422, { ok: false, error: `El campo ${field} es obligatorio` });
       }
+      if (input.tecnico_responsable && !await isActiveTechnician(db, input.tecnico_responsable)) {
+        return sendJson(res, 422, { ok: false, error: 'El técnico responsable no está habilitado' });
+      }
       const { rows: existingEquipment } = await db.query('SELECT 1 FROM equipos WHERE LOWER(BTRIM(codigo)) = LOWER(BTRIM($1)) LIMIT 1', [input.codigo]);
       if (existingEquipment.length) {
         return sendJson(res, 409, { ok: false, error: 'Ya existe un equipo con ese código. Ingresa un código diferente.' });
@@ -428,10 +436,10 @@ export default async function handler(req, res) {
       try {
         await connection.query('BEGIN');
         const result = await connection.query(
-          `INSERT INTO equipos (codigo, tipo, marca, modelo, serial, numero_interno, dependencia, responsable, ubicacion, estado, procesador, ram, disco, sistema_operativo, office, programas, observaciones)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING id`,
-          [input.codigo, input.tipo, input.marca, input.modelo, input.serial, input.numero_interno || '', input.dependencia, input.responsable, input.ubicacion,
-            input.estado || 'Operativo', input.procesador || null, input.ram || null, input.disco || null, input.sistema_operativo || null,
+          `INSERT INTO equipos (codigo, tipo, marca, modelo, serial, numero_interno, dependencia, responsable, tecnico_responsable, ubicacion, estado, procesador, ram, disco, sistema_operativo, office, programas, observaciones)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING id`,
+          [input.codigo, input.tipo, input.marca, input.modelo, input.serial, input.numero_interno || '', input.dependencia, input.responsable,
+            input.tecnico_responsable || null, input.ubicacion, input.estado || 'Operativo', input.procesador || null, input.ram || null, input.disco || null, input.sistema_operativo || null,
             input.office || null, input.programas || null, input.observaciones || null]
         );
         await connection.query(
