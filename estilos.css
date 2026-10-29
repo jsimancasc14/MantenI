@@ -2015,7 +2015,7 @@ body.dark-mode th {
 .sidebar {
     position: static;
     top: auto;
-    align-self: flex-start;
+    align-self: stretch;
     height: auto;
     min-height: 100vh;
     min-height: 100dvh;
