@@ -310,7 +310,11 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
                 console.error('No se pudo actualizar Inicio desde el servidor.', error);
             });
         }
-        if(btn.dataset.tab === 'inventario') cargarInventario();
+        if (btn.dataset.tab === 'inventario') {
+            cargarInventarioDesdeBackend().catch(error => {
+                console.error('No se pudo actualizar el inventario desde el servidor.', error);
+            });
+        }
         if(btn.dataset.tab === 'ordenes') cargarOrdenes();
         if(btn.dataset.tab === 'preventivos') cargarPreventivos();
         if(btn.dataset.tab === 'catalogos') cargarCatalogos();
