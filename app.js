@@ -735,7 +735,9 @@ async function guardarEquipo(e) {
     e.preventDefault();
     const f = new FormData(e.target);
     const eq = Object.fromEntries(f);
-    if(DB.inventario.some(x => x.id === eq.id)) return alert('El ID ya existe');
+    if(DB.inventario.some(x => String(x.id).trim().toLowerCase() === String(eq.id).trim().toLowerCase())) {
+        return alert('Ya existe un equipo con ese código. Ingresa un código diferente.');
+    }
 
     try {
         const response = await fetch('backend/api.php?action=inventario', {

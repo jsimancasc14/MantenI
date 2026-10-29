@@ -381,6 +381,10 @@ export default async function handler(req, res) {
       for (const field of required) {
         if (!String(input[field] || '').trim()) return sendJson(res, 422, { ok: false, error: `El campo ${field} es obligatorio` });
       }
+      const { rows: existingEquipment } = await db.query('SELECT 1 FROM equipos WHERE LOWER(BTRIM(codigo)) = LOWER(BTRIM($1)) LIMIT 1', [input.codigo]);
+      if (existingEquipment.length) {
+        return sendJson(res, 409, { ok: false, error: 'Ya existe un equipo con ese código. Ingresa un código diferente.' });
+      }
       const connection = await db.connect();
       try {
         await connection.query('BEGIN');
@@ -399,6 +403,9 @@ export default async function handler(req, res) {
         return sendJson(res, 201, { ok: true, id: result.rows[0].id });
       } catch (error) {
         await connection.query('ROLLBACK');
+        if (error.code === '23505' && error.constraint === 'equipos_codigo') {
+          return sendJson(res, 409, { ok: false, error: 'Ya existe un equipo con ese código. Ingresa un código diferente.' });
+        }
         throw error;
       } finally {
         connection.release();
