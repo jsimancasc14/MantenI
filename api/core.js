@@ -344,18 +344,28 @@ export default async function handler(req, res) {
         const errorCode = String(payload.error?.code || '');
         console.error('OpenAI assistant error:', errorCode || errorType || aiResponse.status);
         let message = 'OpenAI no pudo responder. Revisa la configuración del asistente e inténtalo de nuevo.';
+        let retryAfterSeconds = null;
         if (aiResponse.status === 401 || errorCode === 'invalid_api_key' || errorType === 'authentication_error') {
           message = 'OpenAI rechazó la clave. Confirma que OPENAI_API_KEY sea una clave de API válida y vuelve a desplegar.';
-        } else if (aiResponse.status === 429 && errorCode === 'insufficient_quota') {
-          message = 'La cuenta de API de OpenAI no tiene cuota disponible. Revisa la facturación y los límites del proyecto.';
+        } else if (aiResponse.status === 429 && ['insufficient_quota', 'credit_balance_exhausted', 'organization_spend_limit_exceeded', 'project_spend_limit_exceeded'].includes(errorCode)) {
+          message = 'OpenAI rechazó la solicitud por cuota, créditos o límite de gasto. Revisa la facturación y los límites de gasto del proyecto; esperar no lo resolverá.';
+        } else if (aiResponse.status === 429 && ['rate_limit_exceeded', 'slow_down'].includes(errorCode)) {
+          const retryAfter = aiResponse.headers.get('retry-after');
+          if (retryAfter && /^\d+$/.test(retryAfter) && Number(retryAfter) > 0) {
+            retryAfterSeconds = Number(retryAfter);
+            res.setHeader('Retry-After', retryAfter);
+          }
+          message = retryAfterSeconds
+            ? `OpenAI está limitando temporalmente las solicitudes. Espera al menos ${retryAfterSeconds} segundos y vuelve a intentarlo.`
+            : 'OpenAI está limitando temporalmente las solicitudes. Espera un minuto antes de volver a intentarlo.';
         } else if (aiResponse.status === 429) {
-          message = 'OpenAI alcanzó un límite temporal de solicitudes. Espera un momento e inténtalo de nuevo.';
+          message = 'OpenAI devolvió un límite 429. Revisa los límites de solicitudes y de gasto del proyecto; si es un límite temporal, espera antes de reintentar.';
         } else if (aiResponse.status === 403 || errorType === 'permission_error') {
           message = 'La clave no tiene permiso para usar la API o el modelo configurado. Revisa los permisos del proyecto de OpenAI.';
         } else if (aiResponse.status === 404 || errorCode === 'model_not_found') {
           message = 'El modelo configurado no está disponible para esta cuenta. Revisa OPENAI_MODEL en Vercel.';
         }
-        return sendJson(res, 502, { ok: false, error: message });
+        return sendJson(res, 502, { ok: false, error: message, retry_after: retryAfterSeconds });
       }
       const answer = (payload.output || []).flatMap(item => item.content || [])
         .filter(item => item.type === 'output_text').map(item => item.text).join('\n').trim();
