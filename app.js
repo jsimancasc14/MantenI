@@ -717,7 +717,6 @@ function abrirFormEquipo() {
         <label>Marca</label><input name="marca" required>
         <label>Modelo</label><input name="modelo">
         <label>Serial</label><input name="serial" required>
-        <label>Número Interno</label><input name="interno" placeholder="INV-AAAA-NNN">
         <label>Dependencia</label><select name="dependencia" required>
             <option value="">${dependencias.length ? 'Seleccione una dependencia...' : 'No hay dependencias registradas'}</option>
             ${dependencias.map(dependencia=>`<option value="${escaparHTML(dependencia)}">${escaparHTML(dependencia)}</option>`).join('')}
@@ -729,11 +728,7 @@ function abrirFormEquipo() {
             <option>En espera de repuesto</option><option>Obsoleto</option><option>Baja</option>
         </select>
         <label>Procesador</label><input name="procesador">
-        <label>RAM</label><input name="ram" placeholder="Ej: 8 GB DDR4">
-        <label>Disco</label><input name="disco" placeholder="Ej: SSD 256 GB">
         <label>Sistema operativo</label><input name="sistema_operativo" placeholder="Ej: Windows 11 Pro">
-        <label>Suite ofimática</label><input name="office" placeholder="Ej: Office 365">
-        <label>Programas instalados</label><textarea name="programas" rows="2" placeholder="Ej: ORFEO, SIIGO, Excel avanzado"></textarea>
         <label>Observaciones</label><textarea name="observaciones"></textarea>
         <button type="submit" class="btn-primario">Guardar Equipo</button>
         </form>`;
@@ -756,17 +751,12 @@ async function guardarEquipo(e) {
                 marca: eq.marca,
                 modelo: eq.modelo,
                 serial: eq.serial,
-                numero_interno: eq.interno,
                 dependencia: eq.dependencia,
                 responsable: eq.responsable,
                 ubicacion: eq.ubicacion,
                 estado: eq.estado,
                 procesador: eq.procesador,
-                ram: eq.ram,
-                disco: eq.disco,
                 sistema_operativo: eq.sistema_operativo,
-                office: eq.office,
-                programas: eq.programas,
                 observaciones: eq.observaciones
             })
         });

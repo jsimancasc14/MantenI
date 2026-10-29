@@ -377,7 +377,7 @@ export default async function handler(req, res) {
       if (req.method !== 'POST') return requireMethod(req, res, ['GET', 'POST', 'DELETE']);
       if (!requireRole(res, user, ['administrador', 'director'])) return;
       const input = await readBody(req);
-      const required = ['codigo', 'tipo', 'marca', 'modelo', 'serial', 'numero_interno', 'dependencia', 'responsable', 'ubicacion'];
+      const required = ['codigo', 'tipo', 'marca', 'modelo', 'serial', 'dependencia', 'responsable', 'ubicacion'];
       for (const field of required) {
         if (!String(input[field] || '').trim()) return sendJson(res, 422, { ok: false, error: `El campo ${field} es obligatorio` });
       }
@@ -387,7 +387,7 @@ export default async function handler(req, res) {
         const result = await connection.query(
           `INSERT INTO equipos (codigo, tipo, marca, modelo, serial, numero_interno, dependencia, responsable, ubicacion, estado, procesador, ram, disco, sistema_operativo, office, programas, observaciones)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING id`,
-          [input.codigo, input.tipo, input.marca, input.modelo, input.serial, input.numero_interno, input.dependencia, input.responsable, input.ubicacion,
+          [input.codigo, input.tipo, input.marca, input.modelo, input.serial, input.numero_interno || '', input.dependencia, input.responsable, input.ubicacion,
             input.estado || 'Operativo', input.procesador || null, input.ram || null, input.disco || null, input.sistema_operativo || null,
             input.office || null, input.programas || null, input.observaciones || null]
         );
