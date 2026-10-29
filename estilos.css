@@ -2199,3 +2199,32 @@ body.dark-mode .theme-toggle .theme-moon{display:none}body.dark-mode .theme-togg
 @keyframes theme-sun-in{from{transform:rotate(-45deg) scale(.7);opacity:.3}to{transform:rotate(0) scale(1);opacity:1}}
 @media(max-width:760px){.sidebar-brand .eyebrow{max-width:none;font-size:.57rem}.sidebar-brand h2{font-size:.98rem}.sidebar-nav{gap:.35rem}.tab-btn{min-height:39px;justify-content:center;gap:.38rem;padding:.42rem .3rem;font-size:.76rem}.tab-btn .nav-icon{width:16px;height:16px;flex-basis:16px}.sidebar-footer{gap:.48rem;padding:.5rem}.user-card{min-height:47px;grid-template-columns:31px minmax(0,1fr) 8px;gap:.5rem;padding:.32rem .42rem}.user-avatar{width:30px;height:30px;border-radius:9px}.user-avatar svg{width:16px;height:16px}.user-label{font-size:.56rem}.user-card strong{font-size:.78rem}.sidebar-actions{gap:.4rem}.sidebar-actions button{min-height:39px;gap:.35rem;padding:.42rem .38rem;font-size:.7rem}.sidebar-actions button svg{width:15px;height:15px;flex-basis:15px}}
 @media(max-width:380px){.tab-btn{gap:.25rem;font-size:.69rem}.sidebar-actions button{gap:.28rem;font-size:.65rem}}
+
+/* Accessible surfaces and text contrast for the dark application theme. */
+body.dark-mode{color-scheme:dark}
+body:not(.dark-mode){color-scheme:light}
+body.dark-mode .tabla-contenedor{background:#101b2a;border-color:#2a3b50;box-shadow:0 16px 36px #0003}
+body.dark-mode .tabla-contenedor table{background:#101b2a;color:#e6edf7}
+body.dark-mode .tabla-contenedor tbody tr,
+body.dark-mode .tabla-contenedor tbody td{background-color:#101b2a;color:#e6edf7}
+body.dark-mode .tabla-contenedor tbody tr:nth-child(even) td{background-color:#142235}
+body.dark-mode .tabla-contenedor tbody tr:hover td{background-color:#1b3049}
+body.dark-mode .tabla-contenedor th{background:linear-gradient(180deg,#1c2c40,#172638);color:#b9c9dc;border-color:#2c3e54}
+body.dark-mode .tabla-contenedor td{border-bottom-color:#29394d}
+body.dark-mode input[type="text"],
+body.dark-mode input[type="search"],
+body.dark-mode input[type="date"],
+body.dark-mode input[type="number"],
+body.dark-mode input[type="email"],
+body.dark-mode input[type="password"],
+body.dark-mode form input,
+body.dark-mode select,
+body.dark-mode textarea{border-color:#35485f;background:#111f30;color:#e8eff8;color-scheme:dark}
+body.dark-mode input::placeholder,body.dark-mode textarea::placeholder{color:#9aaec4;opacity:1}
+body.dark-mode input:focus,body.dark-mode select:focus,body.dark-mode textarea:focus{border-color:#78b8ff;box-shadow:0 0 0 3px #5297e52a}
+body.dark-mode .tabla-contenedor a{text-decoration:none;color:#9acaff}
+body.dark-mode .tabla-contenedor a:hover{color:#c3e0ff;text-decoration:none}
+body.dark-mode .tabla-contenedor .btn-text,body.dark-mode .tabla-contenedor .btn-icon{color:#d8e7fa}
+
+body.dark-mode #login-screen input[type="text"],body.dark-mode #login-screen input[type="password"],body.dark-mode #login-screen input[type="email"]{border-color:#cbd7e4;background:#fff;color:#17283c;color-scheme:light}
+body.dark-mode #login-screen input::placeholder{color:#78889b}
