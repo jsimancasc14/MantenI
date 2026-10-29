@@ -244,9 +244,15 @@ function aplicarTema() {
     const darkMode = storedTheme === 'dark';
     document.body.classList.toggle('dark-mode', darkMode);
     const btn = document.getElementById('theme-toggle');
-    if (btn) {
-        btn.textContent = darkMode ? '☀️' : '🌙';
-    }
+    actualizarControlTema(btn, darkMode);
+}
+
+function actualizarControlTema(btn, darkMode) {
+    if (!btn) return;
+    const label = btn.querySelector('[data-theme-label]');
+    if (label) label.textContent = darkMode ? 'Modo claro' : 'Modo oscuro';
+    btn.setAttribute('aria-label', darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
+    btn.setAttribute('aria-pressed', String(darkMode));
 }
 
 const themeToggle = document.getElementById('theme-toggle');
@@ -254,7 +260,7 @@ if (themeToggle) {
     themeToggle.addEventListener('click', () => {
         const darkMode = document.body.classList.toggle('dark-mode');
         localStorage.setItem('MantTI_Theme', darkMode ? 'dark' : 'light');
-        themeToggle.textContent = darkMode ? '☀️' : '🌙';
+        actualizarControlTema(themeToggle, darkMode);
     });
 }
 

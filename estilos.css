@@ -2175,3 +2175,27 @@ body.dark-mode th {
 .login-card { margin-block:auto; }
 @media (max-width:520px) { .login-card { width:100%; padding:1.15rem 1rem 1.25rem; border-radius:18px; } .login-header { gap:.65rem; margin-bottom:1rem; } .brand-mark.login-brand { width:min(100%, 175px); } #login-form input { min-height:46px; padding:.65rem .75rem; } .login-btn { min-height:46px; margin-top:.55rem; } }
 @media (max-height:700px) and (min-width:521px) { .login-header { gap:.6rem; margin-bottom:.9rem; } .brand-mark.login-brand { width:min(100%, 150px); } .login-card { padding-top:1.1rem; padding-bottom:1.25rem; } #login-form input { min-height:42px; } .login-btn { min-height:42px; margin-top:.5rem; } }
+
+/* Institutional sidebar controls and professional theme switch. */
+.sidebar-brand .eyebrow{max-width:150px;color:#a8c7e9;font-size:.62rem;font-weight:750;letter-spacing:.11em;line-height:1.35;text-transform:uppercase}
+.sidebar-brand h2{margin-top:.18rem;font-size:1.35rem;letter-spacing:-.035em}
+.sidebar-nav{gap:.42rem}
+.tab-btn{min-height:43px;display:flex;align-items:center;gap:.75rem;padding:.62rem .78rem;border-color:transparent;border-radius:11px;color:#d3e0ef;font-size:.88rem;transition:background .18s ease,border-color .18s ease,color .18s ease,transform .18s ease}
+.tab-btn .nav-icon{width:18px;height:18px;flex:0 0 18px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round;opacity:.82}
+.tab-btn:hover,.tab-btn.active{transform:translateX(2px);border-color:#9dc8f33d;background:linear-gradient(100deg,#6eabed31,#ffffff0c);color:#fff}
+.tab-btn.active{box-shadow:inset 3px 0 #76d7cb}.tab-btn.active .nav-icon{color:#90e5d6;opacity:1}
+.sidebar-footer{gap:.65rem;padding-top:.72rem;border-top-color:#ffffff17}
+.user-card{min-height:62px;display:grid;grid-template-columns:38px minmax(0,1fr) 9px;align-items:center;gap:.65rem;padding:.62rem .7rem;border-color:#ffffff15;border-radius:13px;background:linear-gradient(120deg,#ffffff0c,#ffffff05)}
+.user-avatar{width:36px;height:36px;display:grid;place-items:center;border:1px solid #9fd2ff36;border-radius:11px;background:#75baff1b;color:#c4e4ff}
+.user-avatar svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+.user-details{min-width:0;display:grid;gap:2px}.user-label{margin:0;color:#a9c0da;font-size:.61rem;font-weight:750;letter-spacing:.1em}.user-card strong{overflow:hidden;color:#fff;font-size:.88rem;text-overflow:ellipsis;white-space:nowrap}
+.session-indicator{width:8px;height:8px;border-radius:50%;background:#67ddb4;box-shadow:0 0 11px #67ddb488}
+.sidebar-actions{gap:.45rem}.sidebar-actions button{min-height:41px;display:flex;align-items:center;justify-content:center;gap:.42rem;padding:.48rem .5rem;border:1px solid #ffffff18;border-radius:11px;font-size:.72rem;line-height:1.2;transition:background .18s ease,border-color .18s ease,transform .18s ease,box-shadow .18s ease}
+.sidebar-actions button:hover{transform:translateY(-1px);border-color:#b6d9ff58;box-shadow:0 5px 14px #0002}.sidebar-actions button svg{width:16px;height:16px;flex:0 0 16px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}.sidebar-actions button span{min-width:0}
+.sidebar-actions .theme-toggle{justify-content:flex-start;padding-inline:.62rem;border-color:#80caff38;background:linear-gradient(110deg,#4f9ce326,#5dd3bb1c);color:#e6f4ff}
+.theme-toggle .theme-moon,.theme-toggle .theme-sun{width:17px;height:17px}.theme-toggle .theme-sun{display:none}.theme-toggle .theme-moon{color:#b4dfff;transition:transform .3s ease}.theme-toggle:hover .theme-moon{transform:rotate(-18deg)}.theme-toggle span{font-weight:750}
+body.dark-mode .theme-toggle .theme-moon{display:none}body.dark-mode .theme-toggle .theme-sun{display:block;color:#ffd57c;animation:theme-sun-in .35s ease both}
+.sidebar-actions .switch-user-btn{background:#ffffff0b;color:#e4edf8}.sidebar-actions .logout-btn{border-color:#ff9f9f37;background:#d94b4b20;color:#ffd8d8;box-shadow:none}.sidebar-actions .logout-btn:hover{border-color:#ffabab80;background:#d94b4b3b}
+@keyframes theme-sun-in{from{transform:rotate(-45deg) scale(.7);opacity:.3}to{transform:rotate(0) scale(1);opacity:1}}
+@media(max-width:760px){.sidebar-brand .eyebrow{max-width:none;font-size:.57rem}.sidebar-brand h2{font-size:.98rem}.sidebar-nav{gap:.35rem}.tab-btn{min-height:39px;justify-content:center;gap:.38rem;padding:.42rem .3rem;font-size:.76rem}.tab-btn .nav-icon{width:16px;height:16px;flex-basis:16px}.sidebar-footer{gap:.48rem;padding:.5rem}.user-card{min-height:47px;grid-template-columns:31px minmax(0,1fr) 8px;gap:.5rem;padding:.32rem .42rem}.user-avatar{width:30px;height:30px;border-radius:9px}.user-avatar svg{width:16px;height:16px}.user-label{font-size:.56rem}.user-card strong{font-size:.78rem}.sidebar-actions{gap:.4rem}.sidebar-actions button{min-height:39px;gap:.35rem;padding:.42rem .38rem;font-size:.7rem}.sidebar-actions button svg{width:15px;height:15px;flex-basis:15px}}
+@media(max-width:380px){.tab-btn{gap:.25rem;font-size:.69rem}.sidebar-actions button{gap:.28rem;font-size:.65rem}}

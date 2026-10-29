@@ -7,7 +7,7 @@
     <meta name="description" content="Plataforma de gestión de inventario tecnológico y mantenimiento institucional.">
     <meta name="theme-color" content="#092d62">
     <link rel="icon" type="image/svg+xml" href="logo-mantenti.svg">
-    <link rel="stylesheet" href="estilos.css?v=23">
+    <link rel="stylesheet" href="estilos.css?v=24">
 </head>
 <body>
     <div id="login-screen" class="login-screen active">
@@ -45,30 +45,31 @@
                     </video>
                 </div>
                 <div>
-                    <span class="eyebrow">Gestión</span>
+                    <span class="eyebrow">Alcaldía de Arjona · Gestión TIC</span>
                     <h2>ManténTI</h2>
                 </div>
             </div>
 
             <nav class="sidebar-nav" aria-label="Navegación principal">
-                <button class="tab-btn active" data-tab="inicio">Inicio</button>
-                <button class="tab-btn" data-tab="inventario">Inventario</button>
-                <button class="tab-btn" data-tab="ordenes">Órdenes</button>
-                <button class="tab-btn" data-tab="preventivos">Preventivos</button>
-                <button class="tab-btn" data-tab="catalogos">Catálogos</button>
-                <button class="tab-btn" data-tab="reportes">Reportes</button>
+                <button class="tab-btn active" data-tab="inicio"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-6v-7h-4v7H4a1 1 0 0 1-1-1z"/></svg><span>Inicio</span></button>
+                <button class="tab-btn" data-tab="inventario"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/></svg><span>Inventario</span></button>
+                <button class="tab-btn" data-tab="ordenes"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8l4 4v12H4V4h4Zm7 0v5h5M8 13h8m-8 4h8"/></svg><span>Órdenes</span></button>
+                <button class="tab-btn" data-tab="preventivos"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v5l3 2m5-3a8 8 0 1 1-2.34-5.66M20 4v5h-5"/></svg><span>Preventivos</span></button>
+                <button class="tab-btn" data-tab="catalogos"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v6H4zM14 15h6v6h-6z"/></svg><span>Catálogos</span></button>
+                <button class="tab-btn" data-tab="reportes"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5m0 14h17M8 15l4-4 3 2 5-7"/></svg><span>Reportes</span></button>
             </nav>
 
             <div class="sidebar-footer">
                 <div class="user-card">
-                    <span class="user-label">Usuario</span>
-                    <strong>Admin TIC</strong>
+                    <span class="user-avatar" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
+                    <span class="user-details"><span class="user-label">Sesión activa</span><strong>Admin TIC</strong></span>
+                    <span class="session-indicator" title="Sesión protegida" aria-label="Sesión protegida"></span>
                 </div>
                 <div class="sidebar-actions">
-                    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Cambiar tema">🌙</button>
-                    <button id="backup-btn" class="switch-user-btn" type="button">Respaldar</button>
-                    <button id="switch-user-btn" class="switch-user-btn" type="button" aria-label="Cambiar usuario">Cambiar usuario</button>
-                    <button id="logout-btn" class="logout-btn" type="button" aria-label="Cerrar sesión">⎋ Salir</button>
+                    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Cambiar a modo claro" aria-pressed="false" title="Cambiar tema"><svg class="theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.4 15.2A8.5 8.5 0 0 1 8.8 3.6 8.8 8.8 0 1 0 20.4 15.2Z"/></svg><svg class="theme-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg><span data-theme-label>Modo oscuro</span></button>
+                    <button id="backup-btn" class="switch-user-btn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 17v4h14v-4"/></svg><span>Respaldar</span></button>
+                    <button id="switch-user-btn" class="switch-user-btn" type="button" aria-label="Cambiar usuario"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 12-5m3-2h5m-3-3 3 3-3 3"/></svg><span>Cambiar usuario</span></button>
+                    <button id="logout-btn" class="logout-btn" type="button" aria-label="Cerrar sesión"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5m5 5H3m9-9h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/></svg><span>Cerrar sesión</span></button>
                 </div>
             </div>
         </aside>
@@ -375,6 +376,6 @@
         </main>
     </div>
 
-    <script src="app.js?v=13"></script>
+    <script src="app.js?v=14"></script>
 </body>
 </html>
