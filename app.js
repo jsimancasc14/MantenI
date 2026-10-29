@@ -635,14 +635,16 @@ async function eliminarEquipo(codigo) {
         DB.ordenes = DB.ordenes.filter(item => item.equipo !== codigo);
         DB.preventivos = DB.preventivos.filter(item => item.equipo !== codigo);
         guardarDB();
-        cargarInventario(document.getElementById('buscar-equipo')?.value || '');
         cargarOrdenes();
         cargarPreventivos();
-        cargarDashboard();
         try {
+            // Volver a leer el inventario persistido evita dejar en Inicio
+            // un conteo local desfasado tras eliminar un registro.
+            await cargarInventarioDesdeBackend();
             await cargarResumenImpresorasDesdeBackend();
         } catch (error) {
-            console.warn('No se pudo actualizar el conteo de impresoras tras eliminar el activo.', error);
+            console.warn('No se pudo actualizar el inventario y sus indicadores tras eliminar el activo.', error);
+            cargarInventario(document.getElementById('buscar-equipo')?.value || '');
         }
         cargarDashboard();
     } catch (error) {
