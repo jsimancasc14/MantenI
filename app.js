@@ -709,7 +709,7 @@ function abrirFormEquipo() {
     const dependencias = obtenerDependenciasEquipo();
     document.getElementById('modal-cuerpo').innerHTML = `
         <h2>Registrar Nuevo Equipo</h2><form onsubmit="guardarEquipo(event)">
-        <label>ID Equipo</label><input name="id" required placeholder="Ej: PC-ARJ-001">
+        <label>Código</label><input name="id" required placeholder="Ej: PC-ARJ-001">
         <label>Tipo</label><select name="tipo" required>
             <option>PC escritorio</option><option>Laptop</option><option>All-in-One</option>
             <option>Impresora</option><option>Monitor</option><option>Otro</option>
