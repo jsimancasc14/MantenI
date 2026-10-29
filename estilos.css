@@ -328,17 +328,18 @@ body::before {
 .sidebar-footer {
     margin-top: auto;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    align-items: stretch;
+    flex-direction: column;
     gap: 0.8rem;
     padding-top: 1rem;
     border-top: 1px solid rgba(255,255,255,0.08);
 }
 
 .sidebar-actions {
-    display: flex;
-    align-items: center;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.5rem;
+    width: 100%;
 }
 
 .user-card {
@@ -346,6 +347,7 @@ body::before {
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 12px;
     padding: 0.7rem 0.8rem;
+    width: 100%;
     min-width: 0;
 }
 
@@ -359,7 +361,7 @@ body::before {
 }
 
 .theme-toggle {
-    width: 42px;
+    width: 100%;
     height: 42px;
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 12px;
@@ -1789,39 +1791,50 @@ body.dark-mode th {
         grid-template-columns: minmax(0, 1fr);
         gap: 0.45rem;
         margin: 0;
-        padding: 0;
-        border: 0;
+        padding: 0.55rem;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 14px;
+        background: rgba(255,255,255,0.045);
     }
 
     .user-card {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 0.45rem;
-        width: fit-content;
+        width: 100%;
         max-width: 100%;
-        padding: 0.25rem 0.55rem;
+        padding: 0.3rem 0.45rem 0.45rem;
+        border: 0;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        border-radius: 0;
+        background: transparent;
     }
 
     .user-label {
         margin: 0;
+        font-size: 0.65rem;
     }
 
     .sidebar-actions {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 0.4rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
     }
 
     .sidebar-actions button {
-        min-height: 38px;
-        padding: 0.4rem 0.35rem;
-        font-size: 0.73rem;
-        line-height: 1.15;
+        width: 100%;
+        min-width: 0;
+        min-height: 42px;
+        padding: 0.5rem 0.65rem;
+        font-size: 0.78rem;
+        line-height: 1.2;
+        white-space: normal;
     }
 
     .sidebar-actions .logout-btn {
         grid-column: auto;
-        min-height: 38px;
+        min-height: 42px;
     }
 
     .page-shell {
@@ -1944,14 +1957,6 @@ body.dark-mode th {
 
     .topbar {
         margin-bottom: 0.75rem;
-    }
-
-    .sidebar-actions {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .sidebar-actions .logout-btn {
-        grid-column: auto;
     }
 
     .tabla-contenedor tbody,
