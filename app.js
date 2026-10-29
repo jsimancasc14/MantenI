@@ -695,7 +695,18 @@ function exportarInventarioExcel() {
 function filtrarInventario() {
     cargarInventario(document.getElementById('buscar-equipo').value);
 }
+
+function obtenerDependenciasEquipo() {
+    const nombresCatalogo = DB.dependencias.map(dependencia => typeof dependencia === 'string' ? dependencia : dependencia.nombre);
+    const nombresInventario = DB.inventario.map(equipo => equipo.dependencia);
+    return [...new Set([...nombresCatalogo, ...nombresInventario]
+        .map(nombre => String(nombre || '').trim())
+        .filter(nombre => nombre && nombre.toLowerCase() !== 'sin dependencia'))]
+        .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+}
+
 function abrirFormEquipo() {
+    const dependencias = obtenerDependenciasEquipo();
     document.getElementById('modal-cuerpo').innerHTML = `
         <h2>Registrar Nuevo Equipo</h2><form onsubmit="guardarEquipo(event)">
         <label>ID Equipo</label><input name="id" required placeholder="Ej: PC-ARJ-001">
@@ -708,7 +719,8 @@ function abrirFormEquipo() {
         <label>Serial</label><input name="serial" required>
         <label>Número Interno</label><input name="interno" placeholder="INV-AAAA-NNN">
         <label>Dependencia</label><select name="dependencia" required>
-            ${DB.dependencias.map(d=>`<option>${escaparHTML(d.nombre)}</option>`).join('')}
+            <option value="">${dependencias.length ? 'Seleccione una dependencia...' : 'No hay dependencias registradas'}</option>
+            ${dependencias.map(dependencia=>`<option value="${escaparHTML(dependencia)}">${escaparHTML(dependencia)}</option>`).join('')}
         </select>
         <label>Responsable</label><input name="responsable" required>
         <label>Ubicación</label><input name="ubicacion" required>
