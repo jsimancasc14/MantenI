@@ -1681,6 +1681,25 @@ document.getElementById('modal')?.addEventListener('click', e => {
 // ======================================================
 // INICIO — Carga automática al abrir
 // ======================================================
+function actualizarEtiquetasTablasResponsive(root = document) {
+    root.querySelectorAll('table').forEach(tabla => {
+        const encabezados = [...tabla.querySelectorAll('thead th')]
+            .map(encabezado => encabezado.textContent.replace(/\s+/g, ' ').trim());
+        if (!encabezados.length) return;
+        tabla.querySelectorAll('tbody tr').forEach(fila => {
+            [...fila.cells].forEach((celda, indice) => {
+                if (celda.tagName === 'TD' && encabezados[indice] && celda.dataset.label !== encabezados[indice]) {
+                    celda.dataset.label = encabezados[indice];
+                }
+            });
+        });
+    });
+}
+
+actualizarEtiquetasTablasResponsive();
+const observadorTablasResponsive = new MutationObserver(() => actualizarEtiquetasTablasResponsive());
+observadorTablasResponsive.observe(document.body, { childList: true, subtree: true });
+
 aplicarTema();
 cargarDB();
 const usuarioGuardado = JSON.parse(localStorage.getItem('MantTI_User') || 'null');
