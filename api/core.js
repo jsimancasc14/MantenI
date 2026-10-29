@@ -241,6 +241,40 @@ export default async function handler(req, res) {
   const { action, url } = actionFromRequest(req);
   if (action === 'login') return handleLogin(req, res);
 
+  if (action === 'public-summary') {
+    if (!requireMethod(req, res, ['GET'])) return;
+    res.setHeader('Cache-Control', 'no-store');
+    try {
+      const db = getPool();
+      const [equipment, printers, openOrders, plannedMaintenance, dependencies, technicians] = await Promise.all([
+        db.query('SELECT COUNT(*) AS total FROM equipos'),
+        db.query('SELECT COUNT(*) AS total FROM impresoras'),
+        db.query("SELECT COUNT(*) AS total FROM ordenes_trabajo WHERE estado != 'Cerrado'"),
+        db.query("SELECT COUNT(*) AS total FROM preventivos WHERE estado = 'Programado'"),
+        db.query('SELECT COUNT(*) AS total FROM dependencias'),
+        db.query('SELECT COUNT(*) AS total FROM tecnicos WHERE activo = 1')
+      ]);
+      const totalEquipos = Number(equipment.rows[0].total);
+      const totalImpresoras = Number(printers.rows[0].total);
+      return sendJson(res, 200, {
+        ok: true,
+        data: {
+          activos: totalEquipos + totalImpresoras,
+          equipos: totalEquipos,
+          impresoras: totalImpresoras,
+          ordenes_abiertas: Number(openOrders.rows[0].total),
+          mantenimientos_programados: Number(plannedMaintenance.rows[0].total),
+          dependencias: Number(dependencies.rows[0].total),
+          tecnicos_activos: Number(technicians.rows[0].total),
+          actualizado: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      console.error('Public summary error:', error);
+      return sendJson(res, 503, { ok: false, error: 'Indicadores temporalmente no disponibles' });
+    }
+  }
+
   if (action === 'logout' && req.method === 'POST') {
     const session = readSession(req);
     if (!session) return sendJson(res, 401, { ok: false, error: 'No autenticado' });
