@@ -2011,10 +2011,28 @@ body.dark-mode th {
     }
 }
 
+/* El documento es el único contenedor con desplazamiento vertical. */
+.sidebar {
+    position: static;
+    top: auto;
+    align-self: flex-start;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    max-height: none;
+    overflow: visible;
+}
+
+@media (max-width: 760px) {
+    .sidebar {
+        min-height: 0;
+    }
+}
+
 @media (max-height: 760px) {
     .sidebar {
-        height: 100dvh;
-        max-height: 100dvh;
+        height: auto;
+        max-height: none;
         padding-top: clamp(0.45rem, 1.5vh, 1rem);
         padding-bottom: clamp(0.45rem, 1.5vh, 1rem);
         gap: clamp(0.4rem, 1.2vh, 1rem);
