@@ -596,6 +596,7 @@ function cargarInventario(filtro='') {
             <td>${escaparHTML(e.responsable)}</td>
             <td>${etiquetaEstado(e.estado)}</td>
             <td>
+                <button class="btn-text" type="button" onclick="editarEquipo(${argumentoSeguroHTML(e.id)})" title="Editar equipo">Editar</button>
                 <button class="btn-text btn-eliminar" onclick="eliminarEquipo(${argumentoSeguroHTML(e.id)})" title="Eliminar ${escaparHTML(String(e.tipo || '').toLowerCase().includes('impresora') ? 'impresora' : 'equipo')}" aria-label="Eliminar ${escaparHTML(String(e.tipo || '').toLowerCase().includes('impresora') ? 'impresora' : 'equipo')} ${escaparHTML(e.id)}">Eliminar</button>
                 <button class="btn-icon" onclick="verEquipo(${argumentoSeguroHTML(e.id)})" title="Ver Hoja de vida">👁️</button>
                 <button class="btn-icon" onclick="nuevaOrdenDesdeEquipo(${argumentoSeguroHTML(e.id)})" title="Crear Orden">📝</button>
@@ -731,21 +732,53 @@ function abrirFormEquipo() {
         </form>`;
     document.getElementById('modal').classList.add('active');
 }
-async function guardarEquipo(e) {
+function editarEquipo(codigo) {
+    const equipo = DB.inventario.find(item => item.id === codigo);
+    if (!equipo) return alert('No se encontró el equipo seleccionado.');
+    const dependencias = obtenerDependenciasEquipo();
+    const tipos = ['PC escritorio', 'Laptop', 'All-in-One', 'Impresora', 'Monitor', 'Otro'];
+    if (equipo.tipo && !tipos.includes(equipo.tipo)) tipos.unshift(equipo.tipo);
+    const estados = ['Operativo', 'En reparación', 'En espera de repuesto', 'Obsoleto', 'Baja'];
+    if (equipo.estado && !estados.includes(equipo.estado)) estados.unshift(equipo.estado);
+    const opciones = (items, seleccionado) => items.map(item =>
+        `<option value="${escaparHTML(item)}" ${item === seleccionado ? 'selected' : ''}>${escaparHTML(item)}</option>`
+    ).join('');
+
+    document.getElementById('modal-cuerpo').innerHTML = `
+        <h2>Editar Equipo</h2><form onsubmit="guardarEquipo(event, ${argumentoSeguroHTML(equipo.id)})">
+        <label>Código</label><input name="id" required value="${escaparHTML(equipo.id)}" readonly>
+        <label>Tipo</label><select name="tipo" required>${opciones(tipos, equipo.tipo)}</select>
+        <label>Marca</label><input name="marca" required value="${escaparHTML(equipo.marca)}">
+        <label>Modelo</label><input name="modelo" required value="${escaparHTML(equipo.modelo)}">
+        <label>Serial</label><input name="serial" required value="${escaparHTML(equipo.serial)}">
+        <label>Dependencia</label><select name="dependencia" required>
+            <option value="">Seleccione una dependencia...</option>
+            ${opciones(dependencias, equipo.dependencia)}
+        </select>
+        <label>Responsable</label><input name="responsable" required value="${escaparHTML(equipo.responsable)}">
+        <label>Ubicación</label><input name="ubicacion" required value="${escaparHTML(equipo.ubicacion)}">
+        <label>Estado</label><select name="estado" required>${opciones(estados, equipo.estado)}</select>
+        <button type="submit" class="btn-primario">Guardar Cambios</button>
+        </form>`;
+    document.getElementById('modal').classList.add('active');
+}
+
+async function guardarEquipo(e, codigoOriginal = '') {
     e.preventDefault();
     const f = new FormData(e.target);
     const eq = Object.fromEntries(f);
-    if(DB.inventario.some(x => String(x.id).trim().toLowerCase() === String(eq.id).trim().toLowerCase())) {
+    if(!codigoOriginal && DB.inventario.some(x => String(x.id).trim().toLowerCase() === String(eq.id).trim().toLowerCase())) {
         return alert('Ya existe un equipo con ese código. Ingresa un código diferente.');
     }
 
     try {
+        const editando = Boolean(codigoOriginal);
         const response = await fetch('backend/api.php?action=inventario', {
-            method: 'POST',
+            method: editando ? 'PUT' : 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
             credentials: 'same-origin',
             body: JSON.stringify({
-                codigo: eq.id,
+                codigo: codigoOriginal || eq.id,
                 tipo: eq.tipo,
                 marca: eq.marca,
                 modelo: eq.modelo,
@@ -758,6 +791,7 @@ async function guardarEquipo(e) {
         });
         const result = await response.json();
         if (!response.ok || !result.ok) {
+            if (manejarSesionNoAutenticada(response)) return;
             alert(result.error || 'No se pudo guardar el equipo.');
             return;
         }
@@ -766,8 +800,14 @@ async function guardarEquipo(e) {
         return;
     }
 
-    DB.inventario.push({...eq, valor:0});
-    guardarDB(); cerrarModal(); cargarInventario();
+    if (codigoOriginal) {
+        const indice = DB.inventario.findIndex(item => item.id === codigoOriginal);
+        if (indice >= 0) DB.inventario[indice] = { ...DB.inventario[indice], ...eq, id: codigoOriginal };
+    } else {
+        DB.inventario.push({ ...eq, valor: 0 });
+    }
+    const filtroActual = document.getElementById('buscar-equipo')?.value || '';
+    guardarDB(); cerrarModal(); cargarInventario(filtroActual); cargarDashboard();
 }
 async function verEquipo(id) {
     const e = getEquipo(id);

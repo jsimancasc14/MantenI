@@ -374,7 +374,46 @@ export default async function handler(req, res) {
           connection.release();
         }
       }
-      if (req.method !== 'POST') return requireMethod(req, res, ['GET', 'POST', 'DELETE']);
+      if (req.method === 'PUT') {
+        if (!requireRole(res, user, ['administrador', 'director'])) return;
+        const input = await readBody(req);
+        const codigo = String(input.codigo || '').trim();
+        const required = ['tipo', 'marca', 'modelo', 'serial', 'dependencia', 'responsable', 'ubicacion', 'estado'];
+        if (!codigo) return sendJson(res, 422, { ok: false, error: 'Código del equipo obligatorio.' });
+        for (const field of required) {
+          if (!String(input[field] || '').trim()) return sendJson(res, 422, { ok: false, error: `El campo ${field} es obligatorio.` });
+        }
+
+        const connection = await db.connect();
+        try {
+          await connection.query('BEGIN');
+          const updated = await connection.query(
+            `UPDATE equipos
+             SET tipo = $2, marca = $3, modelo = $4, serial = $5, dependencia = $6,
+                 responsable = $7, ubicacion = $8, estado = $9
+             WHERE codigo = $1
+             RETURNING codigo, tipo, marca, modelo, serial, dependencia, responsable, ubicacion, estado`,
+            [codigo, input.tipo, input.marca, input.modelo, input.serial, input.dependencia,
+              input.responsable, input.ubicacion, input.estado]
+          );
+          if (!updated.rowCount) {
+            await connection.query('ROLLBACK');
+            return sendJson(res, 404, { ok: false, error: 'No se encontró el equipo en el inventario.' });
+          }
+          await connection.query(
+            'INSERT INTO historial_equipos (equipo_codigo, accion, descripcion, usuario_id) VALUES ($1, $2, $3, $4)',
+            [codigo, 'Equipo actualizado', 'Datos del equipo actualizados desde el inventario', user.id]
+          );
+          await connection.query('COMMIT');
+          return sendJson(res, 200, { ok: true, data: updated.rows[0] });
+        } catch (error) {
+          await connection.query('ROLLBACK');
+          throw error;
+        } finally {
+          connection.release();
+        }
+      }
+      if (req.method !== 'POST') return requireMethod(req, res, ['GET', 'POST', 'PUT', 'DELETE']);
       if (!requireRole(res, user, ['administrador', 'director'])) return;
       const input = await readBody(req);
       const required = ['codigo', 'tipo', 'marca', 'modelo', 'serial', 'dependencia', 'responsable', 'ubicacion'];

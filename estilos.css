@@ -2169,3 +2169,9 @@ body.dark-mode th {
         margin-left: 0;
     }
 }
+
+/* Pantalla de acceso adaptable para móviles y ventanas de poca altura. */
+.login-screen { overflow-x:hidden; overflow-y:auto; align-items:flex-start; padding:clamp(.65rem, 3vh, 1.2rem) max(.65rem, env(safe-area-inset-right)) clamp(.65rem, 3vh, 1.2rem) max(.65rem, env(safe-area-inset-left)); }
+.login-card { margin-block:auto; }
+@media (max-width:520px) { .login-card { width:100%; padding:1.15rem 1rem 1.25rem; border-radius:18px; } .login-header { gap:.65rem; margin-bottom:1rem; } .brand-mark.login-brand { width:min(100%, 175px); } #login-form input { min-height:46px; padding:.65rem .75rem; } .login-btn { min-height:46px; margin-top:.55rem; } }
+@media (max-height:700px) and (min-width:521px) { .login-header { gap:.6rem; margin-bottom:.9rem; } .brand-mark.login-brand { width:min(100%, 150px); } .login-card { padding-top:1.1rem; padding-bottom:1.25rem; } #login-form input { min-height:42px; } .login-btn { min-height:42px; margin-top:.5rem; } }
