@@ -439,7 +439,8 @@ function cargarDashboard() {
 
 async function cargarResumenImpresorasDesdeBackend() {
     const response = await fetch('backend/api.php?action=dashboard', {
-        credentials: 'same-origin'
+        credentials: 'same-origin',
+        cache: 'no-store'
     });
     const result = await response.json();
     const total = Number(result.dashboard?.total_impresoras);
@@ -484,7 +485,8 @@ function cargarGraficaEstados() {
 // ======================================================
 async function cargarInventarioDesdeBackend() {
     const response = await fetch('backend/api.php?action=inventario', {
-        credentials: 'same-origin'
+        credentials: 'same-origin',
+        cache: 'no-store'
     });
     const result = await response.json();
     if (!response.ok || !result.ok || !Array.isArray(result.data)) {
