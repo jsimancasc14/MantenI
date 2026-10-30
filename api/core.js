@@ -10,7 +10,7 @@ const WRITE_METHODS = new Set(['POST', 'PUT', 'DELETE']);
 const LOGIN_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_LIMIT_MAX_ATTEMPTS = 5;
 const loginAttempts = new Map();
-const VALID_EQUIPMENT_FILTER = "LOWER(BTRIM(COALESCE(codigo, ''))) <> 'realizó'";
+const VALID_EQUIPMENT_FILTER = "LOWER(BTRIM(COALESCE(codigo, ''))) <> 'realizó' AND LOWER(BTRIM(COALESCE(serial, ''))) <> 'mxl32416s2'";
 let pool;
 
 function sendJson(res, statusCode, payload) {
