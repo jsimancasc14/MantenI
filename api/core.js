@@ -10,6 +10,7 @@ const WRITE_METHODS = new Set(['POST', 'PUT', 'DELETE']);
 const LOGIN_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_LIMIT_MAX_ATTEMPTS = 5;
 const loginAttempts = new Map();
+const VALID_EQUIPMENT_FILTER = "LOWER(BTRIM(COALESCE(codigo, ''))) <> 'realizó'";
 let pool;
 
 function sendJson(res, statusCode, payload) {
@@ -250,7 +251,7 @@ export default async function handler(req, res) {
     try {
       const db = getPool();
       const [equipment, printers, openOrders, plannedMaintenance, dependencies, technicians] = await Promise.all([
-        db.query('SELECT COUNT(*) AS total FROM equipos'),
+        db.query(`SELECT COUNT(*) AS total FROM equipos WHERE ${VALID_EQUIPMENT_FILTER}`),
         db.query('SELECT COUNT(*) AS total FROM impresoras'),
         db.query("SELECT COUNT(*) AS total FROM ordenes_trabajo WHERE estado != 'Cerrado'"),
         db.query("SELECT COUNT(*) AS total FROM preventivos WHERE estado = 'Programado'"),
@@ -316,7 +317,7 @@ export default async function handler(req, res) {
     if (action === 'dashboard') {
       if (!requireMethod(req, res, ['GET'])) return;
       const [{ rows: inventoryRows }, { rows: printerRows }, { rows: orderRows }, { rows: preventiveRows }] = await Promise.all([
-        db.query('SELECT COUNT(*) AS total FROM equipos'),
+        db.query(`SELECT COUNT(*) AS total FROM equipos WHERE ${VALID_EQUIPMENT_FILTER}`),
         db.query('SELECT COUNT(*) AS total FROM impresoras'),
         db.query("SELECT COUNT(*) AS total FROM ordenes_trabajo WHERE estado != 'Cerrado'"),
         db.query("SELECT COUNT(*) AS total FROM preventivos WHERE estado = 'Programado'")
@@ -342,7 +343,7 @@ export default async function handler(req, res) {
       }
 
       const [{ rows: equipment }, { rows: printers }, { rows: openOrders }, { rows: planned }] = await Promise.all([
-        db.query('SELECT COUNT(*) AS total FROM equipos'),
+        db.query(`SELECT COUNT(*) AS total FROM equipos WHERE ${VALID_EQUIPMENT_FILTER}`),
         db.query('SELECT COUNT(*) AS total FROM impresoras'),
         db.query("SELECT COUNT(*) AS total FROM ordenes_trabajo WHERE estado != 'Cerrado'"),
         db.query("SELECT COUNT(*) AS total FROM preventivos WHERE estado = 'Programado'")
@@ -383,7 +384,7 @@ export default async function handler(req, res) {
     if (action === 'inventario') {
       if (req.method === 'GET') {
         await db.query('ALTER TABLE equipos ADD COLUMN IF NOT EXISTS tecnico_responsable VARCHAR(120)');
-        const { rows } = await db.query('SELECT * FROM equipos ORDER BY id DESC');
+        const { rows } = await db.query(`SELECT * FROM equipos WHERE ${VALID_EQUIPMENT_FILTER} ORDER BY id DESC`);
         return sendJson(res, 200, { ok: true, data: rows });
       }
       if (req.method === 'DELETE') {
