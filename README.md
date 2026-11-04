@@ -33,6 +33,6 @@ La autenticación usa una cookie firmada con vencimiento de 8 horas, protección
 
 ## Actualizar la base de datos
 
-`mantti_arjona_postgres.sql` es el archivo único del esquema inicial y sus cambios. Al crear una base nueva, importa el archivo completo. Para una base existente, ejecuta solamente el bloque final `Cambios idempotentes para actualizar una base existente`; agrega el campo de firma y asegura que Juan Diaz Pardo y Jairo Simancas Cogollo estén registrados sin eliminar los demás técnicos.
+`mantti_arjona_postgres.sql` es el archivo único del esquema inicial y sus cambios. Al crear una base nueva, importa el archivo completo. Para una base existente, ejecuta solamente el bloque final `Cambios idempotentes para actualizar una base existente`; agrega el técnico responsable de impresoras y el campo de firma, y asegura que Juan Diaz Pardo y Jairo Simancas Cogollo estén registrados sin eliminar los demás técnicos.
 
 La carga y descarga de documentos no está activada: las funciones serverless no ofrecen almacenamiento persistente. Se debe integrar almacenamiento de objetos antes de habilitarla. `admin.php` (importación directa de base de datos) tampoco forma parte del despliegue web.

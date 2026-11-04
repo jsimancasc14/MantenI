@@ -284,6 +284,7 @@ CREATE TABLE "impresoras" (
   "Caracteristicas" varchar(255) DEFAULT NULL,
   "Referencia_Tinta_Toner" varchar(100) DEFAULT NULL,
   "Responsable" varchar(100) DEFAULT NULL,
+  "Tecnico_Responsable" varchar(120) DEFAULT NULL,
   "Condicion" varchar(50) DEFAULT NULL,
   "Observacion" text DEFAULT NULL
 );
@@ -343,6 +344,9 @@ COMMIT;
 -- Cambios idempotentes para actualizar una base existente.
 -- Al importar desde cero, también se aplican estos cambios al final del esquema.
 BEGIN;
+
+ALTER TABLE impresoras
+  ADD COLUMN IF NOT EXISTS "Tecnico_Responsable" varchar(120) DEFAULT NULL;
 
 ALTER TABLE preventivos
   ADD COLUMN IF NOT EXISTS firma varchar(3) NOT NULL DEFAULT 'No';

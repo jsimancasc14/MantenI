@@ -531,7 +531,7 @@ async function cargarInventarioDesdeBackend() {
         serial: 'No registrado',
         dependencia: impresora.Dependencia || '',
         responsable: impresora.Responsable || 'Sin asignar',
-        tecnicoResponsable: '',
+        tecnicoResponsable: impresora.Tecnico_Responsable || '',
         ubicacion: impresora.Sede || '',
         estado: impresora.Condicion || 'Sin estado'
     }));
@@ -758,7 +758,17 @@ function obtenerDependenciasEquipo() {
         .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
 }
 
-function abrirFormImpresora() {
+async function abrirFormImpresora() {
+    let tecnicosActivos;
+    try {
+        tecnicosActivos = await cargarTecnicosDesdeBackend();
+    } catch (error) {
+        alert(error.message || 'No se pudieron cargar los técnicos habilitados.');
+        return;
+    }
+    if (!tecnicosActivos) return;
+    if (!tecnicosActivos.length) return alert('No hay técnicos habilitados para asignar.');
+
     document.getElementById('modal-cuerpo').innerHTML = `
         <h2>Registrar Nueva Impresora</h2>
         <form onsubmit="guardarImpresora(event)">
@@ -770,6 +780,10 @@ function abrirFormImpresora() {
             <label>Características</label><textarea name="caracteristicas" maxlength="255" rows="2" placeholder="Impresora, fotocopiadora, escáner..."></textarea>
             <label>Referencia de tinta o tóner</label><input name="toner" maxlength="100">
             <label>Responsable</label><input name="responsable" maxlength="100">
+            <label>Técnico responsable</label><select name="tecnico_responsable" required>
+                <option value="">Seleccione un técnico...</option>
+                ${tecnicosActivos.map(tecnico => `<option value="${escaparHTML(tecnico.nombre)}">${escaparHTML(tecnico.nombre)}</option>`).join('')}
+            </select>
             <label>Condición</label><select name="condicion">
                 <option>Operativo</option><option>Defectuoso</option><option>En reparación</option><option>Baja</option>
             </select>

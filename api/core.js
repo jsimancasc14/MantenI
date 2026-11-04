@@ -336,6 +336,7 @@ export default async function handler(req, res) {
 
     if (action === 'impresoras') {
       if (req.method === 'GET') {
+        await db.query('ALTER TABLE impresoras ADD COLUMN IF NOT EXISTS "Tecnico_Responsable" VARCHAR(120)');
         const { rows } = await db.query('SELECT * FROM impresoras ORDER BY "ID_Impresora" DESC');
         return sendJson(res, 200, { ok: true, data: rows });
       }
@@ -351,26 +352,31 @@ export default async function handler(req, res) {
           caracteristicas: String(input.caracteristicas || '').trim(),
           toner: String(input.toner || '').trim(),
           responsable: String(input.responsable || '').trim(),
+          tecnicoResponsable: String(input.tecnico_responsable || '').trim(),
           condicion: String(input.condicion || 'Operativo').trim(),
           observacion: String(input.observacion || '').trim()
         };
-        if (!printer.dependencia || !printer.marca || !printer.modelo) {
-          return sendJson(res, 422, { ok: false, error: 'Dependencia, marca y modelo son obligatorios' });
+        if (!printer.dependencia || !printer.marca || !printer.modelo || !printer.tecnicoResponsable) {
+          return sendJson(res, 422, { ok: false, error: 'Dependencia, marca, modelo y técnico responsable son obligatorios' });
+        }
+        if (!await isActiveTechnician(db, printer.tecnicoResponsable)) {
+          return sendJson(res, 422, { ok: false, error: 'El técnico responsable debe estar habilitado' });
         }
         const limits = { dependencia: 100, sede: 100, descripcion: 100, marca: 50, modelo: 100,
-          caracteristicas: 255, toner: 100, responsable: 100, condicion: 50, observacion: 5000 };
+          caracteristicas: 255, toner: 100, responsable: 100, tecnicoResponsable: 120, condicion: 50, observacion: 5000 };
         for (const [field, maxLength] of Object.entries(limits)) {
           if (printer[field].length > maxLength) {
             return sendJson(res, 422, { ok: false, error: `El campo ${field} supera el máximo de ${maxLength} caracteres` });
           }
         }
+        await db.query('ALTER TABLE impresoras ADD COLUMN IF NOT EXISTS "Tecnico_Responsable" VARCHAR(120)');
         const { rows } = await db.query(
-          `INSERT INTO impresoras ("Dependencia", "Sede", "Descripcion", "Marca", "Modelo", "Caracteristicas", "Referencia_Tinta_Toner", "Responsable", "Condicion", "Observacion")
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          `INSERT INTO impresoras ("Dependencia", "Sede", "Descripcion", "Marca", "Modelo", "Caracteristicas", "Referencia_Tinta_Toner", "Responsable", "Tecnico_Responsable", "Condicion", "Observacion")
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
            RETURNING "ID_Impresora"`,
           [printer.dependencia, printer.sede || null, printer.descripcion || 'Impresora', printer.marca, printer.modelo,
             printer.caracteristicas || null, printer.toner || null, printer.responsable || null,
-            printer.condicion || 'Operativo', printer.observacion || null]
+            printer.tecnicoResponsable, printer.condicion || 'Operativo', printer.observacion || null]
         );
         return sendJson(res, 201, { ok: true, id: Number(rows[0].ID_Impresora) });
       }
