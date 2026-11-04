@@ -339,6 +339,41 @@ export default async function handler(req, res) {
         const { rows } = await db.query('SELECT * FROM impresoras ORDER BY "ID_Impresora" DESC');
         return sendJson(res, 200, { ok: true, data: rows });
       }
+      if (req.method === 'POST') {
+        if (!requireRole(res, user, ['administrador', 'director'])) return;
+        const input = await readBody(req);
+        const printer = {
+          dependencia: String(input.dependencia || '').trim(),
+          sede: String(input.sede || '').trim(),
+          descripcion: String(input.descripcion || '').trim(),
+          marca: String(input.marca || '').trim(),
+          modelo: String(input.modelo || '').trim(),
+          caracteristicas: String(input.caracteristicas || '').trim(),
+          toner: String(input.toner || '').trim(),
+          responsable: String(input.responsable || '').trim(),
+          condicion: String(input.condicion || 'Operativo').trim(),
+          observacion: String(input.observacion || '').trim()
+        };
+        if (!printer.dependencia || !printer.marca || !printer.modelo) {
+          return sendJson(res, 422, { ok: false, error: 'Dependencia, marca y modelo son obligatorios' });
+        }
+        const limits = { dependencia: 100, sede: 100, descripcion: 100, marca: 50, modelo: 100,
+          caracteristicas: 255, toner: 100, responsable: 100, condicion: 50, observacion: 5000 };
+        for (const [field, maxLength] of Object.entries(limits)) {
+          if (printer[field].length > maxLength) {
+            return sendJson(res, 422, { ok: false, error: `El campo ${field} supera el máximo de ${maxLength} caracteres` });
+          }
+        }
+        const { rows } = await db.query(
+          `INSERT INTO impresoras ("Dependencia", "Sede", "Descripcion", "Marca", "Modelo", "Caracteristicas", "Referencia_Tinta_Toner", "Responsable", "Condicion", "Observacion")
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+           RETURNING "ID_Impresora"`,
+          [printer.dependencia, printer.sede || null, printer.descripcion || 'Impresora', printer.marca, printer.modelo,
+            printer.caracteristicas || null, printer.toner || null, printer.responsable || null,
+            printer.condicion || 'Operativo', printer.observacion || null]
+        );
+        return sendJson(res, 201, { ok: true, id: Number(rows[0].ID_Impresora) });
+      }
       if (req.method === 'DELETE') {
         if (!requireRole(res, user, ['administrador', 'director'])) return;
         const input = await readBody(req);
@@ -353,7 +388,7 @@ export default async function handler(req, res) {
         if (!rows.length) return sendJson(res, 404, { ok: false, error: 'No se encontró la impresora en el inventario' });
         return sendJson(res, 200, { ok: true, id: Number(rows[0].ID_Impresora) });
       }
-      return requireMethod(req, res, ['GET', 'DELETE']);
+      return requireMethod(req, res, ['GET', 'POST', 'DELETE']);
     }
 
     if (action === 'assistant') {

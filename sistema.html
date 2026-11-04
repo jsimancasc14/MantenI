@@ -202,7 +202,8 @@
                 <h2>Inventario de Equipos e Impresoras</h2>
                 <div class="toolbar-actions inventory-actions">
                     <button class="btn-secundario" type="button" onclick="exportarInventarioExcel()" title="Descargar ficha técnica completa">⇩ Exportar Excel</button>
-                    <button class="btn-primario" onclick="abrirFormEquipo()">+ Nuevo Equipo</button>
+                    <button class="btn-primario" type="button" onclick="abrirFormEquipo()">+ Nuevo Equipo</button>
+                    <button class="btn-secundario" type="button" onclick="abrirFormImpresora()">+ Nueva Impresora</button>
                 </div>
                 <input type="text" id="buscar-equipo" placeholder="Buscar equipo..." oninput="filtrarInventario()">
             </div>
@@ -376,6 +377,6 @@
         </main>
     </div>
 
-    <script src="app.js?v=17"></script>
+    <script src="app.js?v=18"></script>
 </body>
 </html>

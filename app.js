@@ -758,6 +758,57 @@ function obtenerDependenciasEquipo() {
         .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
 }
 
+function abrirFormImpresora() {
+    document.getElementById('modal-cuerpo').innerHTML = `
+        <h2>Registrar Nueva Impresora</h2>
+        <form onsubmit="guardarImpresora(event)">
+            <label>Dependencia</label><input name="dependencia" required maxlength="100" placeholder="Ej: Familias en Acción">
+            <label>Sede o ubicación</label><input name="sede" maxlength="100" placeholder="Ej: Centro de convivencia">
+            <label>Marca</label><input name="marca" required maxlength="50">
+            <label>Modelo</label><input name="modelo" required maxlength="100">
+            <label>Descripción</label><input name="descripcion" maxlength="100" value="Impresora">
+            <label>Características</label><textarea name="caracteristicas" maxlength="255" rows="2" placeholder="Impresora, fotocopiadora, escáner..."></textarea>
+            <label>Referencia de tinta o tóner</label><input name="toner" maxlength="100">
+            <label>Responsable</label><input name="responsable" maxlength="100">
+            <label>Condición</label><select name="condicion">
+                <option>Operativo</option><option>Defectuoso</option><option>En reparación</option><option>Baja</option>
+            </select>
+            <label>Observaciones</label><textarea name="observacion" maxlength="5000" rows="3"></textarea>
+            <button type="submit" class="btn-primario">Guardar Impresora</button>
+        </form>`;
+    document.getElementById('modal').classList.add('active');
+}
+
+async function guardarImpresora(evento) {
+    evento.preventDefault();
+    const printer = Object.fromEntries(new FormData(evento.target));
+    try {
+        const response = await fetch('backend/api.php?action=impresoras', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            credentials: 'same-origin',
+            body: JSON.stringify(printer)
+        });
+        const result = await response.json();
+        if (!response.ok || !result.ok) {
+            if (manejarSesionNoAutenticada(response)) return;
+            alert(result.error || 'No se pudo guardar la impresora.');
+            return;
+        }
+    } catch (error) {
+        alert('No se pudo conectar con el servidor para guardar la impresora.');
+        return;
+    }
+
+    cerrarModal();
+    try {
+        await Promise.all([cargarInventarioDesdeBackend(), cargarResumenImpresorasDesdeBackend()]);
+        cargarDashboard();
+    } catch (error) {
+        alert('La impresora se guardó, pero no se pudo actualizar la lista. Recarga el inventario.');
+    }
+}
+
 async function abrirFormEquipo() {
     let tecnicosActivos;
     try {
