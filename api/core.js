@@ -334,6 +334,28 @@ export default async function handler(req, res) {
       } });
     }
 
+    if (action === 'impresoras') {
+      if (req.method === 'GET') {
+        const { rows } = await db.query('SELECT * FROM impresoras ORDER BY "ID_Impresora" DESC');
+        return sendJson(res, 200, { ok: true, data: rows });
+      }
+      if (req.method === 'DELETE') {
+        if (!requireRole(res, user, ['administrador', 'director'])) return;
+        const input = await readBody(req);
+        const id = Number(input.id);
+        if (!Number.isSafeInteger(id) || id < 1) {
+          return sendJson(res, 422, { ok: false, error: 'ID de impresora inválido' });
+        }
+        const { rows } = await db.query(
+          'DELETE FROM impresoras WHERE "ID_Impresora" = $1 RETURNING "ID_Impresora"',
+          [id]
+        );
+        if (!rows.length) return sendJson(res, 404, { ok: false, error: 'No se encontró la impresora en el inventario' });
+        return sendJson(res, 200, { ok: true, id: Number(rows[0].ID_Impresora) });
+      }
+      return requireMethod(req, res, ['GET', 'DELETE']);
+    }
+
     if (action === 'assistant') {
       if (!requireMethod(req, res, ['POST'])) return;
       const input = await readBody(req);

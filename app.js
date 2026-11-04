@@ -39,6 +39,7 @@ const DB_STORAGE_KEY = 'MantTI_Arjona_DB';
 const DB_STORAGE_VERSION = 2;
 let csrfToken = '';
 let totalImpresoras = 0;
+let impresorasInventario = [];
 const preventivosSeleccionados = new Set();
 
 function cargarDB() {
@@ -484,16 +485,20 @@ function cargarGraficaEstados() {
 // INVENTARIO
 // ======================================================
 async function cargarInventarioDesdeBackend() {
-    const response = await fetch('backend/api.php?action=inventario', {
-        credentials: 'same-origin',
-        cache: 'no-store'
-    });
-    const result = await response.json();
+    const [response, printersResponse] = await Promise.all([
+        fetch('backend/api.php?action=inventario', { credentials: 'same-origin', cache: 'no-store' }),
+        fetch('backend/api.php?action=impresoras', { credentials: 'same-origin', cache: 'no-store' })
+    ]);
+    const [result, printersResult] = await Promise.all([response.json(), printersResponse.json()]);
     if (!response.ok || !result.ok || !Array.isArray(result.data)) {
         throw new Error(result.error || 'No se pudo leer el inventario de PostgreSQL.');
     }
+    if (!printersResponse.ok || !printersResult.ok || !Array.isArray(printersResult.data)) {
+        throw new Error(printersResult.error || 'No se pudo leer el inventario de impresoras.');
+    }
 
     DB.inventario = result.data.map(equipo => ({
+        clase: 'equipo',
         id: equipo.codigo,
         tipo: equipo.tipo,
         marca: equipo.marca,
@@ -515,6 +520,20 @@ async function cargarInventarioDesdeBackend() {
         office: equipo.office || '',
         programas: equipo.programas || '',
         observaciones: equipo.observaciones || ''
+    }));
+    impresorasInventario = printersResult.data.map(impresora => ({
+        clase: 'impresora',
+        id: `IMP-${impresora.ID_Impresora}`,
+        impresoraId: Number(impresora.ID_Impresora),
+        tipo: 'Impresora',
+        marca: impresora.Marca || '',
+        modelo: impresora.Modelo || '',
+        serial: 'No registrado',
+        dependencia: impresora.Dependencia || '',
+        responsable: impresora.Responsable || 'Sin asignar',
+        tecnicoResponsable: '',
+        ubicacion: impresora.Sede || '',
+        estado: impresora.Condicion || 'Sin estado'
     }));
     guardarDB();
     cargarInventario(document.getElementById('buscar-equipo')?.value || '');
@@ -595,18 +614,21 @@ async function cargarOperacionesDesdeBackend() {
 }
 
 function cargarInventario(filtro='') {
-    let datos = DB.inventario;
+    let datos = [...DB.inventario, ...impresorasInventario];
     if(filtro) {
         const t = filtro.toLowerCase();
-        datos = datos.filter(e => 
-            e.id.toLowerCase().includes(t) || 
-            e.marca.toLowerCase().includes(t) || 
-            e.modelo.toLowerCase().includes(t) ||
-            e.serial.toLowerCase().includes(t) ||
-            e.ubicacion.toLowerCase().includes(t) ||
-            e.dependencia.toLowerCase().includes(t));
+        datos = datos.filter(e => [e.id, e.marca, e.modelo, e.serial, e.ubicacion, e.dependencia]
+            .some(valor => String(valor || '').toLowerCase().includes(t)));
     }
-    document.getElementById('tabla-inventario').innerHTML = datos.map(e => `
+    document.getElementById('tabla-inventario').innerHTML = datos.map(e => {
+        const esImpresora = e.clase === 'impresora';
+        const acciones = esImpresora
+            ? `<button class="btn-text btn-eliminar" type="button" onclick="eliminarActivo(${argumentoSeguroHTML(e.id)}, 'impresora')" title="Eliminar impresora" aria-label="Eliminar impresora ${escaparHTML(e.id)}">Eliminar</button>`
+            : `<button class="btn-text" type="button" onclick="editarEquipo(${argumentoSeguroHTML(e.id)})" title="Editar equipo">Editar</button>
+                <button class="btn-text btn-eliminar" type="button" onclick="eliminarActivo(${argumentoSeguroHTML(e.id)}, 'equipo')" title="Eliminar equipo" aria-label="Eliminar equipo ${escaparHTML(e.id)}">Eliminar</button>
+                <button class="btn-icon" type="button" onclick="verEquipo(${argumentoSeguroHTML(e.id)})" title="Ver Hoja de vida">👁️</button>
+                <button class="btn-icon" type="button" onclick="nuevaOrdenDesdeEquipo(${argumentoSeguroHTML(e.id)})" title="Crear Orden">📝</button>`;
+        return `
         <tr>
             <td><strong>${escaparHTML(e.id)}</strong></td>
             <td>${escaparHTML(e.marca)}</td>
@@ -617,43 +639,43 @@ function cargarInventario(filtro='') {
             <td>${escaparHTML(e.responsable)}</td>
             <td>${escaparHTML(e.tecnicoResponsable || DB.ordenes.find(o => o.equipo === e.id && o.estado !== 'Cerrado' && o.tecnico)?.tecnico || DB.preventivos.find(p => p.equipo === e.id && p.tecnico)?.tecnico || 'Sin asignar')}</td>
             <td>${etiquetaEstado(e.estado)}</td>
-            <td>
-                <button class="btn-text" type="button" onclick="editarEquipo(${argumentoSeguroHTML(e.id)})" title="Editar equipo">Editar</button>
-                <button class="btn-text btn-eliminar" onclick="eliminarEquipo(${argumentoSeguroHTML(e.id)})" title="Eliminar ${escaparHTML(String(e.tipo || '').toLowerCase().includes('impresora') ? 'impresora' : 'equipo')}" aria-label="Eliminar ${escaparHTML(String(e.tipo || '').toLowerCase().includes('impresora') ? 'impresora' : 'equipo')} ${escaparHTML(e.id)}">Eliminar</button>
-                <button class="btn-icon" onclick="verEquipo(${argumentoSeguroHTML(e.id)})" title="Ver Hoja de vida">👁️</button>
-                <button class="btn-icon" onclick="nuevaOrdenDesdeEquipo(${argumentoSeguroHTML(e.id)})" title="Crear Orden">📝</button>
-            </td>
-        </tr>`).join('');
+            <td>${acciones}</td>
+        </tr>`;
+    }).join('');
 }
 
-async function eliminarEquipo(codigo) {
-    const equipo = DB.inventario.find(item => item.id === codigo);
-    if (!equipo) return;
-    const tipo = String(equipo.tipo || '').toLowerCase().includes('impresora') ? 'impresora' : 'equipo';
-    if (!confirm(`¿Eliminar ${tipo} ${codigo}? También se eliminarán sus órdenes, mantenimientos, historial y documentos asociados. Esta acción no se puede deshacer.`)) return;
+async function eliminarActivo(id, tipo) {
+    const esImpresora = tipo === 'impresora';
+    const equipo = esImpresora ? null : DB.inventario.find(item => item.id === id);
+    const impresora = esImpresora ? impresorasInventario.find(item => item.id === id) : null;
+    if ((!esImpresora && !equipo) || (esImpresora && !impresora)) return;
+    const confirmacion = esImpresora
+        ? `¿Eliminar la impresora ${id}? Esta acción no se puede deshacer.`
+        : `¿Eliminar el equipo ${id}? También se eliminarán sus órdenes, mantenimientos, historial y documentos asociados. Esta acción no se puede deshacer.`;
+    if (!confirm(confirmacion)) return;
 
     try {
-        const response = await fetch('backend/api.php?action=inventario', {
+        const response = await fetch(`backend/api.php?action=${esImpresora ? 'impresoras' : 'inventario'}`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
             credentials: 'same-origin',
-            body: JSON.stringify({ codigo })
+            body: JSON.stringify(esImpresora ? { id: impresora.impresoraId } : { codigo: id })
         });
         const result = await response.json();
         if (!response.ok || !result.ok) {
             if (manejarSesionNoAutenticada(response)) return;
-            alert(result.error || `No se pudo eliminar el ${tipo}.`);
+            alert(result.error || `No se pudo eliminar ${esImpresora ? 'la impresora' : 'el equipo'}.`);
             return;
         }
-        DB.inventario = DB.inventario.filter(item => item.id !== codigo);
-        DB.ordenes = DB.ordenes.filter(item => item.equipo !== codigo);
-        DB.preventivos = DB.preventivos.filter(item => item.equipo !== codigo);
-        guardarDB();
-        cargarOrdenes();
-        cargarPreventivos();
+        if (!esImpresora) {
+            DB.inventario = DB.inventario.filter(item => item.id !== id);
+            DB.ordenes = DB.ordenes.filter(item => item.equipo !== id);
+            DB.preventivos = DB.preventivos.filter(item => item.equipo !== id);
+            guardarDB();
+            cargarOrdenes();
+            cargarPreventivos();
+        }
         try {
-            // Volver a leer el inventario persistido evita dejar en Inicio
-            // un conteo local desfasado tras eliminar un registro.
             await cargarInventarioDesdeBackend();
             await cargarResumenImpresorasDesdeBackend();
         } catch (error) {
@@ -662,7 +684,7 @@ async function eliminarEquipo(codigo) {
         }
         cargarDashboard();
     } catch (error) {
-        alert(`No se pudo conectar con el servidor para eliminar el ${tipo}.`);
+        alert(`No se pudo conectar con el servidor para eliminar ${esImpresora ? 'la impresora' : 'el equipo'}.`);
     }
 }
 
