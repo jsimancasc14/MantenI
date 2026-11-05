@@ -2228,3 +2228,116 @@ body.dark-mode .tabla-contenedor .btn-text,body.dark-mode .tabla-contenedor .btn
 
 body.dark-mode #login-screen input[type="text"],body.dark-mode #login-screen input[type="password"],body.dark-mode #login-screen input[type="email"]{border-color:#cbd7e4;background:#fff;color:#17283c;color-scheme:light}
 body.dark-mode #login-screen input::placeholder{color:#78889b}
+
+.sidebar-panel {
+    display: contents;
+}
+
+.mobile-menu-toggle {
+    display: none;
+}
+
+@media (max-width: 760px) {
+    .sidebar {
+        position: sticky;
+        top: 0;
+        z-index: 200;
+        align-items: stretch;
+        overflow: visible;
+    }
+
+    .sidebar-brand {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+    }
+
+    .sidebar-brand > div:not(.brand-mark) {
+        min-width: 0;
+    }
+
+    .sidebar-brand .eyebrow {
+        display: block;
+        max-width: 100%;
+        font-size: 0.55rem;
+        line-height: 1.2;
+    }
+
+    .mobile-menu-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        min-width: 82px;
+        min-height: 40px;
+        margin-left: auto;
+        padding: 0.45rem 0.65rem;
+        border: 1px solid #ffffff30;
+        border-radius: 10px;
+        background: #ffffff12;
+        color: #fff;
+        font: inherit;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .mobile-menu-toggle svg {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 18px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+    }
+
+    .mobile-menu-toggle .menu-close-icon,
+    .sidebar.menu-open .mobile-menu-toggle .menu-open-icon {
+        display: none;
+    }
+
+    .sidebar.menu-open .mobile-menu-toggle .menu-close-icon {
+        display: block;
+    }
+
+    .sidebar-panel {
+        display: none;
+        width: 100%;
+        max-height: calc(100dvh - 64px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .sidebar.menu-open .sidebar-panel {
+        display: grid;
+        gap: 0.75rem;
+        padding-top: 0.7rem;
+    }
+
+    .sidebar-nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tab-btn {
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    .sidebar-footer {
+        position: static;
+        inset: auto;
+        z-index: auto;
+        width: auto;
+        margin: 0;
+        padding: 0.55rem;
+        background: rgba(255,255,255,0.045);
+        box-shadow: none;
+    }
+
+    .page-shell {
+        padding-bottom: 0.8rem;
+    }
+}

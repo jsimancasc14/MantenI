@@ -296,8 +296,29 @@ if (backupBtn) {
 // ======================================================
 // NAVEGACIÓN DE PESTAÑAS
 // ======================================================
+const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+const sidebar = document.querySelector('.sidebar');
+
+function cerrarMenuMovil() {
+    sidebar?.classList.remove('menu-open');
+    mobileMenuToggle?.setAttribute('aria-expanded', 'false');
+    mobileMenuToggle?.setAttribute('aria-label', 'Abrir menú');
+}
+
+mobileMenuToggle?.addEventListener('click', () => {
+    const abierto = mobileMenuToggle.getAttribute('aria-expanded') !== 'true';
+    sidebar?.classList.toggle('menu-open', abierto);
+    mobileMenuToggle.setAttribute('aria-expanded', String(abierto));
+    mobileMenuToggle.setAttribute('aria-label', abierto ? 'Cerrar menú' : 'Abrir menú');
+});
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') cerrarMenuMovil();
+});
+
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+        cerrarMenuMovil();
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
