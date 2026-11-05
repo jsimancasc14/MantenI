@@ -40,7 +40,6 @@ const DB_STORAGE_VERSION = 2;
 let csrfToken = '';
 let totalImpresoras = 0;
 let impresorasInventario = [];
-let filtroDependenciaInventario = '';
 const preventivosSeleccionados = new Set();
 
 function cargarDB() {
@@ -620,29 +619,6 @@ async function cargarOperacionesDesdeBackend() {
 
 function cargarInventario(filtro='') {
     let datos = [...DB.inventario, ...impresorasInventario];
-    const dependencias = obtenerDependenciasEquipo();
-    const listaDependencias = document.getElementById('lista-dependencias-inventario');
-    if (listaDependencias) {
-        const activos = [...DB.inventario, ...impresorasInventario];
-        const contarActivos = dependencia => activos.filter(activo =>
-            String(activo.dependencia || '').trim().toLocaleLowerCase() === dependencia.toLocaleLowerCase()
-        ).length;
-        listaDependencias.innerHTML = `
-            <button class="dependency-filter${filtroDependenciaInventario ? '' : ' active'}" type="button"
-                onclick="filtrarInventarioPorDependencia('')" aria-pressed="${!filtroDependenciaInventario}">
-                <span>Todas</span><strong>${activos.length}</strong>
-            </button>
-            ${dependencias.length ? dependencias.map(dependencia => `
-                <button class="dependency-filter${filtroDependenciaInventario.toLocaleLowerCase() === dependencia.toLocaleLowerCase() ? ' active' : ''}"
-                    type="button" onclick="filtrarInventarioPorDependencia(${argumentoSeguroHTML(dependencia)})"
-                    aria-pressed="${filtroDependenciaInventario.toLocaleLowerCase() === dependencia.toLocaleLowerCase()}">
-                    <span>${escaparHTML(dependencia)}</span><strong>${contarActivos(dependencia)}</strong>
-                </button>`).join('') : '<p class="dependency-empty">No hay dependencias registradas.</p>'}`;
-    }
-    if (filtroDependenciaInventario) {
-        const dependenciaSeleccionada = filtroDependenciaInventario.toLocaleLowerCase();
-        datos = datos.filter(activo => String(activo.dependencia || '').trim().toLocaleLowerCase() === dependenciaSeleccionada);
-    }
     if(filtro) {
         const t = filtro.toLowerCase();
         datos = datos.filter(e => [e.id, e.marca, e.modelo, e.serial, e.ubicacion, e.dependencia]
@@ -778,11 +754,6 @@ function filtrarInventario() {
     cargarInventario(document.getElementById('buscar-equipo').value);
 }
 
-function filtrarInventarioPorDependencia(dependencia) {
-    filtroDependenciaInventario = dependencia;
-    cargarInventario(document.getElementById('buscar-equipo')?.value || '');
-}
-
 function obtenerDependenciasEquipo() {
     const nombresCatalogo = DB.dependencias.map(dependencia => typeof dependencia === 'string' ? dependencia : dependencia.nombre);
     const nombresInventario = DB.inventario.map(equipo => equipo.dependencia);
@@ -808,11 +779,16 @@ async function abrirFormImpresora(id = '') {
     }
     if (!tecnicosActivos) return;
     if (!tecnicosActivos.length) return alert('No hay técnicos habilitados para asignar.');
+    const dependencias = obtenerDependenciasEquipo();
+    const dependenciaSeleccionada = String(printer?.dependencia || '').trim().toLocaleLowerCase();
 
     document.getElementById('modal-cuerpo').innerHTML = `
         <h2>${printer ? 'Editar Impresora' : 'Registrar Nueva Impresora'}</h2>
         <form onsubmit="guardarImpresora(event, ${printer ? printer.impresoraId : 'null'})">
-            <label>Dependencia</label><input name="dependencia" required maxlength="100" placeholder="Ej: Familias en Acción" value="${escaparHTML(printer?.dependencia || '')}">
+            <label>Dependencia</label><select name="dependencia" required>
+                <option value="">Seleccione una dependencia...</option>
+                ${dependencias.map(dependencia => `<option value="${escaparHTML(dependencia)}" ${dependenciaSeleccionada === dependencia.toLocaleLowerCase() ? 'selected' : ''}>${escaparHTML(dependencia)}</option>`).join('')}
+            </select>
             <label>Sede o ubicación</label><input name="sede" maxlength="100" placeholder="Ej: Centro de convivencia" value="${escaparHTML(printer?.ubicacion || '')}">
             <label>Marca</label><input name="marca" required maxlength="50" value="${escaparHTML(printer?.marca || '')}">
             <label>Modelo</label><input name="modelo" required maxlength="100" value="${escaparHTML(printer?.modelo || '')}">

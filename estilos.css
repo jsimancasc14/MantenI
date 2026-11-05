@@ -737,85 +737,6 @@ header p {
     gap: 0.6rem;
 }
 
-.inventory-layout {
-    display: grid;
-    grid-template-columns: minmax(210px, 250px) minmax(0, 1fr);
-    align-items: start;
-    gap: 1rem;
-}
-
-.inventory-dependencies {
-    position: sticky;
-    top: 1rem;
-    display: grid;
-    gap: 0.7rem;
-    max-height: 75vh;
-    overflow-y: auto;
-    padding: 1rem;
-    border: 1px solid var(--borde);
-    border-radius: 18px;
-    background: var(--tarjeta);
-    box-shadow: var(--shadow);
-}
-
-.inventory-dependencies h3 {
-    color: var(--texto);
-    font-size: 1rem;
-}
-
-.inventory-dependencies > p,
-.dependency-empty {
-    color: var(--texto-suave);
-    font-size: 0.8rem;
-    line-height: 1.45;
-}
-
-.dependency-filter-list {
-    display: grid;
-    gap: 0.35rem;
-}
-
-.dependency-filter {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    width: 100%;
-    min-width: 0;
-    padding: 0.6rem 0.7rem;
-    border: 1px solid transparent;
-    border-radius: 10px;
-    background: var(--fondo-2);
-    color: var(--texto);
-    text-align: left;
-    cursor: pointer;
-}
-
-.dependency-filter span {
-    overflow-wrap: anywhere;
-}
-
-.dependency-filter strong {
-    flex: 0 0 auto;
-    color: var(--texto-suave);
-    font-size: 0.76rem;
-}
-
-.dependency-filter:hover,
-.dependency-filter.active {
-    border-color: var(--primario);
-    background: var(--primario-claro);
-    color: var(--primario-oscuro);
-}
-
-.dependency-filter.active strong {
-    color: inherit;
-}
-
-.dependency-empty {
-    padding: 0.5rem 0;
-}
-
 input[type="text"],
 input[type="search"],
 select,
@@ -1424,15 +1345,6 @@ form button[type="submit"] {
 }
 
 @media (max-width: 760px) {
-    .inventory-layout {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .inventory-dependencies {
-        position: static;
-        max-height: 280px;
-    }
-
     .layout-shell {
         display: block;
     }
@@ -2299,10 +2211,6 @@ body.dark-mode .tabla-contenedor tbody tr:nth-child(even) td{background-color:#1
 body.dark-mode .tabla-contenedor tbody tr:hover td{background-color:#1b3049}
 body.dark-mode .tabla-contenedor th{background:linear-gradient(180deg,#1c2c40,#172638);color:#b9c9dc;border-color:#2c3e54}
 body.dark-mode .tabla-contenedor td{border-bottom-color:#29394d}
-body.dark-mode .inventory-dependencies{background:#101b2a;border-color:#2a3b50}
-body.dark-mode .dependency-filter{background:#142235;color:#e6edf7}
-body.dark-mode .dependency-filter:hover,
-body.dark-mode .dependency-filter.active{border-color:#78b8ff;background:#1b3049;color:#b9d8ff}
 body.dark-mode input[type="text"],
 body.dark-mode input[type="search"],
 body.dark-mode input[type="date"],
