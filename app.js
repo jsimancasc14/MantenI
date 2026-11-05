@@ -40,6 +40,7 @@ const DB_STORAGE_VERSION = 2;
 let csrfToken = '';
 let totalImpresoras = 0;
 let impresorasInventario = [];
+let filtroDependenciaInventario = '';
 const preventivosSeleccionados = new Set();
 
 function cargarDB() {
@@ -619,6 +620,29 @@ async function cargarOperacionesDesdeBackend() {
 
 function cargarInventario(filtro='') {
     let datos = [...DB.inventario, ...impresorasInventario];
+    const dependencias = obtenerDependenciasEquipo();
+    const listaDependencias = document.getElementById('lista-dependencias-inventario');
+    if (listaDependencias) {
+        const activos = [...DB.inventario, ...impresorasInventario];
+        const contarActivos = dependencia => activos.filter(activo =>
+            String(activo.dependencia || '').trim().toLocaleLowerCase() === dependencia.toLocaleLowerCase()
+        ).length;
+        listaDependencias.innerHTML = `
+            <button class="dependency-filter${filtroDependenciaInventario ? '' : ' active'}" type="button"
+                onclick="filtrarInventarioPorDependencia('')" aria-pressed="${!filtroDependenciaInventario}">
+                <span>Todas</span><strong>${activos.length}</strong>
+            </button>
+            ${dependencias.length ? dependencias.map(dependencia => `
+                <button class="dependency-filter${filtroDependenciaInventario.toLocaleLowerCase() === dependencia.toLocaleLowerCase() ? ' active' : ''}"
+                    type="button" onclick="filtrarInventarioPorDependencia(${argumentoSeguroHTML(dependencia)})"
+                    aria-pressed="${filtroDependenciaInventario.toLocaleLowerCase() === dependencia.toLocaleLowerCase()}">
+                    <span>${escaparHTML(dependencia)}</span><strong>${contarActivos(dependencia)}</strong>
+                </button>`).join('') : '<p class="dependency-empty">No hay dependencias registradas.</p>'}`;
+    }
+    if (filtroDependenciaInventario) {
+        const dependenciaSeleccionada = filtroDependenciaInventario.toLocaleLowerCase();
+        datos = datos.filter(activo => String(activo.dependencia || '').trim().toLocaleLowerCase() === dependenciaSeleccionada);
+    }
     if(filtro) {
         const t = filtro.toLowerCase();
         datos = datos.filter(e => [e.id, e.marca, e.modelo, e.serial, e.ubicacion, e.dependencia]
@@ -754,12 +778,21 @@ function filtrarInventario() {
     cargarInventario(document.getElementById('buscar-equipo').value);
 }
 
+function filtrarInventarioPorDependencia(dependencia) {
+    filtroDependenciaInventario = dependencia;
+    cargarInventario(document.getElementById('buscar-equipo')?.value || '');
+}
+
 function obtenerDependenciasEquipo() {
     const nombresCatalogo = DB.dependencias.map(dependencia => typeof dependencia === 'string' ? dependencia : dependencia.nombre);
     const nombresInventario = DB.inventario.map(equipo => equipo.dependencia);
-    return [...new Set([...nombresCatalogo, ...nombresInventario]
+    const nombresImpresoras = impresorasInventario.map(impresora => impresora.dependencia);
+    const dependencias = new Map();
+    [...nombresCatalogo, ...nombresInventario, ...nombresImpresoras]
         .map(nombre => String(nombre || '').trim())
-        .filter(nombre => nombre && nombre.toLowerCase() !== 'sin dependencia'))]
+        .filter(nombre => nombre && nombre.toLocaleLowerCase() !== 'sin dependencia')
+        .forEach(nombre => dependencias.set(nombre.toLocaleLowerCase(), dependencias.get(nombre.toLocaleLowerCase()) || nombre));
+    return [...dependencias.values()]
         .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
 }
 
