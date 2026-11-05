@@ -761,10 +761,21 @@ function obtenerDependenciasEquipo() {
     const dependencias = new Map();
     [...nombresCatalogo, ...nombresInventario, ...nombresImpresoras]
         .map(nombre => String(nombre || '').trim())
-        .filter(nombre => nombre && nombre.toLocaleLowerCase() !== 'sin dependencia')
-        .forEach(nombre => dependencias.set(nombre.toLocaleLowerCase(), dependencias.get(nombre.toLocaleLowerCase()) || nombre));
+        .filter(Boolean)
+        .forEach(nombre => {
+            const clave = normalizarNombreDependencia(nombre);
+            if (clave && clave !== 'sin dependencia' && !dependencias.has(clave)) {
+                dependencias.set(clave, nombre);
+            }
+        });
     return [...dependencias.values()]
         .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+}
+
+function normalizarNombreDependencia(nombre) {
+    return String(nombre || '').trim().replace(/\s+/g, ' ')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase('es');
 }
 
 async function abrirFormImpresora(id = '') {
@@ -780,14 +791,14 @@ async function abrirFormImpresora(id = '') {
     if (!tecnicosActivos) return;
     if (!tecnicosActivos.length) return alert('No hay técnicos habilitados para asignar.');
     const dependencias = obtenerDependenciasEquipo();
-    const dependenciaSeleccionada = String(printer?.dependencia || '').trim().toLocaleLowerCase();
+    const dependenciaSeleccionada = normalizarNombreDependencia(printer?.dependencia);
 
     document.getElementById('modal-cuerpo').innerHTML = `
         <h2>${printer ? 'Editar Impresora' : 'Registrar Nueva Impresora'}</h2>
         <form onsubmit="guardarImpresora(event, ${printer ? printer.impresoraId : 'null'})">
             <label>Dependencia</label><select name="dependencia" required>
                 <option value="">Seleccione una dependencia...</option>
-                ${dependencias.map(dependencia => `<option value="${escaparHTML(dependencia)}" ${dependenciaSeleccionada === dependencia.toLocaleLowerCase() ? 'selected' : ''}>${escaparHTML(dependencia)}</option>`).join('')}
+                ${dependencias.map(dependencia => `<option value="${escaparHTML(dependencia)}" ${dependenciaSeleccionada === normalizarNombreDependencia(dependencia) ? 'selected' : ''}>${escaparHTML(dependencia)}</option>`).join('')}
             </select>
             <label>Sede o ubicación</label><input name="sede" maxlength="100" placeholder="Ej: Centro de convivencia" value="${escaparHTML(printer?.ubicacion || '')}">
             <label>Marca</label><input name="marca" required maxlength="50" value="${escaparHTML(printer?.marca || '')}">
