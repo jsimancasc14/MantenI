@@ -477,15 +477,18 @@ export default async function handler(req, res) {
         const connection = await db.connect();
         try {
           await connection.query('BEGIN');
-          const deleted = await connection.query('DELETE FROM equipos WHERE codigo = $1 RETURNING codigo', [codigo]);
-          if (!deleted.rowCount) {
+          const updated = await connection.query(
+            "UPDATE equipos SET estado = 'Baja' WHERE codigo = $1 RETURNING codigo",
+            [codigo]
+          );
+          if (!updated.rowCount) {
             await connection.query('ROLLBACK');
             return sendJson(res, 404, { ok: false, error: 'No se encontró el equipo en el inventario' });
           }
-          await connection.query('DELETE FROM ordenes_trabajo WHERE equipo_codigo = $1', [codigo]);
-          await connection.query('DELETE FROM preventivos WHERE equipo_codigo = $1', [codigo]);
-          await connection.query('DELETE FROM historial_equipos WHERE equipo_codigo = $1', [codigo]);
-          await connection.query('DELETE FROM documentos_equipos WHERE equipo_codigo = $1', [codigo]);
+          await connection.query(
+            'INSERT INTO historial_equipos (equipo_codigo, accion, descripcion, usuario_id) VALUES ($1, $2, $3, $4)',
+            [codigo, 'Equipo dado de baja', 'El equipo fue marcado como baja desde el inventario', user.id]
+          );
           await connection.query('COMMIT');
           return sendJson(res, 200, { ok: true, codigo });
         } catch (error) {

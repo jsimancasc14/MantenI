@@ -650,8 +650,12 @@ function cargarInventario(filtro='') {
         const acciones = esImpresora
             ? `<button class="btn-text" type="button" onclick="editarImpresora(${argumentoSeguroHTML(e.id)})" title="Editar impresora" aria-label="Editar impresora ${escaparHTML(e.id)}">Editar</button>
                 <button class="btn-text btn-eliminar" type="button" onclick="eliminarActivo(${argumentoSeguroHTML(e.id)}, 'impresora')" title="Eliminar impresora" aria-label="Eliminar impresora ${escaparHTML(e.id)}">Eliminar</button>`
+            : e.estado === 'Baja'
+                ? `<button class="btn-text" type="button" disabled title="Este equipo ya está dado de baja">De baja</button>
+                    <button class="btn-text" type="button" onclick="editarEquipo(${argumentoSeguroHTML(e.id)})" title="Editar equipo">Editar</button>
+                    <button class="btn-icon" type="button" onclick="verEquipo(${argumentoSeguroHTML(e.id)})" title="Ver Hoja de vida">👁️</button>`
             : `<button class="btn-text" type="button" onclick="editarEquipo(${argumentoSeguroHTML(e.id)})" title="Editar equipo">Editar</button>
-                <button class="btn-text btn-eliminar" type="button" onclick="eliminarActivo(${argumentoSeguroHTML(e.id)}, 'equipo')" title="Eliminar equipo" aria-label="Eliminar equipo ${escaparHTML(e.id)}">Eliminar</button>
+                <button class="btn-text btn-eliminar" type="button" onclick="eliminarActivo(${argumentoSeguroHTML(e.id)}, 'equipo')" title="Dar de baja equipo" aria-label="Dar de baja equipo ${escaparHTML(e.id)}">Dar de baja</button>
                 <button class="btn-icon" type="button" onclick="verEquipo(${argumentoSeguroHTML(e.id)})" title="Ver Hoja de vida">👁️</button>
                 <button class="btn-icon" type="button" onclick="nuevaOrdenDesdeEquipo(${argumentoSeguroHTML(e.id)})" title="Crear Orden">📝</button>`;
         return `
@@ -677,7 +681,7 @@ async function eliminarActivo(id, tipo) {
     if ((!esImpresora && !equipo) || (esImpresora && !impresora)) return;
     const confirmacion = esImpresora
         ? `¿Eliminar la impresora ${id}? Esta acción no se puede deshacer.`
-        : `¿Eliminar el equipo ${id}? También se eliminarán sus órdenes, mantenimientos, historial y documentos asociados. Esta acción no se puede deshacer.`;
+        : `¿Dar de baja el equipo ${id}? Se conservará en el inventario y se contará en «Obsoletos o de baja».`;
     if (!confirm(confirmacion)) return;
 
     try {
@@ -690,16 +694,13 @@ async function eliminarActivo(id, tipo) {
         const result = await response.json();
         if (!response.ok || !result.ok) {
             if (manejarSesionNoAutenticada(response)) return;
-            alert(result.error || `No se pudo eliminar ${esImpresora ? 'la impresora' : 'el equipo'}.`);
+            alert(result.error || (esImpresora ? 'No se pudo eliminar la impresora.' : 'No se pudo dar de baja el equipo.'));
             return;
         }
         if (!esImpresora) {
-            DB.inventario = DB.inventario.filter(item => item.id !== id);
-            DB.ordenes = DB.ordenes.filter(item => item.equipo !== id);
-            DB.preventivos = DB.preventivos.filter(item => item.equipo !== id);
+            equipo.estado = 'Baja';
             guardarDB();
-            cargarOrdenes();
-            cargarPreventivos();
+            cargarDashboard();
         }
         try {
             await cargarInventarioDesdeBackend();
@@ -710,7 +711,7 @@ async function eliminarActivo(id, tipo) {
         }
         cargarDashboard();
     } catch (error) {
-        alert(`No se pudo conectar con el servidor para eliminar ${esImpresora ? 'la impresora' : 'el equipo'}.`);
+        alert(esImpresora ? 'No se pudo conectar con el servidor para eliminar la impresora.' : 'No se pudo conectar con el servidor para dar de baja el equipo.');
     }
 }
 
