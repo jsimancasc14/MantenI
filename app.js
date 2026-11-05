@@ -894,7 +894,7 @@ async function abrirFormEquipo() {
         <label>Código</label><input name="id" required placeholder="Ej: PC-ARJ-001">
         <label>Tipo</label><select name="tipo" required>
             <option>PC escritorio</option><option>Laptop</option><option>All-in-One</option>
-            <option>Impresora</option><option>Monitor</option><option>Otro</option>
+            <option>Monitor</option><option>Otro</option>
         </select>
         <label>Marca</label><input name="marca" required>
         <label>Modelo</label><input name="modelo">
@@ -932,18 +932,22 @@ async function editarEquipo(codigo) {
         tecnicosActivos.push({ nombre: equipo.tecnicoResponsable });
     }
     const dependencias = obtenerDependenciasEquipo();
-    const tipos = ['PC escritorio', 'Laptop', 'All-in-One', 'Impresora', 'Monitor', 'Otro'];
-    if (equipo.tipo && !tipos.includes(equipo.tipo)) tipos.unshift(equipo.tipo);
+    const tipos = ['PC escritorio', 'Laptop', 'All-in-One', 'Monitor', 'Otro'];
+    const esImpresoraLegacy = String(equipo.tipo || '').trim().toLocaleLowerCase('es') === 'impresora';
+    if (equipo.tipo && !esImpresoraLegacy && !tipos.includes(equipo.tipo)) tipos.unshift(equipo.tipo);
     const estados = ['Operativo', 'En reparación', 'En espera de repuesto', 'Obsoleto', 'Baja'];
     if (equipo.estado && !estados.includes(equipo.estado)) estados.unshift(equipo.estado);
     const opciones = (items, seleccionado) => items.map(item =>
         `<option value="${escaparHTML(item)}" ${item === seleccionado ? 'selected' : ''}>${escaparHTML(item)}</option>`
     ).join('');
+    const campoTipo = esImpresoraLegacy
+        ? `<input type="hidden" name="tipo" value="${escaparHTML(equipo.tipo)}"><p>Este registro anterior se conserva como impresora. Las nuevas impresoras se registran en su módulo.</p>`
+        : `<select name="tipo" required>${opciones(tipos, equipo.tipo)}</select>`;
 
     document.getElementById('modal-cuerpo').innerHTML = `
         <h2>Editar Equipo</h2><form onsubmit="guardarEquipo(event, ${argumentoSeguroHTML(equipo.id)})">
         <label>Código</label><input name="id" required value="${escaparHTML(equipo.id)}" readonly>
-        <label>Tipo</label><select name="tipo" required>${opciones(tipos, equipo.tipo)}</select>
+        <label>Tipo</label>${campoTipo}
         <label>Marca</label><input name="marca" required value="${escaparHTML(equipo.marca)}">
         <label>Modelo</label><input name="modelo" required value="${escaparHTML(equipo.modelo)}">
         <label>Serial</label><input name="serial" required value="${escaparHTML(equipo.serial)}">
