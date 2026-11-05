@@ -528,12 +528,16 @@ async function cargarInventarioDesdeBackend() {
         tipo: 'Impresora',
         marca: impresora.Marca || '',
         modelo: impresora.Modelo || '',
+        descripcion: impresora.Descripcion || 'Impresora',
+        caracteristicas: impresora.Caracteristicas || '',
+        toner: impresora.Referencia_Tinta_Toner || '',
         serial: 'No registrado',
         dependencia: impresora.Dependencia || '',
         responsable: impresora.Responsable || 'Sin asignar',
         tecnicoResponsable: impresora.Tecnico_Responsable || '',
         ubicacion: impresora.Sede || '',
-        estado: impresora.Condicion || 'Sin estado'
+        estado: impresora.Condicion || 'Sin estado',
+        observacion: impresora.Observacion || ''
     }));
     guardarDB();
     cargarInventario(document.getElementById('buscar-equipo')?.value || '');
@@ -623,7 +627,8 @@ function cargarInventario(filtro='') {
     document.getElementById('tabla-inventario').innerHTML = datos.map(e => {
         const esImpresora = e.clase === 'impresora';
         const acciones = esImpresora
-            ? `<button class="btn-text btn-eliminar" type="button" onclick="eliminarActivo(${argumentoSeguroHTML(e.id)}, 'impresora')" title="Eliminar impresora" aria-label="Eliminar impresora ${escaparHTML(e.id)}">Eliminar</button>`
+            ? `<button class="btn-text" type="button" onclick="editarImpresora(${argumentoSeguroHTML(e.id)})" title="Editar impresora" aria-label="Editar impresora ${escaparHTML(e.id)}">Editar</button>
+                <button class="btn-text btn-eliminar" type="button" onclick="eliminarActivo(${argumentoSeguroHTML(e.id)}, 'impresora')" title="Eliminar impresora" aria-label="Eliminar impresora ${escaparHTML(e.id)}">Eliminar</button>`
             : `<button class="btn-text" type="button" onclick="editarEquipo(${argumentoSeguroHTML(e.id)})" title="Editar equipo">Editar</button>
                 <button class="btn-text btn-eliminar" type="button" onclick="eliminarActivo(${argumentoSeguroHTML(e.id)}, 'equipo')" title="Eliminar equipo" aria-label="Eliminar equipo ${escaparHTML(e.id)}">Eliminar</button>
                 <button class="btn-icon" type="button" onclick="verEquipo(${argumentoSeguroHTML(e.id)})" title="Ver Hoja de vida">👁️</button>
@@ -758,7 +763,9 @@ function obtenerDependenciasEquipo() {
         .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
 }
 
-async function abrirFormImpresora() {
+async function abrirFormImpresora(id = '') {
+    const printer = id ? impresorasInventario.find(item => item.id === id) : null;
+    if (id && !printer) return alert('No se encontró la impresora seleccionada.');
     let tecnicosActivos;
     try {
         tecnicosActivos = await cargarTecnicosDesdeBackend();
@@ -770,47 +777,54 @@ async function abrirFormImpresora() {
     if (!tecnicosActivos.length) return alert('No hay técnicos habilitados para asignar.');
 
     document.getElementById('modal-cuerpo').innerHTML = `
-        <h2>Registrar Nueva Impresora</h2>
-        <form onsubmit="guardarImpresora(event)">
-            <label>Dependencia</label><input name="dependencia" required maxlength="100" placeholder="Ej: Familias en Acción">
-            <label>Sede o ubicación</label><input name="sede" maxlength="100" placeholder="Ej: Centro de convivencia">
-            <label>Marca</label><input name="marca" required maxlength="50">
-            <label>Modelo</label><input name="modelo" required maxlength="100">
-            <label>Descripción</label><input name="descripcion" maxlength="100" value="Impresora">
-            <label>Características</label><textarea name="caracteristicas" maxlength="255" rows="2" placeholder="Impresora, fotocopiadora, escáner..."></textarea>
-            <label>Referencia de tinta o tóner</label><input name="toner" maxlength="100">
-            <label>Responsable</label><input name="responsable" maxlength="100">
+        <h2>${printer ? 'Editar Impresora' : 'Registrar Nueva Impresora'}</h2>
+        <form onsubmit="guardarImpresora(event, ${printer ? printer.impresoraId : 'null'})">
+            <label>Dependencia</label><input name="dependencia" required maxlength="100" placeholder="Ej: Familias en Acción" value="${escaparHTML(printer?.dependencia || '')}">
+            <label>Sede o ubicación</label><input name="sede" maxlength="100" placeholder="Ej: Centro de convivencia" value="${escaparHTML(printer?.ubicacion || '')}">
+            <label>Marca</label><input name="marca" required maxlength="50" value="${escaparHTML(printer?.marca || '')}">
+            <label>Modelo</label><input name="modelo" required maxlength="100" value="${escaparHTML(printer?.modelo || '')}">
+            <label>Descripción</label><input name="descripcion" maxlength="100" value="${escaparHTML(printer?.descripcion || 'Impresora')}">
+            <label>Características</label><textarea name="caracteristicas" maxlength="255" rows="2" placeholder="Impresora, fotocopiadora, escáner...">${escaparHTML(printer?.caracteristicas || '')}</textarea>
+            <label>Referencia de tinta o tóner</label><input name="toner" maxlength="100" value="${escaparHTML(printer?.toner || '')}">
+            <label>Responsable</label><input name="responsable" maxlength="100" value="${escaparHTML(printer?.responsable === 'Sin asignar' ? '' : printer?.responsable || '')}">
             <label>Técnico responsable</label><select name="tecnico_responsable" required>
                 <option value="">Seleccione un técnico...</option>
-                ${tecnicosActivos.map(tecnico => `<option value="${escaparHTML(tecnico.nombre)}">${escaparHTML(tecnico.nombre)}</option>`).join('')}
+                ${tecnicosActivos.map(tecnico => `<option value="${escaparHTML(tecnico.nombre)}" ${printer?.tecnicoResponsable === tecnico.nombre ? 'selected' : ''}>${escaparHTML(tecnico.nombre)}</option>`).join('')}
             </select>
             <label>Condición</label><select name="condicion">
-                <option>Operativo</option><option>Defectuoso</option><option>En reparación</option><option>Baja</option>
+                <option ${printer?.estado === 'Operativo' ? 'selected' : ''}>Operativo</option>
+                <option ${printer?.estado === 'Defectuoso' ? 'selected' : ''}>Defectuoso</option>
+                <option ${printer?.estado === 'En reparación' ? 'selected' : ''}>En reparación</option>
+                <option ${printer?.estado === 'Baja' ? 'selected' : ''}>Baja</option>
             </select>
-            <label>Observaciones</label><textarea name="observacion" maxlength="5000" rows="3"></textarea>
-            <button type="submit" class="btn-primario">Guardar Impresora</button>
+            <label>Observaciones</label><textarea name="observacion" maxlength="5000" rows="3">${escaparHTML(printer?.observacion || '')}</textarea>
+            <button type="submit" class="btn-primario">${printer ? 'Guardar Cambios' : 'Guardar Impresora'}</button>
         </form>`;
     document.getElementById('modal').classList.add('active');
 }
 
-async function guardarImpresora(evento) {
+function editarImpresora(id) {
+    return abrirFormImpresora(id);
+}
+
+async function guardarImpresora(evento, id = null) {
     evento.preventDefault();
     const printer = Object.fromEntries(new FormData(evento.target));
     try {
         const response = await fetch('backend/api.php?action=impresoras', {
-            method: 'POST',
+            method: id ? 'PUT' : 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
             credentials: 'same-origin',
-            body: JSON.stringify(printer)
+            body: JSON.stringify(id ? { ...printer, id } : printer)
         });
         const result = await response.json();
         if (!response.ok || !result.ok) {
             if (manejarSesionNoAutenticada(response)) return;
-            alert(result.error || 'No se pudo guardar la impresora.');
+            alert(result.error || `No se pudo ${id ? 'actualizar' : 'guardar'} la impresora.`);
             return;
         }
     } catch (error) {
-        alert('No se pudo conectar con el servidor para guardar la impresora.');
+        alert(`No se pudo conectar con el servidor para ${id ? 'actualizar' : 'guardar'} la impresora.`);
         return;
     }
 
@@ -819,7 +833,7 @@ async function guardarImpresora(evento) {
         await Promise.all([cargarInventarioDesdeBackend(), cargarResumenImpresorasDesdeBackend()]);
         cargarDashboard();
     } catch (error) {
-        alert('La impresora se guardó, pero no se pudo actualizar la lista. Recarga el inventario.');
+        alert(`La impresora se ${id ? 'actualizó' : 'guardó'}, pero no se pudo actualizar la lista. Recarga el inventario.`);
     }
 }
 

@@ -340,9 +340,13 @@ export default async function handler(req, res) {
         const { rows } = await db.query('SELECT * FROM impresoras ORDER BY "ID_Impresora" DESC');
         return sendJson(res, 200, { ok: true, data: rows });
       }
-      if (req.method === 'POST') {
+      if (req.method === 'POST' || req.method === 'PUT') {
         if (!requireRole(res, user, ['administrador', 'director'])) return;
         const input = await readBody(req);
+        const id = Number(input.id);
+        if (req.method === 'PUT' && (!Number.isSafeInteger(id) || id < 1)) {
+          return sendJson(res, 422, { ok: false, error: 'ID de impresora inválido' });
+        }
         const printer = {
           dependencia: String(input.dependencia || '').trim(),
           sede: String(input.sede || '').trim(),
@@ -370,6 +374,21 @@ export default async function handler(req, res) {
           }
         }
         await db.query('ALTER TABLE impresoras ADD COLUMN IF NOT EXISTS "Tecnico_Responsable" VARCHAR(120)');
+        if (req.method === 'PUT') {
+          const { rows } = await db.query(
+            `UPDATE impresoras
+             SET "Dependencia" = $2, "Sede" = $3, "Descripcion" = $4, "Marca" = $5, "Modelo" = $6,
+                 "Caracteristicas" = $7, "Referencia_Tinta_Toner" = $8, "Responsable" = $9,
+                 "Tecnico_Responsable" = $10, "Condicion" = $11, "Observacion" = $12
+             WHERE "ID_Impresora" = $1
+             RETURNING "ID_Impresora"`,
+            [id, printer.dependencia, printer.sede || null, printer.descripcion || 'Impresora', printer.marca, printer.modelo,
+              printer.caracteristicas || null, printer.toner || null, printer.responsable || null,
+              printer.tecnicoResponsable, printer.condicion || 'Operativo', printer.observacion || null]
+          );
+          if (!rows.length) return sendJson(res, 404, { ok: false, error: 'No se encontró la impresora en el inventario' });
+          return sendJson(res, 200, { ok: true, id: Number(rows[0].ID_Impresora) });
+        }
         const { rows } = await db.query(
           `INSERT INTO impresoras ("Dependencia", "Sede", "Descripcion", "Marca", "Modelo", "Caracteristicas", "Referencia_Tinta_Toner", "Responsable", "Tecnico_Responsable", "Condicion", "Observacion")
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -394,7 +413,7 @@ export default async function handler(req, res) {
         if (!rows.length) return sendJson(res, 404, { ok: false, error: 'No se encontró la impresora en el inventario' });
         return sendJson(res, 200, { ok: true, id: Number(rows[0].ID_Impresora) });
       }
-      return requireMethod(req, res, ['GET', 'POST', 'DELETE']);
+      return requireMethod(req, res, ['GET', 'POST', 'PUT', 'DELETE']);
     }
 
     if (action === 'assistant') {
