@@ -823,6 +823,7 @@ async function abrirFormImpresora(id = '') {
             <label>Dependencia</label><select name="dependencia" required>
                 <option value="">Seleccione una dependencia...</option>
                 ${dependencias.map(dependencia => `<option value="${escaparHTML(dependencia)}" ${dependenciaSeleccionada === normalizarNombreDependencia(dependencia) ? 'selected' : ''}>${escaparHTML(dependencia)}</option>`).join('')}
+                <option value="Riesgo" ${dependenciaSeleccionada === normalizarNombreDependencia('Riesgo') ? 'selected' : ''}>Riesgo</option>
             </select>
             <label>Sede o ubicación</label><input name="sede" maxlength="100" placeholder="Ej: Centro de convivencia" value="${escaparHTML(printer?.ubicacion || '')}">
             <label>Marca</label><input name="marca" required maxlength="50" value="${escaparHTML(printer?.marca || '')}">
