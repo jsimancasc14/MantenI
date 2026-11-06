@@ -540,7 +540,8 @@ async function cargarInventarioDesdeBackend() {
         so: equipo.sistema_operativo || '',
         office: equipo.office || '',
         programas: equipo.programas || '',
-        observaciones: equipo.observaciones || ''
+        observaciones: equipo.observaciones || '',
+        riesgo: equipo.riesgo || ''
     }));
     impresorasInventario = printersResult.data.map(impresora => ({
         clase: 'impresora',
@@ -735,6 +736,7 @@ function exportarInventarioExcel() {
         ['Proveedor', 'proveedor'],
         ['Valor', 'valor'],
         ['Dependencia', 'dependencia'],
+        ['Riesgo', 'riesgo'],
         ['Responsable', 'responsable'],
         ['Ubicación', 'ubicacion'],
         ['Estado', 'estado'],
@@ -914,6 +916,7 @@ async function abrirFormEquipo() {
             <option>Operativo</option><option>En reparación</option>
             <option>En espera de repuesto</option><option>Obsoleto</option><option>Baja</option>
         </select>
+        <label>Riesgo</label><textarea name="riesgo" maxlength="1000" placeholder="Describe riesgos asociados al equipo (opcional)"></textarea>
         <button type="submit" class="btn-primario">Guardar Equipo</button>
         </form>`;
     document.getElementById('modal').classList.add('active');
@@ -963,6 +966,7 @@ async function editarEquipo(codigo) {
         </select>
         <label>Ubicación</label><input name="ubicacion" required value="${escaparHTML(equipo.ubicacion)}">
         <label>Estado</label><select name="estado" required>${opciones(estados, equipo.estado)}</select>
+        <label>Riesgo</label><textarea name="riesgo" maxlength="1000" placeholder="Describe riesgos asociados al equipo (opcional)">${escaparHTML(equipo.riesgo || '')}</textarea>
         <button type="submit" class="btn-primario">Guardar Cambios</button>
         </form>`;
     document.getElementById('modal').classList.add('active');
@@ -992,7 +996,8 @@ async function guardarEquipo(e, codigoOriginal = '') {
                 responsable: eq.responsable,
                 tecnico_responsable: eq.tecnico_responsable,
                 ubicacion: eq.ubicacion,
-                estado: eq.estado
+                estado: eq.estado,
+                riesgo: eq.riesgo
             })
         });
         const result = await response.json();
@@ -1040,6 +1045,7 @@ async function verEquipo(id) {
         <div><p><strong>Marca/Modelo:</strong> ${escaparHTML(e.marca)} ${escaparHTML(e.modelo)}</p>
         <p><strong>Serial:</strong> ${escaparHTML(e.serial)}</p>
         <p><strong>Dependencia:</strong> ${escaparHTML(e.dependencia)}</p>
+        <p><strong>Riesgo:</strong> ${escaparHTML(e.riesgo || 'No registrado')}</p>
         <p><strong>Responsable:</strong> ${escaparHTML(e.responsable)}</p>
         <p><strong>Ubicación:</strong> ${escaparHTML(e.ubicacion)}</p>
         <p><strong>Estado:</strong> ${etiquetaEstado(e.estado)}</p></div>

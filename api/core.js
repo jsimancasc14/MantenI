@@ -464,6 +464,7 @@ export default async function handler(req, res) {
     }
 
     if (action === 'inventario') {
+      await db.query('ALTER TABLE equipos ADD COLUMN IF NOT EXISTS riesgo TEXT');
       if (req.method === 'GET') {
         await db.query('ALTER TABLE equipos ADD COLUMN IF NOT EXISTS tecnico_responsable VARCHAR(120)');
         const { rows } = await db.query(`SELECT * FROM equipos WHERE ${VALID_EQUIPMENT_FILTER} ORDER BY id DESC`);
@@ -502,8 +503,10 @@ export default async function handler(req, res) {
         if (!requireRole(res, user, ['administrador', 'director'])) return;
         const input = await readBody(req);
         const codigo = String(input.codigo || '').trim();
+        const riesgo = String(input.riesgo || '').trim();
         const required = ['tipo', 'marca', 'modelo', 'serial', 'dependencia', 'responsable', 'ubicacion', 'estado'];
         if (!codigo) return sendJson(res, 422, { ok: false, error: 'Código del equipo obligatorio.' });
+        if (riesgo.length > 1000) return sendJson(res, 422, { ok: false, error: 'El riesgo no puede superar 1000 caracteres.' });
         for (const field of required) {
           if (!String(input[field] || '').trim()) return sendJson(res, 422, { ok: false, error: `El campo ${field} es obligatorio.` });
         }
@@ -518,11 +521,11 @@ export default async function handler(req, res) {
           const updated = await connection.query(
             `UPDATE equipos
              SET tipo = $2, marca = $3, modelo = $4, serial = $5, dependencia = $6,
-                 responsable = $7, tecnico_responsable = $8, ubicacion = $9, estado = $10
+                 responsable = $7, tecnico_responsable = $8, ubicacion = $9, estado = $10, riesgo = $11
              WHERE codigo = $1
-             RETURNING codigo, tipo, marca, modelo, serial, dependencia, responsable, tecnico_responsable, ubicacion, estado`,
+             RETURNING codigo, tipo, marca, modelo, serial, dependencia, responsable, tecnico_responsable, ubicacion, estado, riesgo`,
             [codigo, input.tipo, input.marca, input.modelo, input.serial, input.dependencia,
-              input.responsable, input.tecnico_responsable || null, input.ubicacion, input.estado]
+              input.responsable, input.tecnico_responsable || null, input.ubicacion, input.estado, riesgo || null]
           );
           if (!updated.rowCount) {
             await connection.query('ROLLBACK');
@@ -544,7 +547,9 @@ export default async function handler(req, res) {
       if (req.method !== 'POST') return requireMethod(req, res, ['GET', 'POST', 'PUT', 'DELETE']);
       if (!requireRole(res, user, ['administrador', 'director'])) return;
       const input = await readBody(req);
+      const riesgo = String(input.riesgo || '').trim();
       const required = ['codigo', 'tipo', 'marca', 'modelo', 'serial', 'dependencia', 'responsable', 'ubicacion'];
+      if (riesgo.length > 1000) return sendJson(res, 422, { ok: false, error: 'El riesgo no puede superar 1000 caracteres.' });
       for (const field of required) {
         if (!String(input[field] || '').trim()) return sendJson(res, 422, { ok: false, error: `El campo ${field} es obligatorio` });
       }
@@ -559,11 +564,11 @@ export default async function handler(req, res) {
       try {
         await connection.query('BEGIN');
         const result = await connection.query(
-          `INSERT INTO equipos (codigo, tipo, marca, modelo, serial, numero_interno, dependencia, responsable, tecnico_responsable, ubicacion, estado, procesador, ram, disco, sistema_operativo, office, programas, observaciones)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING id`,
+          `INSERT INTO equipos (codigo, tipo, marca, modelo, serial, numero_interno, dependencia, responsable, tecnico_responsable, ubicacion, estado, procesador, ram, disco, sistema_operativo, office, programas, observaciones, riesgo)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING id`,
           [input.codigo, input.tipo, input.marca, input.modelo, input.serial, input.numero_interno || '', input.dependencia, input.responsable,
             input.tecnico_responsable || null, input.ubicacion, input.estado || 'Operativo', input.procesador || null, input.ram || null, input.disco || null, input.sistema_operativo || null,
-            input.office || null, input.programas || null, input.observaciones || null]
+            input.office || null, input.programas || null, input.observaciones || null, riesgo || null]
         );
         await connection.query(
           'INSERT INTO historial_equipos (equipo_codigo, accion, descripcion, usuario_id) VALUES ($1, $2, $3, $4)',

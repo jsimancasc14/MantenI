@@ -44,6 +44,7 @@ CREATE TABLE "equipos" (
   "office" varchar(80) DEFAULT NULL,
   "programas" varchar(220) DEFAULT NULL,
   "observaciones" text DEFAULT NULL,
+  "riesgo" text DEFAULT NULL,
   "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
