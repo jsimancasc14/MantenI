@@ -906,6 +906,7 @@ async function abrirFormEquipo() {
             <option value="">${dependencias.length ? 'Seleccione una dependencia...' : 'No hay dependencias registradas'}</option>
             ${dependencias.map(dependencia=>`<option value="${escaparHTML(dependencia)}">${escaparHTML(dependencia)}</option>`).join('')}
         </select>
+        <label>Riesgo</label><textarea name="riesgo" maxlength="1000" rows="3" placeholder="Describe riesgos asociados al equipo (opcional)"></textarea>
         <label>Responsable</label><input name="responsable" required>
         <label>Técnico responsable</label><select name="tecnico_responsable" required>
             <option value="">Seleccione un técnico...</option>
@@ -916,7 +917,6 @@ async function abrirFormEquipo() {
             <option>Operativo</option><option>En reparación</option>
             <option>En espera de repuesto</option><option>Obsoleto</option><option>Baja</option>
         </select>
-        <label>Riesgo</label><textarea name="riesgo" maxlength="1000" placeholder="Describe riesgos asociados al equipo (opcional)"></textarea>
         <button type="submit" class="btn-primario">Guardar Equipo</button>
         </form>`;
     document.getElementById('modal').classList.add('active');
