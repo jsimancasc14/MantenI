@@ -1444,19 +1444,6 @@ async function eliminarPreventivosSeleccionados() {
     guardarDB(); cargarPreventivos(); cargarDashboard();
 }
 async function abrirFormPreventivo() {
-    let tecnicosActivos;
-    try {
-        tecnicosActivos = await cargarTecnicosDesdeBackend();
-    } catch (error) {
-        alert(error.message || 'No se pudieron cargar los técnicos habilitados.');
-        return;
-    }
-    if (!tecnicosActivos) return;
-    if (!tecnicosActivos.length) {
-        alert('No hay técnicos habilitados para asignar.');
-        return;
-    }
-
     document.getElementById('modal-cuerpo').innerHTML = `
         <h2>Nuevo Plan de Mantenimiento Preventivo</h2><form onsubmit="guardarPreventivo(event)">
         <label>Equipo o impresora</label><select id="preventivo-equipo-seleccionado" name="equipo" required onchange="actualizarDependenciaEquipoSeleccionado(this.value, 'preventivo-dependencia-equipo')">
@@ -1470,7 +1457,7 @@ async function abrirFormPreventivo() {
         </select>
         <label>Fecha Último Mantenimiento</label><input id="preventivo-ultimo" type="date" name="ultimo" value="${hoy()}" required onchange="actualizarProximaFechaPreventivo()">
         <label>Próximo mantenimiento (fecha proyectada)</label><input id="preventivo-proximo" type="date" name="proximo" required readonly>
-        <p class="form-hint">El sistema repartira los nuevos planes entre los ${tecnicosActivos.length} tecnicos activos, equilibrando la cantidad de planes programados.</p>
+        <p class="form-hint">Cada plan se asignará al técnico responsable registrado para el equipo o impresora en el inventario.</p>
         <label>Actividades Estándar</label><textarea name="actividades" required rows="3">Limpieza interna y externa, actualización SO y antivirus, revisión de disco y RAM</textarea>
         <button type="submit" class="btn-primario">Crear Plan</button>
         </form>`;
@@ -1497,9 +1484,17 @@ async function guardarPreventivo(e) {
     try {
         tecnicosActivos = await cargarTecnicosDesdeBackend();
     } catch (error) {
-        return alert(error.message || 'No se pudieron cargar los tecnicos activos.');
+        return alert(error.message || 'No se pudieron validar los técnicos asignados en el inventario.');
     }
-    if (!tecnicosActivos?.length) return alert('No hay tecnicos activos para asignar.');
+    if (!tecnicosActivos?.length) return alert('No hay técnicos activos para validar las asignaciones del inventario.');
+    const nombresTecnicosActivos = new Set(tecnicosActivos.map(tecnico => tecnico.nombre));
+    const equiposSinTecnicoActivo = equipos.filter(equipo =>
+        !nombresTecnicosActivos.has(String(equipo.tecnicoResponsable || '').trim())
+    );
+    if (equiposSinTecnicoActivo.length) {
+        const codigos = equiposSinTecnicoActivo.map(equipo => equipo.id).join(', ');
+        return alert(`Asigna un técnico activo en el inventario antes de crear planes para: ${codigos}.`);
+    }
 
     const siguienteNumero = DB.preventivos.reduce((mayor, plan) => {
         const numero = Number(String(plan.id).match(/^PR-(\d+)$/)?.[1] || 0);
@@ -1512,21 +1507,13 @@ async function guardarPreventivo(e) {
         proximo: f.get('proximo'),
         actividades: f.get('actividades')
     };
-    const cargas = new Map(tecnicosActivos.map(tecnico => [
-        tecnico.nombre,
-        DB.preventivos.filter(plan => plan.tecnico === tecnico.nombre && plan.estado === 'Programado').length
-    ]));
     const nuevosPlanes = equipos.map((equipo, indice) => {
-        const tecnico = tecnicosActivos.reduce((menosCargado, candidato) =>
-            cargas.get(candidato.nombre) < cargas.get(menosCargado.nombre) ? candidato : menosCargado
-        );
-        cargas.set(tecnico.nombre, cargas.get(tecnico.nombre) + 1);
         return {
             id: `PR-${String(siguienteNumero + indice).padStart(3, '0')}`,
             equipo: equipo.id,
             dependencia: equipo.dependencia || '',
             grupo: grupoCodigo,
-            tecnico: tecnico.nombre,
+            tecnico: String(equipo.tecnicoResponsable).trim(),
             ...datosComunes,
             estado: 'Programado',
             firma: 'No',
