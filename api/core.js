@@ -711,12 +711,12 @@ export default async function handler(req, res) {
         const planes = Array.isArray(input.planes) ? input.planes : [input];
         const fields = ['frecuencia', 'proximo_mantenimiento', 'actividades'];
         if (!planes.length || planes.length > 1000 || fields.some(field => !String(input[field] || '').trim()) ||
-            planes.some(plan => ['codigo', 'equipo_codigo', 'dependencia'].some(field => !String(plan[field] || '').trim()) || !String(plan.tecnico || input.tecnico || '').trim())) {
+            planes.some(plan => ['codigo', 'equipo_codigo', 'dependencia'].some(field => !String(plan[field] || '').trim()))) {
           return sendJson(res, 422, { ok: false, error: 'Faltan datos obligatorios del plan preventivo' });
         }
         const codigos = planes.map(plan => String(plan.codigo).trim());
         if (new Set(codigos).size !== codigos.length) return sendJson(res, 422, { ok: false, error: 'Los codigos de los planes deben ser unicos' });
-        const tecnicos = new Set(planes.map(plan => String(plan.tecnico || input.tecnico || '').trim()));
+        const tecnicos = new Set(planes.map(plan => String(plan.tecnico || input.tecnico || '').trim()).filter(Boolean));
         for (const tecnico of tecnicos) {
           if (!await isActiveTechnician(db, tecnico)) {
             return sendJson(res, 422, { ok: false, error: 'El tecnico asignado no esta habilitado' });
@@ -726,6 +726,7 @@ export default async function handler(req, res) {
         const connection = await db.connect();
         try {
           await connection.query('BEGIN');
+          await connection.query('ALTER TABLE preventivos ALTER COLUMN tecnico DROP NOT NULL');
           if (grupoCodigo) await connection.query('ALTER TABLE preventivos ADD COLUMN IF NOT EXISTS grupo_codigo VARCHAR(50)');
           if (grupoCodigo) {
             await connection.query(
@@ -741,9 +742,9 @@ export default async function handler(req, res) {
               : 'codigo, equipo_codigo, dependencia, frecuencia, ultimo_mantenimiento, proximo_mantenimiento, tecnico, actividades, estado';
             const values = grupoCodigo
               ? [String(plan.codigo).trim(), String(plan.equipo_codigo).trim(), String(plan.dependencia).trim(), input.frecuencia,
-                  input.ultimo_mantenimiento || null, input.proximo_mantenimiento, String(plan.tecnico || input.tecnico).trim(), input.actividades, grupoCodigo]
+                  input.ultimo_mantenimiento || null, input.proximo_mantenimiento, String(plan.tecnico || input.tecnico || '').trim() || null, input.actividades, grupoCodigo]
               : [String(plan.codigo).trim(), String(plan.equipo_codigo).trim(), String(plan.dependencia).trim(), input.frecuencia,
-                  input.ultimo_mantenimiento || null, input.proximo_mantenimiento, String(plan.tecnico || input.tecnico).trim(), input.actividades];
+                  input.ultimo_mantenimiento || null, input.proximo_mantenimiento, String(plan.tecnico || input.tecnico || '').trim() || null, input.actividades];
             const placeholders = grupoCodigo
               ? "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Programado', $9)"
               : "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Programado')";
@@ -762,15 +763,16 @@ export default async function handler(req, res) {
         if (!requireRole(res, user, ['administrador', 'director', 'supervisor', 'tecnico'])) return;
         if (input.operacion === 'editar') {
           if (!requireRole(res, user, ['administrador', 'director', 'supervisor'])) return;
-          const fields = ['codigo', 'equipo_codigo', 'dependencia', 'frecuencia', 'proximo_mantenimiento', 'tecnico', 'actividades'];
+          const fields = ['codigo', 'equipo_codigo', 'dependencia', 'frecuencia', 'proximo_mantenimiento', 'actividades'];
           if (fields.some(field => !String(input[field] || '').trim())) return sendJson(res, 422, { ok: false, error: 'Faltan campos obligatorios del preventivo' });
-          if (!await isActiveTechnician(db, input.tecnico)) return sendJson(res, 422, { ok: false, error: 'El técnico asignado no está habilitado' });
+          const tecnico = String(input.tecnico || '').trim();
+          if (tecnico && !await isActiveTechnician(db, tecnico)) return sendJson(res, 422, { ok: false, error: 'El técnico asignado no está habilitado' });
           const result = await db.query(
             `UPDATE preventivos SET equipo_codigo = $1, dependencia = $2, frecuencia = $3,
               ultimo_mantenimiento = $4, proximo_mantenimiento = $5, tecnico = $6, actividades = $7
              WHERE codigo = $8 RETURNING codigo`,
             [input.equipo_codigo, input.dependencia, input.frecuencia, input.ultimo_mantenimiento || null,
-              input.proximo_mantenimiento, input.tecnico, input.actividades, input.codigo]
+              input.proximo_mantenimiento, tecnico || null, input.actividades, input.codigo]
           );
           if (!result.rowCount) return sendJson(res, 404, { ok: false, error: 'Plan no encontrado' });
           return sendJson(res, 200, { ok: true });

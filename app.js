@@ -1457,7 +1457,7 @@ async function abrirFormPreventivo() {
         </select>
         <label>Fecha Último Mantenimiento</label><input id="preventivo-ultimo" type="date" name="ultimo" value="${hoy()}" required onchange="actualizarProximaFechaPreventivo()">
         <label>Próximo mantenimiento (fecha proyectada)</label><input id="preventivo-proximo" type="date" name="proximo" required readonly>
-        <p class="form-hint">Cada plan se asignará al técnico responsable registrado para el equipo o impresora en el inventario.</p>
+        <p class="form-hint">Se conservará el técnico activo del inventario; los activos sin técnico quedarán como «Sin asignar».</p>
         <label>Actividades Estándar</label><textarea name="actividades" required rows="3">Limpieza interna y externa, actualización SO y antivirus, revisión de disco y RAM</textarea>
         <button type="submit" class="btn-primario">Crear Plan</button>
         </form>`;
@@ -1486,14 +1486,15 @@ async function guardarPreventivo(e) {
     } catch (error) {
         return alert(error.message || 'No se pudieron validar los técnicos asignados en el inventario.');
     }
-    if (!tecnicosActivos?.length) return alert('No hay técnicos activos para validar las asignaciones del inventario.');
-    const nombresTecnicosActivos = new Set(tecnicosActivos.map(tecnico => tecnico.nombre));
-    const equiposSinTecnicoActivo = equipos.filter(equipo =>
-        !nombresTecnicosActivos.has(String(equipo.tecnicoResponsable || '').trim())
-    );
-    if (equiposSinTecnicoActivo.length) {
-        const codigos = equiposSinTecnicoActivo.map(equipo => equipo.id).join(', ');
-        return alert(`Asigna un técnico activo en el inventario antes de crear planes para: ${codigos}.`);
+    if (tecnicosActivos === null) return;
+    const nombresTecnicosActivos = new Set((tecnicosActivos || []).map(tecnico => tecnico.nombre));
+    const equiposConTecnicoInactivo = equipos.filter(equipo => {
+        const tecnico = String(equipo.tecnicoResponsable || '').trim();
+        return tecnico && !nombresTecnicosActivos.has(tecnico);
+    });
+    if (equiposConTecnicoInactivo.length) {
+        const codigos = equiposConTecnicoInactivo.map(equipo => equipo.id).join(', ');
+        return alert(`Actualiza el técnico responsable en el inventario; no está activo para: ${codigos}.`);
     }
 
     const siguienteNumero = DB.preventivos.reduce((mayor, plan) => {
@@ -1513,7 +1514,7 @@ async function guardarPreventivo(e) {
             equipo: equipo.id,
             dependencia: equipo.dependencia || '',
             grupo: grupoCodigo,
-            tecnico: String(equipo.tecnicoResponsable).trim(),
+            tecnico: String(equipo.tecnicoResponsable || '').trim() || null,
             ...datosComunes,
             estado: 'Programado',
             firma: 'No',
@@ -1548,7 +1549,7 @@ async function editarPreventivo(id) {
     let tecnicosActivos;
     try { tecnicosActivos = await cargarTecnicosDesdeBackend(); }
     catch (error) { return alert(error.message || 'No se pudieron cargar los técnicos habilitados.'); }
-    if (!tecnicosActivos?.length) return alert('No hay técnicos habilitados para asignar.');
+    if (tecnicosActivos === null) return;
     document.getElementById('modal-cuerpo').innerHTML = `
         <h2>Editar Plan ${escaparHTML(plan.id)}</h2><form onsubmit="guardarEdicionPreventivo(event, ${argumentoSeguroHTML(plan.id)})">
         <label>Equipo o impresora</label><select id="preventivo-equipo-seleccionado" name="equipo" required onchange="actualizarDependenciaEquipoSeleccionado(this.value, 'preventivo-dependencia-equipo')">
@@ -1558,7 +1559,10 @@ async function editarPreventivo(id) {
         <label>Frecuencia</label><select name="frecuencia" required>${['Mensual','Trimestral','Semestral','Anual'].map(f=>`<option ${plan.frecuencia===f?'selected':''}>${f}</option>`).join('')}</select>
         <label>Fecha último mantenimiento</label><input type="date" name="ultimo" value="${escaparHTML(plan.ultimo || '')}">
         <label>Próximo mantenimiento</label><input type="date" name="proximo" value="${escaparHTML(plan.proximo)}" required>
-        <label>Técnico responsable</label><select name="tecnico" required>${tecnicosActivos.map(t=>`<option ${t.nombre===plan.tecnico?'selected':''}>${escaparHTML(t.nombre)}</option>`).join('')}</select>
+        <label>Técnico responsable</label><select name="tecnico">
+            <option value="" ${plan.tecnico ? '' : 'selected'}>Sin asignar</option>
+            ${tecnicosActivos.map(t=>`<option value="${escaparHTML(t.nombre)}" ${t.nombre===plan.tecnico?'selected':''}>${escaparHTML(t.nombre)}</option>`).join('')}
+        </select>
         <label>Actividades estándar</label><textarea name="actividades" required rows="3">${escaparHTML(plan.actividades || '')}</textarea>
         <button type="submit" class="btn-primario">Guardar cambios</button></form>`;
     document.getElementById('modal').classList.add('active');

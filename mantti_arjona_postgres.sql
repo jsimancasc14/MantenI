@@ -175,7 +175,7 @@ CREATE TABLE "preventivos" (
   "frecuencia" varchar(30) NOT NULL,
   "ultimo_mantenimiento" date DEFAULT NULL,
   "proximo_mantenimiento" date NOT NULL,
-  "tecnico" varchar(120) NOT NULL,
+  "tecnico" varchar(120) DEFAULT NULL,
   "actividades" text NOT NULL,
   "observaciones" text DEFAULT NULL,
   "firma" varchar(3) NOT NULL DEFAULT 'No' CHECK ("firma" IN ('Sí', 'No')),
