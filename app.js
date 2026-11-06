@@ -121,7 +121,9 @@ async function cargarSesionSegura() {
     const response = await fetch('backend/api.php?action=session', { credentials: 'same-origin' });
     const result = await response.json();
     if (!response.ok || !result.ok || !result.csrf_token) {
-        throw new Error(result.error || 'No se pudo validar la sesión con el servidor.');
+        const error = new Error(result.error || 'No se pudo validar la sesión con el servidor.');
+        if (response.status === 401) error.code = 'SESSION_EXPIRED';
+        throw error;
     }
     csrfToken = result.csrf_token;
 }
@@ -1951,10 +1953,12 @@ aplicarTema();
 cargarDB();
 const usuarioGuardado = JSON.parse(localStorage.getItem('MantTI_User') || 'null');
 if (usuarioGuardado) {
-    mostrarApp().catch(() => {
+    mostrarApp().catch(error => {
         localStorage.removeItem('MantTI_User');
         cambiarUsuario();
-        alert('No se pudo conectar con PostgreSQL. Revisa la configuración local y vuelve a iniciar sesión.');
+        if (error.code !== 'SESSION_EXPIRED') {
+            alert(error.message || 'No se pudo validar la conexión con la aplicación. Comprueba tu conexión e inicia sesión nuevamente.');
+        }
     });
 } else {
     document.getElementById('login-screen')?.classList.remove('hidden');
