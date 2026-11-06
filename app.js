@@ -661,16 +661,16 @@ function cargarInventario(filtro='') {
                 <button class="btn-icon" type="button" onclick="nuevaOrdenDesdeEquipo(${argumentoSeguroHTML(e.id)})" title="Crear Orden">📝</button>`;
         return `
         <tr>
-            <td><strong>${escaparHTML(e.id)}</strong></td>
-            <td>${escaparHTML(e.marca)}</td>
-            <td>${escaparHTML(e.modelo)}</td>
-            <td>${escaparHTML(e.serial)}</td>
-            <td>${escaparHTML(e.ubicacion)}</td>
-            <td>${escaparHTML(e.dependencia)}</td>
-            <td>${escaparHTML(e.responsable)}</td>
-            <td>${escaparHTML(e.tecnicoResponsable || DB.ordenes.find(o => o.equipo === e.id && o.estado !== 'Cerrado' && o.tecnico)?.tecnico || DB.preventivos.find(p => p.equipo === e.id && p.tecnico)?.tecnico || 'Sin asignar')}</td>
-            <td>${etiquetaEstado(e.estado)}</td>
-            <td>${acciones}</td>
+            <td data-label="Código"><strong>${escaparHTML(e.id)}</strong></td>
+            <td data-label="Marca">${escaparHTML(e.marca)}</td>
+            <td data-label="Modelo">${escaparHTML(e.modelo)}</td>
+            <td data-label="Serial">${escaparHTML(e.serial)}</td>
+            <td data-label="Ubicación">${escaparHTML(e.ubicacion)}</td>
+            <td data-label="Dependencia">${escaparHTML(e.dependencia)}</td>
+            <td data-label="Responsable">${escaparHTML(e.responsable)}</td>
+            <td data-label="Técnico responsable">${escaparHTML(e.tecnicoResponsable || DB.ordenes.find(o => o.equipo === e.id && o.estado !== 'Cerrado' && o.tecnico)?.tecnico || DB.preventivos.find(p => p.equipo === e.id && p.tecnico)?.tecnico || 'Sin asignar')}</td>
+            <td data-label="Estado">${etiquetaEstado(e.estado)}</td>
+            <td data-label="Acciones">${acciones}</td>
         </tr>`;
     }).join('');
 }
@@ -1059,7 +1059,7 @@ async function verEquipo(id) {
         <p><strong>Programas instalados:</strong> ${escaparHTML(e.programas || '—')}</p></div></div>
         <h3 style="margin-top:1.5rem;">Historial de Órdenes (${ordenes.length})</h3>
         ${ordenes.length ? `<table><thead><tr><th>N°</th><th>Fecha</th><th>Tipo</th><th>Estado</th></tr></thead>
-        ${ordenes.map(o=>`<tr><td>${escaparHTML(o.id)}</td><td>${escaparHTML(o.solicitud)}</td><td>${escaparHTML(o.tipo)}</td><td>${etiquetaEstado(o.estado)}</td></tr>`).join('')}</table>` : '<p>Sin órdenes registradas</p>'}
+        ${ordenes.map(o=>`<tr><td data-label="N° Orden">${escaparHTML(o.id)}</td><td data-label="Fecha">${escaparHTML(o.solicitud)}</td><td data-label="Tipo">${escaparHTML(o.tipo)}</td><td data-label="Estado">${etiquetaEstado(o.estado)}</td></tr>`).join('')}</table>` : '<p>Sin órdenes registradas</p>'}
         <h3 style="margin-top:1.5rem;">Trazabilidad del equipo</h3>
         ${historial.length ? `<div class="timeline-list">${historial.map(item => `<div class="timeline-item"><strong>${escaparHTML(item.accion)}</strong><span>${escaparHTML(item.descripcion)}</span><small>${escaparHTML(item.created_at)} · ${escaparHTML(item.usuario)}</small></div>`).join('')}</div>` : '<p>Sin movimientos registrados</p>'}
         <h3 style="margin-top:1.5rem;">Documentos y evidencias</h3>
@@ -1126,13 +1126,13 @@ function cargarOrdenes() {
         const planesTecnico = DB.preventivos.filter(plan => normalizarNombreTecnico(plan.tecnico) === tecnicoNormalizado);
         document.getElementById('tabla-ordenes-tecnico').innerHTML = datos.map(o => `
             <tr>
-                <td><strong>${escaparHTML(o.id)}</strong><br><small>${escaparHTML(o.solicitud)}</small></td>
-                <td>${escaparHTML(o.equipo)}</td>
-                <td>${escaparHTML(o.tipo)}</td>
-                <td><span class="etiqueta ${o.prioridad==='Alta'?'vencido':o.prioridad==='Media'?'programado':'cerrado'}">${escaparHTML(o.prioridad)}</span></td>
-                <td>${escaparHTML(o.falla.substring(0, 45))}${o.falla.length > 45 ? '...' : ''}</td>
-                <td>${etiquetaEstado(o.estado)}</td>
-                <td>
+                <td data-label="N° Orden"><strong>${escaparHTML(o.id)}</strong><br><small>${escaparHTML(o.solicitud)}</small></td>
+                <td data-label="Equipo">${escaparHTML(o.equipo)}</td>
+                <td data-label="Tipo">${escaparHTML(o.tipo)}</td>
+                <td data-label="Prioridad"><span class="etiqueta ${o.prioridad==='Alta'?'vencido':o.prioridad==='Media'?'programado':'cerrado'}">${escaparHTML(o.prioridad)}</span></td>
+                <td data-label="Falla">${escaparHTML(o.falla.substring(0, 45))}${o.falla.length > 45 ? '...' : ''}</td>
+                <td data-label="Estado">${etiquetaEstado(o.estado)}</td>
+                <td data-label="Acciones">
                     ${o.estado === 'Programado' ? `<button class="btn-icon" onclick="iniciarOrden(${argumentoSeguroHTML(o.id)})" title="Iniciar Orden">🔄</button>` : ''}
                     ${o.estado !== 'Cerrado' ? `<button class="btn-icon" onclick="cerrarOrden(${argumentoSeguroHTML(o.id)})" title="Cerrar Orden">✅</button>` : ''}
                 </td>
@@ -1143,26 +1143,26 @@ function cargarOrdenes() {
         document.getElementById('tabla-preventivos-tecnico').innerHTML = planesTecnico.length ? planesTecnico.map(plan => {
             const equipo = getEquipo(plan.equipo);
             return `<tr>
-                <td><strong>${escaparHTML(plan.id)}</strong></td>
-                <td>${escaparHTML(plan.equipo)}</td>
-                <td>${equipo ? escaparHTML(`${equipo.tipo} ${equipo.marca} ${equipo.modelo}`.trim()) : '-'}</td>
-                <td>${escaparHTML(plan.frecuencia)}</td>
-                <td>${escaparHTML(plan.proximo || '-')}</td>
-                <td>${etiquetaEstado(plan.estado)}</td>
+                <td data-label="ID Plan"><strong>${escaparHTML(plan.id)}</strong></td>
+                <td data-label="Equipo">${escaparHTML(plan.equipo)}</td>
+                <td data-label="Nombre del equipo">${equipo ? escaparHTML(`${equipo.tipo} ${equipo.marca} ${equipo.modelo}`.trim()) : '-'}</td>
+                <td data-label="Frecuencia">${escaparHTML(plan.frecuencia)}</td>
+                <td data-label="Próximo mantenimiento">${escaparHTML(plan.proximo || '-')}</td>
+                <td data-label="Estado">${etiquetaEstado(plan.estado)}</td>
             </tr>`;
-        }).join('') : '<tr><td colspan="6">No hay planes preventivos asignados a este tecnico.</td></tr>';
+        }).join('') : '<tr><td colspan="6" data-label="Planes">No hay planes preventivos asignados a este tecnico.</td></tr>';
         return;
     }
 
     document.getElementById('tabla-ordenes').innerHTML = datos.map(o => `
         <tr>
-            <td><strong>${escaparHTML(o.id)}</strong><br><small>${escaparHTML(o.solicitud)}</small></td>
-            <td>${escaparHTML(o.equipo)}</td>
-            <td>${escaparHTML(o.tipo)}</td>
-            <td><span class="etiqueta ${o.prioridad==='Alta'?'vencido':o.prioridad==='Media'?'programado':'cerrado'}">${escaparHTML(o.prioridad)}</span></td>
-            <td>${escaparHTML(o.tecnico)}</td>
-            <td>${etiquetaEstado(o.estado)}</td>
-            <td>
+            <td data-label="N° Orden"><strong>${escaparHTML(o.id)}</strong><br><small>${escaparHTML(o.solicitud)}</small></td>
+            <td data-label="Equipo">${escaparHTML(o.equipo)}</td>
+            <td data-label="Tipo">${escaparHTML(o.tipo)}</td>
+            <td data-label="Prioridad"><span class="etiqueta ${o.prioridad==='Alta'?'vencido':o.prioridad==='Media'?'programado':'cerrado'}">${escaparHTML(o.prioridad)}</span></td>
+            <td data-label="Técnico">${escaparHTML(o.tecnico)}</td>
+            <td data-label="Estado">${etiquetaEstado(o.estado)}</td>
+            <td data-label="Acciones">
                 ${o.estado!=='Cerrado'?`<button class="btn-icon" onclick="cerrarOrden(${argumentoSeguroHTML(o.id)})" title="Cerrar Orden">✅</button>`:''}
                 <button class="btn-icon" onclick="eliminarOrden(${argumentoSeguroHTML(o.id)})" title="Eliminar Orden" aria-label="Eliminar orden ${escaparHTML(o.id)}">Eliminar</button>
             </td>
@@ -1375,25 +1375,25 @@ function cargarPreventivos() {
         else if(d < 0) claseDias = 'vencido';
         else if(d <= 7) claseDias = 'advertencia';
         return `<tr>
-            <td><strong>${escaparHTML(p.id)}</strong></td>
-            <td><input type="checkbox" ${preventivosSeleccionados.has(p.id)?'checked':''} onchange="cambiarSeleccionPreventivo(${argumentoSeguroHTML(p.id)}, this.checked)" aria-label="Seleccionar plan ${escaparHTML(p.id)}"></td>
-            <td>${escaparHTML(p.equipo)}</td>
-            <td>${equipo ? escaparHTML(`${equipo.tipo} ${equipo.marca} ${equipo.modelo}`.trim()) : '—'}</td>
-            <td>${escaparHTML(equipo?.dependencia || p.dependencia || '—')}</td>
-            <td>${escaparHTML(equipo?.responsable || 'Sin asignar')}</td>
-            <td>${escaparHTML(p.tecnico || 'Sin asignar')}</td>
-            <td>${escaparHTML(p.frecuencia)}</td>
-            <td>${escaparHTML(p.ultimo||'—')}</td>
-            <td>${escaparHTML(p.proximo)}</td>
-            <td class="${claseDias}">${d===null||isNaN(d)?'—':d<0?`${d} días`:`${d} días`}</td>
-            <td>${etiquetaEstado(d<0 && p.estado==='Programado'?'Vencido':p.estado)}</td>
-            <td>
+            <td data-label="ID Plan"><strong>${escaparHTML(p.id)}</strong></td>
+            <td data-label="Seleccionar"><input type="checkbox" ${preventivosSeleccionados.has(p.id)?'checked':''} onchange="cambiarSeleccionPreventivo(${argumentoSeguroHTML(p.id)}, this.checked)" aria-label="Seleccionar plan ${escaparHTML(p.id)}"></td>
+            <td data-label="Equipo">${escaparHTML(p.equipo)}</td>
+            <td data-label="Nombre del equipo">${equipo ? escaparHTML(`${equipo.tipo} ${equipo.marca} ${equipo.modelo}`.trim()) : '—'}</td>
+            <td data-label="Dependencia">${escaparHTML(equipo?.dependencia || p.dependencia || '—')}</td>
+            <td data-label="Responsable">${escaparHTML(equipo?.responsable || 'Sin asignar')}</td>
+            <td data-label="Técnico responsable">${escaparHTML(p.tecnico || 'Sin asignar')}</td>
+            <td data-label="Frecuencia">${escaparHTML(p.frecuencia)}</td>
+            <td data-label="Último">${escaparHTML(p.ultimo||'—')}</td>
+            <td data-label="Próximo">${escaparHTML(p.proximo)}</td>
+            <td data-label="Días restantes" class="${claseDias}">${d===null||isNaN(d)?'—':d<0?`${d} días`:`${d} días`}</td>
+            <td data-label="Estado">${etiquetaEstado(d<0 && p.estado==='Programado'?'Vencido':p.estado)}</td>
+            <td data-label="Firma">
                 <select aria-label="Firma del plan ${escaparHTML(p.id)}" data-firma="${escaparHTML(p.firma || 'No')}" onchange="guardarFirmaPreventivo(${argumentoSeguroHTML(p.id)}, this.value, this)">
                     <option value="Sí" ${(p.firma || 'No') === 'Sí' ? 'selected' : ''}>Sí firmó</option>
                     <option value="No" ${(p.firma || 'No') === 'No' ? 'selected' : ''}>No firmó</option>
                 </select>
             </td>
-            <td>
+            <td data-label="Acciones">
                 <label class="checkbox-inline"><input type="checkbox" ${p.estado==='Realizado'?'checked':''} onchange="cambiarEstadoPreventivo(${argumentoSeguroHTML(p.id)}, this.checked, this)" aria-label="Marcar plan ${escaparHTML(p.id)} como realizado"> Realizado</label>
                 <button class="btn-text" onclick="editarPreventivo(${argumentoSeguroHTML(p.id)})" title="Editar plan">Editar</button>
                 ${primerPlanDelGrupo?`<button class="btn-text btn-danger" onclick="eliminarPreventivo(${argumentoSeguroHTML(p.id)})" title="Eliminar todo el grupo de planes">Eliminar todo el plan</button>`:''}
@@ -1687,15 +1687,15 @@ async function cargarCatalogos() {
         alert(error.message || 'No se pudo actualizar el catálogo de técnicos.');
     }
     document.getElementById('tabla-dependencias').innerHTML = DB.dependencias.map(d => `
-        <tr><td>${escaparHTML(d.nombre)}</td><td>${escaparHTML(d.responsable)}</td><td>${escaparHTML(d.correo)}</td><td>${escaparHTML(d.telefono)}</td><td>—</td></tr>`).join('');
+        <tr><td data-label="Dependencia">${escaparHTML(d.nombre)}</td><td data-label="Responsable">${escaparHTML(d.responsable)}</td><td data-label="Correo">${escaparHTML(d.correo)}</td><td data-label="Teléfono">${escaparHTML(d.telefono)}</td><td data-label="Acciones">—</td></tr>`).join('');
     document.getElementById('tabla-tecnicos').innerHTML = DB.tecnicos.map(t => `
-        <tr><td>${escaparHTML(t.nombre)}</td><td>${escaparHTML(t.cargo)}</td><td>${escaparHTML(t.correo)}</td><td>${Number(t.activo) === 1?'✅':'❌'}</td>
-        <td>
+        <tr><td data-label="Técnico">${escaparHTML(t.nombre)}</td><td data-label="Cargo">${escaparHTML(t.cargo)}</td><td data-label="Correo">${escaparHTML(t.correo)}</td><td data-label="Activo">${Number(t.activo) === 1?'✅':'❌'}</td>
+        <td data-label="Acciones">
             <button class="btn-icon" type="button" onclick="cambiarEstadoTecnico(${Number(t.id)}, ${Number(t.activo) !== 1})" title="${Number(t.activo) === 1?'Deshabilitar':'Habilitar'} técnico">${Number(t.activo) === 1?'⛔':'✅'}</button>
             <button class="btn-icon" type="button" onclick="eliminarTecnico(${Number(t.id)})" title="Eliminar técnico">🗑️</button>
         </td></tr>`).join('');
     document.getElementById('tabla-repuestos').innerHTML = DB.repuestos.map(r => `
-        <tr><td>${escaparHTML(r.nombre)}</td><td>${escaparHTML(r.unidad)}</td><td>$${Number(r.costo).toLocaleString()}</td><td>${Number(r.existencia)}</td><td>—</td></tr>`).join('');
+        <tr><td data-label="Repuesto">${escaparHTML(r.nombre)}</td><td data-label="Unidad">${escaparHTML(r.unidad)}</td><td data-label="Costo unitario">$${Number(r.costo).toLocaleString()}</td><td data-label="Existencia">${Number(r.existencia)}</td><td data-label="Acciones">—</td></tr>`).join('');
 }
 
 async function cambiarEstadoTecnico(id, activo) {
