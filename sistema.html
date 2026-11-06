@@ -8,6 +8,7 @@
     <meta name="theme-color" content="#092d62">
     <link rel="icon" type="image/svg+xml" href="logo-mantenti.svg">
     <link rel="stylesheet" href="estilos.css?v=27">
+    <link rel="stylesheet" href="diseno.css?v=1">
 </head>
 <body>
     <div id="login-screen" class="login-screen active">
@@ -133,6 +134,28 @@
                     <p class="numero" id="no-operativos">0</p>
                 </div>
             </div>
+
+            <section class="quick-actions" aria-label="Accesos rápidos">
+                <div class="quick-actions-heading">
+                    <span class="eyebrow">Accesos rápidos</span>
+                    <h2>¿Qué necesitas gestionar?</h2>
+                </div>
+                <button class="quick-action" type="button" onclick="abrirFormEquipo()">
+                    <span class="quick-action-icon" aria-hidden="true">＋</span>
+                    <span><strong>Registrar equipo</strong><small>Agregar un activo al inventario</small></span>
+                    <span class="quick-action-arrow" aria-hidden="true">→</span>
+                </button>
+                <button class="quick-action" type="button" onclick="abrirFormOrden()">
+                    <span class="quick-action-icon" aria-hidden="true">⌁</span>
+                    <span><strong>Crear orden</strong><small>Atender una solicitud técnica</small></span>
+                    <span class="quick-action-arrow" aria-hidden="true">→</span>
+                </button>
+                <button class="quick-action" type="button" onclick="abrirFormPreventivo()">
+                    <span class="quick-action-icon" aria-hidden="true">◷</span>
+                    <span><strong>Programar preventivo</strong><small>Planificar mantenimiento de activos</small></span>
+                    <span class="quick-action-arrow" aria-hidden="true">→</span>
+                </button>
+            </section>
 
             <section class="assistant-card" aria-labelledby="assistant-title">
                 <div class="assistant-copy">
@@ -384,6 +407,6 @@
         </main>
     </div>
 
-    <script src="app.js?v=28"></script>
+    <script src="app.js?v=29"></script>
 </body>
 </html>
