@@ -799,7 +799,15 @@ table {
     border-collapse: collapse;
     min-width: 760px;
 }
+#preventivos .tabla-contenedor th:nth-child(13),
+#preventivos .tabla-contenedor td:nth-child(13) {
+    width: 160px;
+    min-width: 160px;
+}
 
+#preventivos .tabla-contenedor td:nth-child(13) select {
+    min-width: 135px;
+}
 th,
 td {
     padding: 0.9rem 1rem;
