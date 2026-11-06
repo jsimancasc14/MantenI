@@ -1253,6 +1253,7 @@ async function abrirFormOrden(equipoPreseleccionado='') {
         <label>Dependencia</label><select id="orden-dependencia-seleccionada" required onchange="filtrarEquiposPorDependencia(this.value)">
             <option value="">Seleccione una dependencia...</option>
             ${dependencias.map(dependencia=>`<option value="${escaparHTML(dependencia)}" ${dependencia===dependenciaPreseleccionada?'selected':''}>${escaparHTML(dependencia)}</option>`).join('')}
+            <option value="Riesgo">Riesgo</option>
         </select>
         <label>Equipo</label><select id="orden-equipo-seleccionado" name="equipo" required>
             <option value="">Seleccione primero una dependencia...</option>
