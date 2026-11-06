@@ -903,10 +903,10 @@ async function abrirFormEquipo() {
         <label>Modelo</label><input name="modelo">
         <label>Serial</label><input name="serial" required>
         <label>Dependencia</label><select name="dependencia" required>
-            <option value="">${dependencias.length ? 'Seleccione una dependencia...' : 'No hay dependencias registradas'}</option>
+            <option value="">Seleccione una dependencia...</option>
             ${dependencias.map(dependencia=>`<option value="${escaparHTML(dependencia)}">${escaparHTML(dependencia)}</option>`).join('')}
+            <option value="Riesgo">Riesgo</option>
         </select>
-        <label>Riesgo</label><textarea name="riesgo" maxlength="1000" rows="3" placeholder="Describe riesgos asociados al equipo (opcional)"></textarea>
         <label>Responsable</label><input name="responsable" required>
         <label>Técnico responsable</label><select name="tecnico_responsable" required>
             <option value="">Seleccione un técnico...</option>
@@ -958,7 +958,9 @@ async function editarEquipo(codigo) {
         <label>Dependencia</label><select name="dependencia" required>
             <option value="">Seleccione una dependencia...</option>
             ${opciones(dependencias, equipo.dependencia)}
+            <option value="Riesgo" ${equipo.dependencia === 'Riesgo' ? 'selected' : ''}>Riesgo</option>
         </select>
+        <input type="hidden" name="riesgo" value="${escaparHTML(equipo.riesgo || '')}">
         <label>Responsable</label><input name="responsable" required value="${escaparHTML(equipo.responsable)}">
         <label>Técnico responsable</label><select name="tecnico_responsable" required>
             <option value="">Seleccione un técnico...</option>
@@ -966,7 +968,6 @@ async function editarEquipo(codigo) {
         </select>
         <label>Ubicación</label><input name="ubicacion" required value="${escaparHTML(equipo.ubicacion)}">
         <label>Estado</label><select name="estado" required>${opciones(estados, equipo.estado)}</select>
-        <label>Riesgo</label><textarea name="riesgo" maxlength="1000" placeholder="Describe riesgos asociados al equipo (opcional)">${escaparHTML(equipo.riesgo || '')}</textarea>
         <button type="submit" class="btn-primario">Guardar Cambios</button>
         </form>`;
     document.getElementById('modal').classList.add('active');
