@@ -35,6 +35,7 @@
     .hero h1{max-width:680px;text-wrap:balance}
     .lead{line-height:1.75}
     .visual{min-width:0}
+    @media(max-width:1150px){.visual{overflow:hidden}}
     .orbit,.orb{max-width:100%}
     .motion-card{border-color:#a8d2f33d;box-shadow:0 28px 80px #0006}
     .stats-section{padding-bottom:88px}
@@ -42,14 +43,18 @@
     .stat:hover{transform:translateY(-3px);border-color:#83d9cd55;background:linear-gradient(145deg,#ffffff15,#ffffff09)}
     .section{position:relative}
     .section-head h2{text-wrap:balance}
-    .card{min-height:230px;border-color:#e2eaf2;box-shadow:0 10px 30px #1734550a}
-    .card-icon{background:linear-gradient(145deg,#eaf4ff,#e4f7f3)}
+    .card{min-height:230px;border-color:#e2eaf2;box-shadow:0 10px 30px #1734550a;animation:capability-float 7s ease-in-out infinite;transition:transform .28s ease,box-shadow .28s ease,border-color .28s ease}
+    .card:nth-child(2){animation-delay:-2.3s}.card:nth-child(3){animation-delay:-4.6s}
+    .card-icon{background:linear-gradient(145deg,#eaf4ff,#e4f7f3);transition:transform .28s ease,background .28s ease}
+    @media(hover:hover){.card:hover{transform:translateY(-7px) scale(1.015);border-color:#a9cce9;box-shadow:0 24px 48px #17345520;animation-play-state:paused}.card:hover .card-icon{transform:rotate(-5deg) scale(1.08);background:linear-gradient(145deg,#dceeff,#d9f5ed)}}
     .access{border-color:#ffffff24;box-shadow:0 24px 60px #0003}
     .footer-inner{min-height:54px}
     @media(max-width:900px){.hero{min-height:590px}.stats-section{padding-bottom:70px}}
-    @media(max-width:700px){.top{min-height:68px}.hero{padding-block:46px 34px}.visual{min-height:370px}.stats-section{padding-bottom:52px}.card{min-height:0}}
+    @media(max-width:700px){.top{min-height:68px}.hero{padding-block:46px 34px}.visual{min-height:370px}.stats-section{padding-bottom:52px}.card{min-height:0;animation-duration:8s}}
     @media(max-width:390px){.hero{padding-block:38px 28px}.visual{min-height:340px}.module-list{grid-template-columns:1fr}.module{min-height:48px;flex-direction:row;align-items:center;justify-content:flex-start}.stats-grid{grid-template-columns:1fr 1fr}}
-    @media(prefers-reduced-motion:reduce){.stat:hover{transform:none}}
+    @keyframes capability-float{0%,100%{translate:0 0}50%{translate:0 -7px}}
+    @media(max-width:700px){@keyframes capability-float{0%,100%{translate:0 0}50%{translate:0 -4px}}}
+    @media(prefers-reduced-motion:reduce){.stat:hover,.card:hover{transform:none}.card{translate:none;animation:none}.card-icon{transition:none}}
   </style>
 </head>
 <body>
