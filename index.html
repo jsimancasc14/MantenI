@@ -51,10 +51,21 @@
     .footer-inner{min-height:54px}
     @media(max-width:900px){.hero{min-height:590px}.stats-section{padding-bottom:70px}}
     @media(max-width:700px){.top{min-height:68px}.hero{padding-block:46px 34px}.visual{min-height:370px}.stats-section{padding-bottom:52px}.card{min-height:0;animation-duration:8s}}
-    @media(max-width:390px){.hero{padding-block:38px 28px}.visual{min-height:340px}.module-list{grid-template-columns:1fr}.module{min-height:48px;flex-direction:row;align-items:center;justify-content:flex-start}.stats-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:390px){.hero{padding-block:38px 28px}.hero-copy{min-width:0}.hero-copy>.eyebrow{max-width:100%;font-size:.68rem;letter-spacing:.1em}.visual{min-height:340px}.module-list{grid-template-columns:1fr}.module{min-height:48px;flex-direction:row;align-items:center;justify-content:flex-start}.stats-grid{grid-template-columns:1fr 1fr}}
     @keyframes capability-float{0%,100%{translate:0 0}50%{translate:0 -7px}}
     @media(max-width:700px){@keyframes capability-float{0%,100%{translate:0 0}50%{translate:0 -4px}}}
     @media(prefers-reduced-motion:reduce){.stat:hover,.card:hover{transform:none}.card{translate:none;animation:none}.card-icon{transition:none}}
+    .motion-paused *, .motion-paused *:before, .motion-paused *:after{animation-play-state:paused!important}
+    .motion-toggle{width:100%;min-height:40px;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:13px;padding:8px 12px;border:1px solid #ffffff24;border-radius:11px;background:#ffffff09;color:#dce9f7;font:inherit;font-size:.75rem;font-weight:700;cursor:pointer;transition:background .2s,border-color .2s}
+    .motion-toggle:hover:not(:disabled){border-color:#71e0c177;background:#ffffff12}.motion-toggle:disabled{cursor:default;opacity:.76}.motion-toggle svg{width:16px;height:16px;color:var(--mint)}.motion-toggle .icon-pause{display:none}.motion-toggle[aria-pressed="true"] .icon-pause{display:block}.motion-toggle[aria-pressed="true"] .icon-play{display:none}
+    .motion-status{min-height:1.2em;margin:4px 0 0;color:#9eb3c9;text-align:center;font-size:.68rem}
+    .workflow-section{padding:82px 0;background:#eaf0f6;color:#17283c}.workflow-section .section-head{margin-bottom:34px}.workflow-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.workflow-step{min-width:0;overflow:hidden;border:1px solid #d6e1ec;border-radius:20px;background:#fff;box-shadow:0 12px 32px #1734550c}.workflow-copy{padding:22px 22px 16px}.workflow-step .num{color:#148972;font-size:.7rem;font-weight:800;letter-spacing:.1em}.workflow-step h3{margin:8px 0 7px;color:#123761;font-size:1.12rem}.workflow-step p{margin:0;color:#62748a;font-size:.87rem;line-height:1.65}
+    .preview{margin:0 14px 14px;overflow:hidden;border:1px solid #dce5ef;border-radius:13px;background:#f7f9fc;box-shadow:0 4px 14px #1734550a}.preview-head{min-height:38px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;border-bottom:1px solid #e4eaf1;background:#fff;color:#29425e;font-size:.65rem;font-weight:800;letter-spacing:.06em}.preview-dots{display:flex;gap:4px}.preview-dots i{width:6px;height:6px;border-radius:50%;background:#c9d5e1}.preview-body{padding:10px}.preview-caption{margin:0;padding:0 14px 13px;color:#718197;font-size:.66rem;text-align:center}.preview-tabs{display:flex;gap:6px;margin-bottom:9px}.preview-tabs span,.preview-status{display:inline-flex;align-items:center;gap:5px;padding:4px 7px;border-radius:7px;background:#e8f1ff;color:#32628f;font-size:.59rem;font-weight:750}.preview-status{background:#e5f7f1;color:#18745f}.preview-table{display:grid;grid-template-columns:1.1fr 1.2fr 1fr .8fr;gap:1px;overflow:hidden;border:1px solid #e2e8ef;border-radius:8px;background:#e2e8ef}.preview-table span{min-width:0;padding:7px 5px;background:#fff;color:#52657a;font-size:.56rem;overflow-wrap:anywhere}.preview-table span:nth-child(-n+4){background:#f1f5f9;color:#62748a;font-size:.52rem;font-weight:800}.preview-fields{display:grid;grid-template-columns:1fr 1fr;gap:7px}.preview-field{min-height:36px;padding:6px 8px;border:1px solid #e1e8f0;border-radius:7px;background:#fff}.preview-field small{display:block;color:#738399;font-size:.51rem}.preview-field strong{display:block;margin-top:2px;color:#43566d;font-size:.6rem;font-weight:650}.preview-timeline{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:9px}.preview-timeline span{padding:6px 4px;border:1px solid #e2e8ef;border-radius:7px;background:#fff;color:#66788d;text-align:center;font-size:.53rem;font-weight:700}.preview-timeline span:first-child{border-color:#9fd9ca;background:#edf9f5;color:#18745f}
+    .workflow-note{margin:17px 0 0;color:#718197;text-align:center;font-size:.75rem}
+    .faq-section{padding:82px 0;background:#fff;color:#17283c}.faq-layout{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(28px,6vw,76px);align-items:start}.faq-intro h2{margin:11px 0;color:#0b2d55;font-size:clamp(2rem,3.7vw,3.05rem);line-height:1.1;letter-spacing:-.045em}.faq-intro p{margin:0;color:#607287}.faq-cta{margin-top:22px}.faq-list{display:grid;gap:10px}.faq-list details{border:1px solid #dfe7ef;border-radius:14px;background:#fbfcfe;transition:border-color .2s,box-shadow .2s}.faq-list details[open]{border-color:#b9d1e8;box-shadow:0 8px 24px #1734550b}.faq-list summary{position:relative;padding:17px 48px 17px 18px;color:#183a5d;font-weight:750;cursor:pointer;list-style:none}.faq-list summary::-webkit-details-marker{display:none}.faq-list summary:after{position:absolute;top:50%;right:18px;color:#168b78;font-size:1.2rem;content:"+";transform:translateY(-50%)}.faq-list details[open] summary:after{content:"−"}.faq-answer{padding:0 18px 17px;color:#607287;font-size:.88rem;line-height:1.7}.faq-answer p{margin:0}.faq-answer a{color:#17659a;font-weight:700}
+    @media(max-width:900px){.workflow-grid{grid-template-columns:1fr 1fr}.workflow-step:last-child{grid-column:1/-1}.faq-layout{grid-template-columns:1fr;gap:24px}}
+    @media(max-width:700px){.workflow-section,.faq-section{padding:60px 0}.workflow-grid{grid-template-columns:1fr}.workflow-step:last-child{grid-column:auto}.workflow-copy{padding:20px 20px 14px}.preview{margin-inline:12px}.faq-cta{width:100%}}
+    @media(prefers-reduced-motion:reduce){.motion-toggle,.faq-list details{transition:none}}
   </style>
 </head>
 <body>
@@ -66,6 +77,8 @@
     <nav aria-label="Navegación principal">
       <a href="#plataforma">Plataforma</a>
       <a href="#capacidades">Capacidades</a>
+      <a href="#recorrido">Recorrido</a>
+      <a href="#preguntas">Preguntas</a>
       <a class="btn" href="sistema.html">Sistema de Gestión TIC <span aria-hidden="true">→</span></a>
     </nav>
   </header>
@@ -85,13 +98,18 @@
         <div class="orb" aria-hidden="true"></div><div class="orbit" aria-hidden="true"></div>
         <div class="motion-card">
           <div class="motion-head"><div class="brand-mini"><img src="logo-mantenti.svg" alt=""><span>Alcaldía de Arjona</span></div><span class="live">Bolívar · Colombia</span></div>
-          <div class="video-wrap"><video autoplay muted playsinline loop preload="metadata" aria-label="Logo animado de la Alcaldía de Arjona, Bolívar"><source src="logo-alcaldia-arjona.mp4" type="video/mp4"></video></div>
+          <div class="video-wrap"><video muted playsinline loop preload="none" poster="logo-mantenti.svg" aria-label="Logo animado de la Alcaldía de Arjona, Bolívar"><source src="logo-alcaldia-arjona.mp4" type="video/mp4"></video></div>
           <p class="video-caption">ARJONA · BOLÍVAR</p>
           <div class="module-list" aria-label="Módulos de la plataforma">
             <div class="module"><i aria-hidden="true">▦</i>Inventario TI</div>
             <div class="module"><i aria-hidden="true">✓</i>Soporte técnico</div>
             <div class="module"><i aria-hidden="true">◷</i>Mantenimiento</div>
           </div>
+          <button class="motion-toggle" id="motion-toggle" type="button" aria-pressed="false" aria-describedby="motion-status">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path class="icon-play" d="M8 5v14l11-7L8 5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path class="icon-pause" d="M8 5h3v14H8zM15 5h3v14h-3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            <span id="motion-toggle-label">Movimiento activo · pausar</span>
+          </button>
+          <p class="motion-status" id="motion-status" role="status" aria-live="polite"></p>
         </div>
       </div>
     </section>
@@ -115,7 +133,51 @@
         </div>
       </div>
     </section>
-    <section class="wrap access" id="acceso"><div><span class="eyebrow">Gestión TIC municipal</span><h2>Inventario, soporte y mantenimiento en un solo sistema.</h2><p>Herramienta de trabajo para el equipo TIC de la Alcaldía de Arjona: equipos, impresoras, órdenes de servicio y mantenimientos preventivos.</p></div><a class="btn" href="sistema.html">Abrir ManténTI <span aria-hidden="true">→</span></a></section>
+    <section class="workflow-section" id="recorrido" aria-labelledby="recorrido-title">
+      <div class="wrap">
+        <div class="section-head"><span class="eyebrow">Del registro al seguimiento</span><h2 id="recorrido-title">Así se conecta el trabajo del área TIC.</h2><p>Un recorrido sencillo por los módulos disponibles para mantener los recursos institucionales organizados y atendidos.</p></div>
+        <div class="workflow-grid">
+          <article class="workflow-step">
+            <div class="workflow-copy"><span class="num">PASO 01 / INVENTARIO</span><h3>Identifica cada activo</h3><p>Registra equipos e impresoras con su código, ubicación, dependencia, responsable y estado.</p></div>
+            <div class="preview" aria-label="Vista esquemática del inventario, sin registros reales">
+              <div class="preview-head"><span>INVENTARIO</span><span class="preview-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+              <div class="preview-body"><div class="preview-tabs"><span>Equipos</span><span>Impresoras</span></div><div class="preview-table" aria-hidden="true"><span>Código</span><span>Equipo</span><span>Ubicación</span><span>Estado</span><span>—</span><span>—</span><span>—</span><span>—</span></div></div>
+              <p class="preview-caption">Campos de referencia del módulo real</p>
+            </div>
+          </article>
+          <article class="workflow-step">
+            <div class="workflow-copy"><span class="num">PASO 02 / ATENCIÓN</span><h3>Registra y asigna la solicitud</h3><p>Crea una orden de trabajo, relaciona el equipo y asigna un técnico para dar seguimiento.</p></div>
+            <div class="preview" aria-label="Vista esquemática de una orden de trabajo, sin datos reales">
+              <div class="preview-head"><span>ÓRDENES DE TRABAJO</span><span class="preview-status">Seguimiento</span></div>
+              <div class="preview-body"><div class="preview-fields"><div class="preview-field"><small>Equipo</small><strong>Seleccionar activo</strong></div><div class="preview-field"><small>Tipo</small><strong>Tipo de atención</strong></div><div class="preview-field"><small>Prioridad</small><strong>Por definir</strong></div><div class="preview-field"><small>Técnico</small><strong>Asignación</strong></div></div><div class="preview-timeline"><span>Registro</span><span>Asignación</span><span>Cierre</span></div></div>
+              <p class="preview-caption">Flujo ilustrativo · inicia sesión para gestionarlo</p>
+            </div>
+          </article>
+          <article class="workflow-step">
+            <div class="workflow-copy"><span class="num">PASO 03 / PREVENCIÓN</span><h3>Anticipa el mantenimiento</h3><p>Programa planes preventivos y consulta frecuencia, responsable y próxima fecha en un solo módulo.</p></div>
+            <div class="preview" aria-label="Vista esquemática de un plan preventivo, sin datos reales">
+              <div class="preview-head"><span>PLAN PREVENTIVO</span><span class="preview-status">Agenda</span></div>
+              <div class="preview-body"><div class="preview-fields"><div class="preview-field"><small>Equipo</small><strong>Activo relacionado</strong></div><div class="preview-field"><small>Frecuencia</small><strong>Programación</strong></div><div class="preview-field"><small>Técnico responsable</small><strong>Responsable asignado</strong></div><div class="preview-field"><small>Próximo mantenimiento</small><strong>Fecha programada</strong></div></div></div>
+              <p class="preview-caption">Campos de referencia del módulo real</p>
+            </div>
+          </article>
+        </div>
+        <p class="workflow-note">Vistas esquemáticas con campos de la plataforma; no muestran información ni registros reales.</p>
+      </div>
+    </section>
+    <section class="faq-section" id="preguntas" aria-labelledby="preguntas-title">
+      <div class="wrap faq-layout">
+        <div class="faq-intro"><span class="eyebrow">Ayuda para empezar</span><h2 id="preguntas-title">Preguntas frecuentes</h2><p>Información básica de acceso, soporte y uso de los indicadores.</p><a class="btn faq-cta" href="sistema.html">Ir al inicio de sesión <span aria-hidden="true">→</span></a></div>
+        <div class="faq-list">
+          <details><summary>¿Quién puede ingresar a ManténTI?</summary><div class="faq-answer"><p>El sistema está destinado al personal autorizado de la Alcaldía. Se requiere una cuenta habilitada por el equipo TIC; la página pública no permite crear cuentas.</p></div></details>
+          <details><summary>¿Cómo solicito soporte técnico?</summary><div class="faq-answer"><p>El personal con acceso puede registrar una orden de trabajo desde el módulo Órdenes y consultar su seguimiento. Si no tienes cuenta o no puedes ingresar, solicita orientación al área TIC por los canales institucionales de la Alcaldía.</p></div></details>
+          <details><summary>¿Qué hago si olvidé mi contraseña?</summary><div class="faq-answer"><p>La página no ofrece recuperación automática de contraseña. Contacta al administrador del sistema o al área TIC por los canales institucionales para verificar tu acceso.</p></div></details>
+          <details><summary>¿Qué información muestran los indicadores?</summary><div class="faq-answer"><p>Son conteos agregados consultados desde la plataforma, como activos, órdenes abiertas, mantenimientos programados y técnicos activos. No reemplazan el detalle de cada registro dentro del sistema.</p></div></details>
+          <details><summary>¿El asistente de la aplicación es inteligencia artificial?</summary><div class="faq-answer"><p>No. El asistente local responde con reglas sencillas basadas en los conteos actuales de la aplicación; no es IA generativa y no reemplaza la revisión de los registros.</p></div></details>
+        </div>
+      </div>
+    </section>
+    <section class="wrap access" id="acceso"><div><span class="eyebrow">Gestión TIC municipal</span><h2>Inventario, soporte y mantenimiento en un solo sistema.</h2><p>Herramienta de trabajo para el equipo TIC de la Alcaldía de Arjona: equipos, impresoras, órdenes de servicio y mantenimientos preventivos. Acceso exclusivo para personal autorizado.</p></div><a class="btn" href="sistema.html">Abrir ManténTI <span aria-hidden="true">→</span></a></section>
   </main>
   <footer><div class="wrap footer-inner"><div class="footer-brand"><img src="logo-mantenti.svg" alt=""><span>ManténTI Arjona</span></div><div class="footer-meta">Alcaldía de Arjona · Bolívar<br>Gestión institucional de tecnología y mantenimiento</div></div></footer>
   <script>
@@ -123,6 +185,55 @@
       const state = document.getElementById('api-state');
       const stateText = document.getElementById('api-state-text');
       const updatedText = document.getElementById('stats-updated');
+      const motionToggle = document.getElementById('motion-toggle');
+      const motionToggleLabel = document.getElementById('motion-toggle-label');
+      const motionStatus = document.getElementById('motion-status');
+      const video = document.querySelector('.video-wrap video');
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const mobileViewport = window.matchMedia('(max-width: 700px)');
+      let motionEnabled = !reducedMotion.matches;
+      const updateMotion = () => {
+        document.body.classList.toggle('motion-paused', !motionEnabled);
+        motionToggle.setAttribute('aria-pressed', String(motionEnabled));
+        motionToggleLabel.textContent = reducedMotion.matches
+          ? 'Movimiento reducido activado'
+          : motionEnabled ? 'Movimiento activo · pausar' : 'Movimiento pausado · reanudar';
+      };
+      const applyMotionPreference = () => {
+        if (reducedMotion.matches) {
+          motionEnabled = false;
+          motionToggle.disabled = true;
+          motionToggleLabel.textContent = 'Movimiento reducido activado';
+          motionStatus.textContent = 'Se respeta la preferencia de movimiento de tu dispositivo.';
+          video.pause();
+        } else {
+          motionToggle.disabled = false;
+          motionStatus.textContent = '';
+        }
+        updateMotion();
+        if (motionEnabled && !mobileViewport.matches) {
+          video.play().catch(() => {
+            motionStatus.textContent = 'El navegador requiere iniciar el video manualmente.';
+          });
+        } else {
+          video.pause();
+        }
+      };
+      motionToggle.addEventListener('click', () => {
+        motionEnabled = !motionEnabled;
+        updateMotion();
+        motionStatus.textContent = motionEnabled ? '' : 'Animaciones y video pausados.';
+        if (motionEnabled) {
+          video.play().catch(() => {
+            motionStatus.textContent = 'No se pudo reproducir el video. Comprueba la conexión e inténtalo de nuevo.';
+          });
+        } else {
+          video.pause();
+        }
+      });
+      reducedMotion.addEventListener('change', applyMotionPreference);
+      mobileViewport.addEventListener('change', applyMotionPreference);
+      applyMotionPreference();
       const format = new Intl.NumberFormat('es-CO');
       fetch('backend/api.php?action=public-summary', { headers: { Accept: 'application/json' }, cache: 'no-store' })
         .then(response => {
@@ -147,7 +258,6 @@
           stateText.textContent = 'Indicadores no disponibles';
           updatedText.textContent = 'No fue posible conectar con la información actual. Intenta recargar la página.';
         });
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('video').forEach(video => video.pause());
     })();
   </script>
 </body>
