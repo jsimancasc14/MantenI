@@ -98,7 +98,7 @@ body::before {
         radial-gradient(ellipse at 92% 88%, rgba(19, 166, 106, 0.2), transparent 36%),
         linear-gradient(135deg, #071b35 0%, #0c3156 55%, #082c3e 100%);
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 430px);
     align-items: center;
     justify-content: center;
     gap: clamp(2rem, 7vw, 7rem);
@@ -124,7 +124,7 @@ body::before {
 .login-welcome {
     position: relative;
     z-index: 1;
-    width: min(100%, 560px);
+    width: min(100%, 580px);
     justify-self: end;
     color: #f4f8ff;
 }
@@ -141,9 +141,10 @@ body::before {
 .login-welcome h1 {
     max-width: 600px;
     margin: 0;
-    font-size: clamp(2.6rem, 5vw, 4.7rem);
-    line-height: 1.06;
-    letter-spacing: -.055em;
+    font-size: clamp(2.55rem, 4.4vw, 4.15rem);
+    font-weight: 750;
+    line-height: 1.04;
+    letter-spacing: -.05em;
 }
 
 .login-welcome h1 span {
@@ -152,33 +153,33 @@ body::before {
 
 .login-welcome > p:last-child {
     max-width: 480px;
-    margin-top: 1.25rem;
+    margin: 1.35rem 0 0;
     color: #c4d2e4;
-    font-size: clamp(1rem, 1.4vw, 1.12rem);
-    line-height: 1.7;
+    font-size: clamp(1rem, 1.25vw, 1.1rem);
+    line-height: 1.75;
 }
 .login-card {
     position: relative;
     z-index: 1;
     width: 100%;
     background: rgba(255,255,255,0.98);
-    border: 1px solid rgba(220,232,248,0.8);
+    border: 1px solid rgba(220,232,248,0.82);
     border-radius: 24px;
-    box-shadow: 0 28px 70px rgba(0,12,30,0.38), 0 1px 0 rgba(255,255,255,0.7) inset;
-    padding: 2rem clamp(1.25rem, 6vw, 2.4rem) 2.2rem;
+    box-shadow: 0 32px 80px rgba(0,12,30,0.36), 0 1px 0 rgba(255,255,255,0.75) inset;
+    padding: clamp(1.65rem, 3vw, 2.2rem) clamp(1.35rem, 3vw, 2.25rem);
 }
 
 .login-header {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    margin-bottom: 1.8rem;
+    gap: .85rem;
+    margin-bottom: 1.5rem;
     text-align: center;
 }
 
 .brand-mark.login-brand {
-    width: min(100%, 240px);
+    width: min(100%, 180px);
     height: auto;
     aspect-ratio: 16 / 9;
     flex: 0 1 auto;
@@ -187,14 +188,20 @@ body::before {
 .login-header h2 {
     margin: 0;
     color: #17283c;
-    font-size: clamp(1.45rem, 4vw, 1.75rem);
+    font-size: clamp(1.5rem, 3vw, 1.8rem);
     letter-spacing: -0.025em;
+}
+.login-subtitle {
+    margin: .35rem 0 0;
+    color: #6b7b8e;
+    font-size: .88rem;
+    line-height: 1.5;
 }
 
 #login-form {
     display: flex;
     flex-direction: column;
-    gap: 0.45rem;
+    gap: .55rem;
 }
 
 #login-form label {
@@ -204,9 +211,65 @@ body::before {
 }
 
 #login-form input {
-    min-height: 50px;
-    border-radius: 12px;
+    min-height: 52px;
+    border-radius: 11px;
     background: #fff;
+}
+
+.login-password-field {
+    position: relative;
+    width: 100%;
+}
+
+.login-password-field input {
+    padding-right: 3.25rem;
+}
+
+.login-password-toggle {
+    position: absolute;
+    top: 50%;
+    right: .55rem;
+    display: grid;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: #61758c;
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition: background .18s ease, color .18s ease;
+}
+
+.login-password-toggle:hover,
+.login-password-toggle:focus-visible {
+    background: #eaf1f8;
+    color: #174b91;
+}
+
+.login-password-toggle svg {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.login-password-toggle .password-eye-closed,
+.login-password-toggle.is-visible .password-eye-open {
+    display: none;
+}
+
+.login-password-toggle.is-visible .password-eye-closed {
+    display: block;
+}
+
+.login-password-toggle:focus-visible {
+    outline-offset: 1px;
 }
 
 .login-hint {
@@ -221,16 +284,17 @@ body::before {
 .login-btn {
     width: 100%;
     min-height: 50px;
-    margin-top: 0.8rem;
-    border-radius: 12px;
+    margin-top: .9rem;
+    border-radius: 11px;
     font-weight: 700;
+    box-shadow: 0 10px 22px rgba(23,75,145,.2);
 }
 
 .login-presentation-link {
     display: block;
-    margin-top: 1rem;
+    margin-top: 1.15rem;
     color: #174b91;
-    font-size: 0.9rem;
+    font-size: .88rem;
     font-weight: 700;
     text-align: center;
     text-decoration: none;
@@ -2217,10 +2281,10 @@ body.dark-mode th {
 }
 
 /* Pantalla de acceso adaptable para móviles y ventanas de poca altura. */
-.login-screen { overflow-x:hidden; overflow-y:auto; align-items:center; padding:clamp(.65rem, 3vh, 1.2rem) max(.65rem, env(safe-area-inset-right)) clamp(.65rem, 3vh, 1.2rem) max(.65rem, env(safe-area-inset-left)); }
+.login-screen { overflow-x:hidden; overflow-y:auto; align-items:center; padding:clamp(.9rem, 3vh, 1.5rem) max(1rem, env(safe-area-inset-right)) clamp(.9rem, 3vh, 1.5rem) max(1rem, env(safe-area-inset-left)); }
 .login-card { margin-block:auto; }
-@media (max-width:760px) { .login-screen { grid-template-columns:minmax(0, 440px); } .login-welcome { display:none; } }
-@media (max-width:520px) { .login-screen { grid-template-columns:minmax(0, 1fr); } .login-card { width:100%; padding:1.15rem 1rem 1.25rem; border-radius:18px; } .login-header { gap:.65rem; margin-bottom:1rem; } .brand-mark.login-brand { width:min(100%, 175px); } #login-form input { min-height:46px; padding:.65rem .75rem; } .login-btn { min-height:46px; margin-top:.55rem; } }
+@media (max-width:900px), (max-height:640px) { .login-screen { grid-template-columns:minmax(0, 440px); } .login-welcome { display:none; } }
+@media (max-width:520px) { .login-screen { grid-template-columns:minmax(0, 1fr); } .login-card { width:100%; padding:1.2rem 1rem 1.35rem; border-radius:20px; } .login-header { gap:.65rem; margin-bottom:1.1rem; } .brand-mark.login-brand { width:min(100%, 160px); } #login-form input { min-height:48px; padding:.65rem .75rem; } .login-password-field input { padding-right:3rem; } .login-btn { min-height:48px; margin-top:.65rem; } }
 @media (max-height:700px) and (min-width:521px) { .login-header { gap:.6rem; margin-bottom:.9rem; } .brand-mark.login-brand { width:min(100%, 150px); } .login-card { padding-top:1.1rem; padding-bottom:1.25rem; } #login-form input { min-height:42px; } .login-btn { min-height:42px; margin-top:.5rem; } }
 
 /* Institutional sidebar controls and professional theme switch. */

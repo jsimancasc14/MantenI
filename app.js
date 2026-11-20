@@ -197,6 +197,17 @@ if (loginForm) {
     loginForm.addEventListener('submit', iniciarSesion);
 }
 
+const loginPassword = document.getElementById('password');
+const loginPasswordToggle = document.getElementById('toggle-login-password');
+loginPasswordToggle?.addEventListener('click', () => {
+    if (!loginPassword) return;
+    const mostrar = loginPassword.type === 'password';
+    loginPassword.type = mostrar ? 'text' : 'password';
+    loginPasswordToggle.setAttribute('aria-pressed', String(mostrar));
+    loginPasswordToggle.setAttribute('aria-label', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
+    loginPasswordToggle.classList.toggle('is-visible', mostrar);
+});
+
 const assistantForm = document.getElementById('assistant-form');
 const assistantQuestion = document.getElementById('assistant-question');
 const assistantAnswer = document.getElementById('assistant-answer');
