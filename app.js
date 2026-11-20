@@ -115,6 +115,7 @@ async function mostrarApp() {
     cargarOrdenes();
     cargarPreventivos();
     cargarDashboard();
+    cargarUsuariosChat();
 }
 
 async function cargarSesionSegura() {
@@ -208,47 +209,115 @@ loginPasswordToggle?.addEventListener('click', () => {
     loginPasswordToggle.classList.toggle('is-visible', mostrar);
 });
 
-const assistantForm = document.getElementById('assistant-form');
-const assistantQuestion = document.getElementById('assistant-question');
-const assistantAnswer = document.getElementById('assistant-answer');
-const assistantSubmit = document.getElementById('assistant-submit');
+const chatUsers = document.getElementById('chat-users');
+const chatSearch = document.getElementById('chat-search');
+const chatMessages = document.getElementById('chat-messages');
+const chatForm = document.getElementById('chat-form');
+const chatMessage = document.getElementById('chat-message');
+const chatSend = document.getElementById('chat-send');
+const chatContactName = document.getElementById('chat-contact-name');
+const chatContactRole = document.getElementById('chat-contact-role');
+let chatContacts = [];
+let selectedChatUser = null;
 
-async function consultarAsistente(question) {
-    if (!assistantQuestion || !assistantAnswer || !assistantSubmit) return;
-    const prompt = String(question || '').trim().slice(0, 500);
-    if (!prompt) return;
-    assistantQuestion.value = prompt;
-    assistantAnswer.dataset.state = 'loading';
-    assistantAnswer.textContent = 'Consultando los indicadores actuales…';
-    assistantSubmit.disabled = true;
+function escapeHtml(value) {
+    const element = document.createElement('span');
+    element.textContent = String(value ?? '');
+    return element.innerHTML;
+}
+
+function chatInitials(name) {
+    return String(name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase();
+}
+
+function renderChatUsers() {
+    if (!chatUsers) return;
+    const query = String(chatSearch?.value || '').trim().toLocaleLowerCase('es');
+    const visible = chatContacts.filter(user =>
+        !query || `${user.name} ${user.role} ${user.username}`.toLocaleLowerCase('es').includes(query)
+    );
+    chatUsers.innerHTML = visible.map(user => `
+        <button class="chat-user ${selectedChatUser === user.id ? 'active' : ''}" type="button" data-chat-user="${user.id}">
+            <span class="chat-avatar">${chatInitials(user.name)}</span>
+            <span><strong class="chat-user-name">${escapeHtml(user.name)}</strong><small class="chat-user-role">${escapeHtml(user.role)}</small></span>
+        </button>
+    `).join('') || '<p class="chat-empty">No hay usuarios disponibles.</p>';
+}
+
+async function cargarUsuariosChat() {
+    if (!chatUsers) return;
     try {
-        const response = await fetch('backend/api.php?action=assistant', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-            body: JSON.stringify({ question: prompt })
-        });
+        const response = await fetch('backend/api.php?action=chat', { credentials: 'same-origin' });
         const result = await response.json();
         if (manejarSesionNoAutenticada(response)) return;
-        if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo obtener una respuesta.');
-        assistantAnswer.dataset.state = 'success';
-        assistantAnswer.textContent = result.answer;
+        if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo cargar el chat.');
+        chatContacts = result.users || [];
+        renderChatUsers();
     } catch (error) {
-        assistantAnswer.dataset.state = 'error';
-        assistantAnswer.textContent = error.message || 'No se pudo conectar con el asistente.';
-    } finally {
-        assistantSubmit.disabled = false;
+        chatUsers.innerHTML = `<p class="chat-empty">${escapeHtml(error.message)}</p>`;
     }
 }
 
-assistantForm?.addEventListener('submit', event => {
-    event.preventDefault();
-    consultarAsistente(assistantQuestion.value);
+async function cargarConversacionChat() {
+    if (!selectedChatUser || !chatMessages) return;
+    try {
+        const response = await fetch(`backend/api.php?action=chat&contact_id=${encodeURIComponent(selectedChatUser)}`, { credentials: 'same-origin' });
+        const result = await response.json();
+        if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo cargar la conversación.');
+        chatMessages.innerHTML = (result.messages || []).map(message => `
+            <div class="chat-message ${message.mine ? 'mine' : ''}">
+                <div class="chat-bubble">${escapeHtml(message.message)}</div>
+                <time class="chat-time">${escapeHtml(new Date(message.created_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }))}</time>
+            </div>
+        `).join('') || '<p class="chat-empty">Aún no hay mensajes en esta conversación.</p>';
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    } catch (error) {
+        chatMessages.innerHTML = `<p class="chat-empty">${escapeHtml(error.message)}</p>`;
+    }
+}
+
+chatUsers?.addEventListener('click', event => {
+    const button = event.target.closest('[data-chat-user]');
+    if (!button) return;
+    selectedChatUser = Number(button.dataset.chatUser);
+    const contact = chatContacts.find(user => user.id === selectedChatUser);
+    if (chatContactName) chatContactName.textContent = contact?.name || 'Usuario';
+    if (chatContactRole) chatContactRole.textContent = contact?.role || '';
+    if (chatMessage) chatMessage.disabled = false;
+    if (chatSend) chatSend.disabled = false;
+    renderChatUsers();
+    cargarConversacionChat();
 });
 
-document.querySelectorAll('[data-ai-question]').forEach(button => {
-    button.addEventListener('click', () => consultarAsistente(button.dataset.aiQuestion));
+chatSearch?.addEventListener('input', renderChatUsers);
+
+chatForm?.addEventListener('submit', async event => {
+    event.preventDefault();
+    const message = String(chatMessage?.value || '').trim();
+    if (!message || !selectedChatUser) return;
+    chatSend.disabled = true;
+    try {
+        const response = await fetch('backend/api.php?action=chat', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            body: JSON.stringify({ recipient_id: selectedChatUser, message })
+        });
+        const result = await response.json();
+        if (manejarSesionNoAutenticada(response)) return;
+        if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo enviar el mensaje.');
+        chatMessage.value = '';
+        await cargarConversacionChat();
+    } catch (error) {
+        alert(error.message || 'No se pudo enviar el mensaje.');
+    } finally {
+        chatSend.disabled = false;
+    }
 });
+
+setInterval(() => {
+    if (selectedChatUser) cargarConversacionChat();
+}, 5000);
 
 // ======================================================
 // TEMA OSCURO / CLARO

@@ -416,6 +416,77 @@ export default async function handler(req, res) {
       return requireMethod(req, res, ['GET', 'POST', 'PUT', 'DELETE']);
     }
 
+    if (action === 'chat') {
+      await db.query(`CREATE TABLE IF NOT EXISTS mensajes_chat (
+        id SERIAL PRIMARY KEY,
+        remitente_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+        destinatario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+        mensaje VARCHAR(1000) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        leido_en TIMESTAMP DEFAULT NULL
+      )`);
+      await db.query('CREATE INDEX IF NOT EXISTS idx_mensajes_chat_destinatario ON mensajes_chat(destinatario_id, created_at)');
+      await db.query('CREATE INDEX IF NOT EXISTS idx_mensajes_chat_conversacion ON mensajes_chat(remitente_id, destinatario_id, created_at)');
+
+      if (req.method === 'GET') {
+        const contactId = Number(url.searchParams.get('contact_id') || 0);
+        if (contactId) {
+          if (!Number.isSafeInteger(contactId) || contactId < 1) {
+            return sendJson(res, 422, { ok: false, error: 'Usuario de conversación inválido.' });
+          }
+          const { rows } = await db.query(
+            `SELECT m.id, m.remitente_id, m.destinatario_id, m.mensaje, m.created_at,
+                    (m.remitente_id = $1) AS mine
+             FROM mensajes_chat m
+             WHERE (m.remitente_id = $1 AND m.destinatario_id = $2)
+                OR (m.remitente_id = $2 AND m.destinatario_id = $1)
+             ORDER BY m.created_at ASC, m.id ASC`,
+            [user.id, contactId]
+          );
+          await db.query(
+            'UPDATE mensajes_chat SET leido_en = CURRENT_TIMESTAMP WHERE remitente_id = $1 AND destinatario_id = $2 AND leido_en IS NULL',
+            [contactId, user.id]
+          );
+          return sendJson(res, 200, { ok: true, messages: rows });
+        }
+        const { rows } = await db.query(
+          `SELECT id, username, nombre_completo AS name, rol AS role
+           FROM usuarios
+           WHERE activo = 1 AND id != $1
+           ORDER BY nombre_completo ASC`,
+          [user.id]
+        );
+        return sendJson(res, 200, { ok: true, users: rows.map(row => ({
+          id: Number(row.id), username: row.username, name: row.name, role: row.role
+        })) });
+      }
+
+      if (req.method === 'POST') {
+        const input = await readBody(req);
+        const recipientId = Number(input.recipient_id);
+        const message = String(input.message || '').trim();
+        if (!Number.isSafeInteger(recipientId) || recipientId < 1) {
+          return sendJson(res, 422, { ok: false, error: 'Selecciona un usuario destinatario.' });
+        }
+        if (!message || message.length > 1000) {
+          return sendJson(res, 422, { ok: false, error: 'El mensaje debe tener entre 1 y 1000 caracteres.' });
+        }
+        const { rows: recipients } = await db.query(
+          'SELECT id FROM usuarios WHERE id = $1 AND activo = 1 LIMIT 1',
+          [recipientId]
+        );
+        if (!recipients.length) return sendJson(res, 404, { ok: false, error: 'El usuario destinatario no está disponible.' });
+        const { rows } = await db.query(
+          `INSERT INTO mensajes_chat (remitente_id, destinatario_id, mensaje)
+           VALUES ($1, $2, $3)
+           RETURNING id, remitente_id, destinatario_id, mensaje, created_at`,
+          [user.id, recipientId, message]
+        );
+        return sendJson(res, 201, { ok: true, message: rows[0] });
+      }
+      return requireMethod(req, res, ['GET', 'POST']);
+    }
+
     if (action === 'assistant') {
       if (!requireMethod(req, res, ['POST'])) return;
       const input = await readBody(req);
