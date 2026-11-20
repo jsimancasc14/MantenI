@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#092d62">
     <link rel="icon" type="image/svg+xml" href="logo-mantenti.svg">
     <link rel="stylesheet" href="estilos.css?v=27">
-    <link rel="stylesheet" href="diseno.css?v=2">
+    <link rel="stylesheet" href="diseno.css?v=1">
 </head>
 <body>
     <div id="login-screen" class="login-screen active">
@@ -29,13 +29,7 @@
                 <input id="usuario" name="usuario" type="text" placeholder="admin o tecnico" autocomplete="username" spellcheck="false" required>
 
                 <label for="password">Contraseña</label>
-                <div class="password-field">
-                    <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required>
-                    <button type="button" class="password-toggle" data-password-toggle="password" aria-label="Mostrar contraseña" aria-pressed="false">
-                        <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
-                        <svg class="eye-closed" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 9.5 6 9.5 6a17 17 0 0 1-2.4 3M14.1 14.1A3 3 0 0 1 9.9 9.9M6.2 7.7C3.8 9.5 2.5 12 2.5 12s3.5 6 9.5 6c1.1 0 2.1-.2 3-.5"/></svg>
-                    </button>
-                </div>
+                <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required>
 
                 <button type="submit" class="btn-primario login-btn">Entrar al sistema</button>
             </form>
@@ -82,7 +76,6 @@
                         <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Cambiar a modo claro" aria-pressed="false" title="Cambiar tema"><svg class="theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.4 15.2A8.5 8.5 0 0 1 8.8 3.6 8.8 8.8 0 1 0 20.4 15.2Z"/></svg><svg class="theme-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l-1.42-1.42m11.3-11.3 1.42-1.42"/></svg><span data-theme-label>Modo oscuro</span></button>
                         <button id="backup-btn" class="switch-user-btn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 17v4h14v-4"/></svg><span>Respaldar</span></button>
                         <button id="switch-user-btn" class="switch-user-btn" type="button" aria-label="Cambiar usuario"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 12-5m3-2h5m-3-3 3 3-3 3"/></svg><span>Cambiar usuario</span></button>
-                        <button id="change-password-btn" class="switch-user-btn" type="button" aria-label="Cambiar contraseña segura"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/></svg><span>Contraseña segura</span></button>
                         <button id="logout-btn" class="logout-btn" type="button" aria-label="Cerrar sesión"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5m5 5H3m9-9h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/></svg><span>Cerrar sesión</span></button>
                     </div>
                 </div>
@@ -414,6 +407,6 @@
         </main>
     </div>
 
-    <script src="app.js?v=31"></script>
+    <script src="app.js?v=30"></script>
 </body>
 </html>

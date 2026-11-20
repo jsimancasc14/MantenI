@@ -312,36 +312,6 @@ export default async function handler(req, res) {
       if (!requireMethod(req, res, ['GET'])) return;
       return sendJson(res, 200, { ok: true, user, csrf_token: refreshedSession.csrfToken });
     }
-    if (action === 'password') {
-      if (!requireMethod(req, res, ['POST', 'PUT'])) return;
-      const input = await readBody(req);
-      const actual = String(input.current_password || '');
-      const nueva = String(input.new_password || '');
-      const confirmacion = String(input.confirm_password || '');
-      if (!actual || !nueva || !confirmacion) {
-        return sendJson(res, 422, { ok: false, error: 'Completa todos los campos de contraseña' });
-      }
-      if (nueva !== confirmacion) {
-        return sendJson(res, 422, { ok: false, error: 'La nueva contraseña y la confirmación no coinciden' });
-      }
-      if (nueva.length < 10 || !/[A-Z]/.test(nueva) || !/[a-z]/.test(nueva) ||
-          !/\d/.test(nueva) || !/[^A-Za-z0-9]/.test(nueva)) {
-        return sendJson(res, 422, { ok: false, error: 'La contraseña no cumple los requisitos de seguridad' });
-      }
-      if (nueva === actual) {
-        return sendJson(res, 422, { ok: false, error: 'La nueva contraseña debe ser diferente a la actual' });
-      }
-      const { rows } = await db.query(
-        'SELECT password_hash FROM usuarios WHERE id = $1 AND activo = 1 LIMIT 1',
-        [session.sub]
-      );
-      if (!rows[0] || !(await bcrypt.compare(actual, rows[0].password_hash))) {
-        return sendJson(res, 401, { ok: false, error: 'La contraseña actual no es correcta' });
-      }
-      const hash = await bcrypt.hash(nueva, 12);
-      await db.query('UPDATE usuarios SET password_hash = $1 WHERE id = $2', [hash, session.sub]);
-      return sendJson(res, 200, { ok: true, message: 'Contraseña actualizada' });
-    }
     if (action === 'logout') return sendJson(res, 405, { ok: false, error: 'Método no permitido' });
 
     if (action === 'dashboard') {
