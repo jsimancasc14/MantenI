@@ -651,6 +651,34 @@ body.dark-mode .tabla-contenedor tbody tr:hover td {
     }
 }
 
+/* Panel de contraseña segura */
+.password-field { position: relative; display: flex; align-items: center; width: 100%; }
+.password-field input { width: 100%; padding-right: 48px !important; }
+.password-toggle { position: absolute; right: 8px; width: 36px; height: 36px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 9px; background: transparent; color: #66778a; cursor: pointer; }
+.password-toggle svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.password-toggle .eye-closed { display: none; }
+.password-toggle.active .eye-open { display: none; }
+.password-toggle.active .eye-closed { display: block; }
+.password-toggle:hover, .password-toggle.active { background: #eaf1f7; color: #174b91; }
+.password-panel { max-width: 520px; }
+.password-panel-head { display: flex; align-items: center; gap: .8rem; margin-bottom: 1.1rem; }
+.password-panel-head h2 { margin: .15rem 0 0; color: var(--texto); font-size: 1.35rem; }
+.password-panel-icon { width: 46px; height: 46px; display: grid; place-items: center; flex: 0 0 46px; border: 1px solid #77bda833; border-radius: 14px; background: #e8f7f2; color: #138575; }
+.password-panel-icon svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.password-change-form { display: grid; gap: .55rem; }
+.password-change-form label { margin-top: .35rem; font-weight: 700; color: var(--texto); }
+.password-change-form .btn-primario { justify-self: start; margin-top: .55rem; }
+.password-strength { display: grid !important; grid-template-columns: repeat(4, 1fr); gap: 6px !important; margin-top: .15rem; }
+.password-strength span { height: 5px; border-radius: 999px; background: #dce5ed; transition: background .2s ease; }
+.password-strength[data-level="1"] span:first-child { background: #d94b4b; }
+.password-strength[data-level="2"] span:nth-child(-n+2) { background: #f3a638; }
+.password-strength[data-level="3"] span:nth-child(-n+3) { background: #6a9fd8; }
+.password-strength[data-level="4"] span { background: #138575; }
+.password-strength-text { min-height: 20px; color: var(--texto-suave); font-size: .78rem; }
+body.dark-mode .password-toggle { color: #a9b7c9; }
+body.dark-mode .password-toggle:hover, body.dark-mode .password-toggle.active { background: #1b2d44; color: #9acaff; }
+body.dark-mode .password-strength span { background: #35485f; }
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

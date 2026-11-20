@@ -136,6 +136,113 @@ function cambiarUsuario() {
     document.getElementById('login-form')?.reset();
 }
 
+function validarContraseñaSegura(password) {
+    return password.length >= 10 &&
+        /[A-Z]/.test(password) &&
+        /[a-z]/.test(password) &&
+        /\d/.test(password) &&
+        /[^A-Za-z0-9]/.test(password);
+}
+
+function abrirPanelContraseñaSegura() {
+    document.getElementById('modal-cuerpo').innerHTML = `
+        <div class="password-panel">
+            <div class="password-panel-head">
+                <span class="password-panel-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/></svg>
+                </span>
+                <div><span class="tag">Seguridad de la cuenta</span><h2>Cambiar contraseña</h2></div>
+            </div>
+            <form id="password-change-form" class="password-change-form">
+                <label for="current-password">Contraseña actual</label>
+                <div class="password-field"><input id="current-password" name="current_password" type="password" autocomplete="current-password" required><button type="button" class="password-toggle" data-password-toggle="current-password" aria-label="Mostrar contraseña" aria-pressed="false"><svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg><svg class="eye-closed" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 9.5 6 9.5 6a17 17 0 0 1-2.4 3M14.1 14.1A3 3 0 0 1 9.9 9.9M6.2 7.7C3.8 9.5 2.5 12 2.5 12s3.5 6 9.5 6c1.1 0 2.1-.2 3-.5"/></svg></button></div>
+                <label for="new-password">Nueva contraseña</label>
+                <div class="password-field"><input id="new-password" name="new_password" type="password" autocomplete="new-password" required minlength="10"><button type="button" class="password-toggle" data-password-toggle="new-password" aria-label="Mostrar contraseña" aria-pressed="false"><svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg><svg class="eye-closed" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 9.5 6 9.5 6a17 17 0 0 1-2.4 3M14.1 14.1A3 3 0 0 1 9.9 9.9M6.2 7.7C3.8 9.5 2.5 12 2.5 12s3.5 6 9.5 6c1.1 0 2.1-.2 3-.5"/></svg></button></div>
+                <div class="password-strength" id="password-strength" data-level="0"><span></span><span></span><span></span><span></span></div>
+                <p class="password-strength-text" id="password-strength-text">Usa 10 caracteres con mayúscula, minúscula, número y símbolo.</p>
+                <label for="confirm-password">Confirmar nueva contraseña</label>
+                <div class="password-field"><input id="confirm-password" name="confirm_password" type="password" autocomplete="new-password" required minlength="10"><button type="button" class="password-toggle" data-password-toggle="confirm-password" aria-label="Mostrar contraseña" aria-pressed="false"><svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg><svg class="eye-closed" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 6.2A9.8 9.8 0 0 1 12 6c6 0 9.5 6 9.5 6a17 17 0 0 1-2.4 3M14.1 14.1A3 3 0 0 1 9.9 9.9M6.2 7.7C3.8 9.5 2.5 12 2.5 12s3.5 6 9.5 6c1.1 0 2.1-.2 3-.5"/></svg></button></div>
+                <button type="submit" class="btn-primario">Actualizar contraseña</button>
+            </form>
+        </div>`;
+    document.getElementById('modal').classList.add('active');
+    inicializarControlesContraseña(document.getElementById('modal-cuerpo'));
+}
+
+function inicializarControlesContraseña(contenedor) {
+    contenedor?.querySelectorAll('[data-password-toggle]').forEach(button => {
+        button.addEventListener('click', () => {
+            const input = document.getElementById(button.dataset.passwordToggle);
+            if (!input) return;
+            const mostrar = input.type === 'password';
+            input.type = mostrar ? 'text' : 'password';
+            button.setAttribute('aria-pressed', String(mostrar));
+            button.setAttribute('aria-label', mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña');
+            button.classList.toggle('active', mostrar);
+        });
+    });
+
+    const nueva = document.getElementById('new-password');
+    const indicador = document.getElementById('password-strength');
+    const texto = document.getElementById('password-strength-text');
+    nueva?.addEventListener('input', () => {
+        const value = nueva.value;
+        let nivel = 0;
+        if (value.length >= 10) nivel++;
+        if (/[A-Z]/.test(value) && /[a-z]/.test(value)) nivel++;
+        if (/\d/.test(value)) nivel++;
+        if (/[^A-Za-z0-9]/.test(value)) nivel++;
+        indicador?.setAttribute('data-level', String(nivel));
+        if (texto) {
+            texto.textContent = validarContraseñaSegura(value)
+                ? 'Contraseña segura lista para usar.'
+                : 'Usa 10 caracteres con mayúscula, minúscula, número y símbolo.';
+        }
+    });
+
+    document.getElementById('password-change-form')?.addEventListener('submit', cambiarContraseñaSegura);
+}
+
+async function cambiarContraseñaSegura(event) {
+    event.preventDefault();
+    const form = new FormData(event.target);
+    const actual = String(form.get('current_password') || '');
+    const nueva = String(form.get('new_password') || '');
+    const confirmacion = String(form.get('confirm_password') || '');
+
+    if (!validarContraseñaSegura(nueva)) {
+        alert('La nueva contraseña debe tener al menos 10 caracteres e incluir mayúscula, minúscula, número y símbolo.');
+        return;
+    }
+    if (nueva !== confirmacion) {
+        alert('La nueva contraseña y la confirmación no coinciden.');
+        return;
+    }
+    if (nueva === actual) {
+        alert('La nueva contraseña debe ser diferente a la contraseña actual.');
+        return;
+    }
+
+    try {
+        const response = await fetch('backend/api.php?action=password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+            credentials: 'same-origin',
+            body: JSON.stringify({ current_password: actual, new_password: nueva, confirm_password: confirmacion })
+        });
+        if (manejarSesionNoAutenticada(response)) return;
+        const result = await response.json();
+        if (!response.ok || !result.ok) {
+            alert(result.error || 'No se pudo cambiar la contraseña.');
+            return;
+        }
+        cerrarModal();
+        alert('Contraseña actualizada correctamente.');
+    } catch (error) {
+        alert('No se pudo conectar con el servidor.');
+    }
+}
+
 function manejarSesionNoAutenticada(response) {
     if (response.status !== 401) return false;
     cambiarUsuario();
@@ -196,6 +303,8 @@ const loginForm = document.getElementById('login-form');
 if (loginForm) {
     loginForm.addEventListener('submit', iniciarSesion);
 }
+
+inicializarControlesContraseña(document);
 
 const assistantForm = document.getElementById('assistant-form');
 const assistantQuestion = document.getElementById('assistant-question');
@@ -279,6 +388,11 @@ if (switchUserBtn) {
     switchUserBtn.addEventListener('click', () => {
         cambiarUsuario();
     });
+}
+
+const changePasswordBtn = document.getElementById('change-password-btn');
+if (changePasswordBtn) {
+    changePasswordBtn.addEventListener('click', abrirPanelContraseñaSegura);
 }
 
 const backupBtn = document.getElementById('backup-btn');
