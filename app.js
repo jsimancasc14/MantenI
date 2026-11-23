@@ -217,6 +217,8 @@ const chatMessage = document.getElementById('chat-message');
 const chatSend = document.getElementById('chat-send');
 const chatContactName = document.getElementById('chat-contact-name');
 const chatContactRole = document.getElementById('chat-contact-role');
+const chatContactAvatar = document.getElementById('chat-contact-avatar');
+const chatUserCount = document.getElementById('chat-user-count');
 let chatContacts = [];
 let selectedChatUser = null;
 
@@ -238,10 +240,11 @@ function renderChatUsers() {
     );
     chatUsers.innerHTML = visible.map(user => `
         <button class="chat-user ${selectedChatUser === user.id ? 'active' : ''}" type="button" data-chat-user="${user.id}">
-            <span class="chat-avatar">${chatInitials(user.name)}</span>
-            <span><strong class="chat-user-name">${escapeHtml(user.name)}</strong><small class="chat-user-role">${escapeHtml(user.role)}</small></span>
+            <span class="chat-avatar">${escapeHtml(chatInitials(user.name))}</span>
+            <span class="chat-user-copy"><strong class="chat-user-name">${escapeHtml(user.name)}</strong><small class="chat-user-role">${escapeHtml(user.role)}</small></span>
         </button>
     `).join('') || '<p class="chat-empty">No hay usuarios disponibles.</p>';
+    if (chatUserCount) chatUserCount.textContent = String(chatContacts.length);
 }
 
 async function cargarUsuariosChat() {
@@ -263,6 +266,7 @@ async function cargarConversacionChat() {
     try {
         const response = await fetch(`backend/api.php?action=chat&contact_id=${encodeURIComponent(selectedChatUser)}`, { credentials: 'same-origin' });
         const result = await response.json();
+        if (manejarSesionNoAutenticada(response)) return;
         if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo cargar la conversación.');
         chatMessages.innerHTML = (result.messages || []).map(message => `
             <div class="chat-message ${message.mine ? 'mine' : ''}">
@@ -283,13 +287,17 @@ chatUsers?.addEventListener('click', event => {
     const contact = chatContacts.find(user => user.id === selectedChatUser);
     if (chatContactName) chatContactName.textContent = contact?.name || 'Usuario';
     if (chatContactRole) chatContactRole.textContent = contact?.role || '';
+    if (chatContactAvatar) chatContactAvatar.textContent = chatInitials(contact?.name);
     if (chatMessage) chatMessage.disabled = false;
-    if (chatSend) chatSend.disabled = false;
+    if (chatSend) chatSend.disabled = !chatMessage?.value.trim();
     renderChatUsers();
     cargarConversacionChat();
 });
 
 chatSearch?.addEventListener('input', renderChatUsers);
+chatMessage?.addEventListener('input', () => {
+    if (chatSend) chatSend.disabled = !chatMessage.value.trim() || !selectedChatUser;
+});
 
 chatForm?.addEventListener('submit', async event => {
     event.preventDefault();
@@ -311,7 +319,7 @@ chatForm?.addEventListener('submit', async event => {
     } catch (error) {
         alert(error.message || 'No se pudo enviar el mensaje.');
     } finally {
-        chatSend.disabled = false;
+        chatSend.disabled = !chatMessage.value.trim() || !selectedChatUser;
     }
 });
 

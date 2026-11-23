@@ -173,29 +173,47 @@
             <section class="chat-card" aria-labelledby="chat-title">
                 <div class="chat-sidebar">
                     <div class="chat-heading">
-                        <div>
+                        <span class="chat-heading-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-6.5A7.5 7.5 0 0 1 10.5 7H12a8 8 0 0 1 8 4.5Z"/><path d="M8 12h8m-8 3h5"/></svg>
+                        </span>
+                        <div class="chat-heading-copy">
                             <span class="eyebrow">Comunicación interna</span>
                             <h2 id="chat-title">Mensajes</h2>
+                            <p>Conversa directamente con el equipo.</p>
                         </div>
-                        <span id="chat-status" class="chat-status">Conectado</span>
                     </div>
-                    <label for="chat-search" class="chat-search-label">Buscar usuario</label>
-                    <input id="chat-search" class="chat-search" type="search" placeholder="Nombre o rol">
+                    <label for="chat-search" class="chat-search-label">Buscar una persona</label>
+                    <div class="chat-search-wrap">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+                        <input id="chat-search" class="chat-search" type="search" placeholder="Buscar por nombre o rol">
+                    </div>
+                    <div class="chat-people-heading"><span>PERSONAS</span><span id="chat-user-count">0</span></div>
                     <div id="chat-users" class="chat-users" aria-label="Usuarios disponibles"></div>
+                    <p class="chat-sidebar-note"><span aria-hidden="true"></span>Mensajes privados para el equipo TIC</p>
                 </div>
                 <div class="chat-conversation">
                     <div class="chat-conversation-header">
+                        <span id="chat-contact-avatar" class="chat-contact-avatar" aria-hidden="true">?</span>
                         <div>
-                            <strong id="chat-contact-name">Selecciona un usuario</strong>
+                            <strong id="chat-contact-name">Tus conversaciones</strong>
                             <span id="chat-contact-role"></span>
                         </div>
                     </div>
                     <div id="chat-messages" class="chat-messages" role="log" aria-live="polite">
-                        <p class="chat-empty">Elige un usuario para comenzar una conversación.</p>
+                        <div class="chat-welcome">
+                            <span class="chat-welcome-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-6.5A7.5 7.5 0 0 1 10.5 7H12a8 8 0 0 1 8 4.5Z"/><path d="M8 12h8m-8 3h5"/></svg>
+                            </span>
+                            <strong>Tu espacio de comunicación</strong>
+                            <span>Elige una persona de la lista para iniciar una conversación privada.</span>
+                        </div>
                     </div>
                     <form id="chat-form" class="chat-form">
-                        <input id="chat-message" type="text" maxlength="1000" placeholder="Escribe un mensaje..." autocomplete="off" disabled>
-                        <button id="chat-send" class="btn-primario" type="submit" disabled>Enviar</button>
+                        <input id="chat-message" type="text" maxlength="1000" placeholder="Selecciona una persona para escribir" aria-label="Escribe un mensaje" autocomplete="off" disabled>
+                        <button id="chat-send" class="btn-primario" type="submit" aria-label="Enviar mensaje" disabled>
+                            <span>Enviar</span>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4 20-7ZM22 2 11 13"/></svg>
+                        </button>
                     </form>
                 </div>
             </section>
@@ -432,6 +450,6 @@
         </main>
     </div>
 
-    <script src="app.js?v=32"></script>
+    <script src="app.js?v=33"></script>
 </body>
 </html>
