@@ -435,7 +435,7 @@ export default async function handler(req, res) {
             return sendJson(res, 422, { ok: false, error: 'Usuario de conversación inválido.' });
           }
           const { rows } = await db.query(
-            `SELECT m.id, m.remitente_id, m.destinatario_id, m.mensaje, m.created_at,
+            `SELECT m.id, m.remitente_id, m.destinatario_id, m.mensaje AS message, m.created_at,
                     (m.remitente_id = $1) AS mine
              FROM mensajes_chat m
              WHERE (m.remitente_id = $1 AND m.destinatario_id = $2)
