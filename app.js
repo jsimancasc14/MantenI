@@ -132,15 +132,24 @@ async function cargarSesionSegura() {
 function cambiarUsuario() {
     localStorage.removeItem('MantTI_User');
     csrfToken = '';
+    selectedChatUser = null;
     document.getElementById('login-screen')?.classList.remove('hidden');
     document.getElementById('app-shell')?.classList.add('hidden');
     document.getElementById('login-form')?.reset();
 }
 
+let sessionExpired = false;
+
 function manejarSesionNoAutenticada(response) {
     if (response.status !== 401) return false;
+    if (sessionExpired) return true;
+    sessionExpired = true;
     cambiarUsuario();
-    alert('Tu sesión venció o ya no está activa. Inicia sesión nuevamente y vuelve a enviar la operación; no se guardó.');
+    const notice = document.getElementById('session-notice');
+    if (notice) {
+        notice.textContent = 'Tu sesión venció. Inicia sesión nuevamente para continuar.';
+        notice.hidden = false;
+    }
     return true;
 }
 
@@ -177,6 +186,12 @@ async function iniciarSesion(event) {
             return;
         }
 
+        sessionExpired = false;
+        const sessionNotice = document.getElementById('session-notice');
+        if (sessionNotice) {
+            sessionNotice.textContent = '';
+            sessionNotice.hidden = true;
+        }
         localStorage.setItem('MantTI_User', JSON.stringify(result.user));
         csrfToken = result.csrf_token || '';
     } catch (error) {
