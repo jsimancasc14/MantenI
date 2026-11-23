@@ -232,6 +232,19 @@ function chatInitials(name) {
     return String(name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase();
 }
 
+function formatChatListTime(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const now = new Date();
+    const today = date.getFullYear() === now.getFullYear() &&
+        date.getMonth() === now.getMonth() &&
+        date.getDate() === now.getDate();
+    return today
+        ? date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+        : date.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' });
+}
+
 function renderChatUsers() {
     if (!chatUsers) return;
     const query = String(chatSearch?.value || '').trim().toLocaleLowerCase('es');
@@ -241,7 +254,12 @@ function renderChatUsers() {
     chatUsers.innerHTML = visible.map(user => `
         <button class="chat-user ${selectedChatUser === user.id ? 'active' : ''}" type="button" data-chat-user="${user.id}">
             <span class="chat-avatar">${escapeHtml(chatInitials(user.name))}</span>
-            <span class="chat-user-copy"><strong class="chat-user-name">${escapeHtml(user.name)}</strong><small class="chat-user-role">${escapeHtml(user.role)}</small></span>
+            <span class="chat-user-copy">
+                <span class="chat-user-topline"><strong class="chat-user-name">${escapeHtml(user.name)}</strong><time class="chat-user-time">${escapeHtml(formatChatListTime(user.last_message_at))}</time></span>
+                <small class="chat-user-role">${escapeHtml(user.role)}</small>
+                <small class="chat-user-preview">${user.last_message ? `${user.last_message_mine ? 'Tú: ' : ''}${escapeHtml(user.last_message)}` : 'Inicia una conversación'}</small>
+            </span>
+            ${Number(user.unread_count) > 0 ? `<span class="chat-unread-badge" aria-label="${Number(user.unread_count)} mensajes sin leer">${Number(user.unread_count) > 99 ? '99+' : Number(user.unread_count)}</span>` : ''}
         </button>
     `).join('') || '<p class="chat-empty">No hay usuarios disponibles.</p>';
     if (chatUserCount) chatUserCount.textContent = String(chatContacts.length);
@@ -291,7 +309,7 @@ chatUsers?.addEventListener('click', event => {
     if (chatMessage) chatMessage.disabled = false;
     if (chatSend) chatSend.disabled = !chatMessage?.value.trim();
     renderChatUsers();
-    cargarConversacionChat();
+    cargarConversacionChat().then(cargarUsuariosChat);
 });
 
 chatSearch?.addEventListener('input', renderChatUsers);
@@ -316,6 +334,7 @@ chatForm?.addEventListener('submit', async event => {
         if (!response.ok || !result.ok) throw new Error(result.error || 'No se pudo enviar el mensaje.');
         chatMessage.value = '';
         await cargarConversacionChat();
+        await cargarUsuariosChat();
     } catch (error) {
         alert(error.message || 'No se pudo enviar el mensaje.');
     } finally {
@@ -326,6 +345,12 @@ chatForm?.addEventListener('submit', async event => {
 setInterval(() => {
     if (selectedChatUser) cargarConversacionChat();
 }, 5000);
+
+setInterval(() => {
+    if (chatUsers && !document.getElementById('app-shell')?.classList.contains('hidden')) {
+        cargarUsuariosChat();
+    }
+}, 15000);
 
 // ======================================================
 // TEMA OSCURO / CLARO

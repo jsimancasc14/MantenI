@@ -450,14 +450,37 @@ export default async function handler(req, res) {
           return sendJson(res, 200, { ok: true, messages: rows });
         }
         const { rows } = await db.query(
-          `SELECT id, username, nombre_completo AS name, rol AS role
-           FROM usuarios
-           WHERE activo = 1 AND id != $1
-           ORDER BY nombre_completo ASC`,
+          `SELECT u.id, u.username, u.nombre_completo AS name, u.rol AS role,
+                  recent.mensaje AS last_message, recent.created_at AS last_message_at,
+                  COALESCE(recent.remitente_id = $1, FALSE) AS last_message_mine,
+                  COALESCE(unread.total, 0) AS unread_count
+           FROM usuarios u
+           LEFT JOIN LATERAL (
+             SELECT m.mensaje, m.created_at, m.remitente_id
+             FROM mensajes_chat m
+             WHERE (m.remitente_id = $1 AND m.destinatario_id = u.id)
+                OR (m.remitente_id = u.id AND m.destinatario_id = $1)
+             ORDER BY m.created_at DESC, m.id DESC
+             LIMIT 1
+           ) recent ON TRUE
+           LEFT JOIN LATERAL (
+             SELECT COUNT(*) AS total
+             FROM mensajes_chat m
+             WHERE m.remitente_id = u.id AND m.destinatario_id = $1 AND m.leido_en IS NULL
+           ) unread ON TRUE
+           WHERE u.activo = 1 AND u.id != $1
+           ORDER BY recent.created_at DESC NULLS LAST, u.nombre_completo ASC`,
           [user.id]
         );
         return sendJson(res, 200, { ok: true, users: rows.map(row => ({
-          id: Number(row.id), username: row.username, name: row.name, role: row.role
+          id: Number(row.id),
+          username: row.username,
+          name: row.name,
+          role: row.role,
+          last_message: row.last_message,
+          last_message_at: row.last_message_at,
+          last_message_mine: row.last_message_mine,
+          unread_count: Number(row.unread_count)
         })) });
       }
 
